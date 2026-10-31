@@ -1,0 +1,7 @@
+channels = ["conda-forge"]
+
+[deps]
+# parallelproj 2 (compiled backend parallelproj-core) is not yet resolvable with Python 3.15
+python = ">=3.12,<3.14"
+parallelproj = ">=2"
+numpy = ""

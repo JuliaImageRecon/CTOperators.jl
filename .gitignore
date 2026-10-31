@@ -2,3 +2,6 @@
 /docs/Manifest*.toml
 /docs/build/
 /docs/src/generated/
+/benchmark/out/
+/benchmark/envs/*/Manifest*.toml
+/benchmark/envs/*/.CondaPkg/
