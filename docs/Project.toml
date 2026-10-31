@@ -21,3 +21,4 @@ CTOperators = {path = ".."}
 Documenter = "1"
 LinearOperators = "~2.12"
 Literate = "2"
+Zygote = "0.7.15"
