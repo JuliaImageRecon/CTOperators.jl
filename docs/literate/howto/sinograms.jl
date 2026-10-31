@@ -37,11 +37,13 @@ norm(y_ours - y_sinograms) / norm(y_sinograms)
 
 #-
 
-fig = Figure(size=(900, 260))
+fig = Figure(size=(800, 820))
 for (j, (name, p)) in enumerate((("CTOperators.jl, voxel phantom", y_ours), ("Sinograms.jl, analytic", y_sinograms),
                                  ("difference", y_ours - y_sinograms)))
-  heatmap(fig[1, j], p[:, :, 1]; colormap=j == 3 ? :RdBu : :grays,
-          colorrange=j == 3 ? (-2, 2) : (0, maximum(y_sinograms)), axis=(; title=name, aspect=DataAspect()))
+  ax = Axis(fig[j, 1]; title=name, aspect=DataAspect(), xlabel="detector column", ylabel="row")
+  hm = heatmap!(ax, p[:, :, 1]; colormap=j == 3 ? :RdBu : :grays,
+                colorrange=j == 3 ? (-2, 2) : (0, maximum(y_sinograms)))
+  Colorbar(fig[j, 2], hm; label="line integral")
 end
 save("sinograms_view.png", fig) #hide
 nothing #hide
