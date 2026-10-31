@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><title>Siddon&#39;s Method · CTOperators.jl</title><meta name="title" content="Siddon&#39;s Method · CTOperators.jl"/><meta property="og:title" content="Siddon&#39;s Method · CTOperators.jl"/><meta property="twitter:title" content="Siddon&#39;s Method · CTOperators.jl"/><meta name="description" content="Documentation for CTOperators.jl."/><meta property="og:description" content="Documentation for CTOperators.jl."/><meta property="twitter:description" content="Documentation for CTOperators.jl."/><meta property="og:url" content="https://JuliaImageRecon.github.io/CTOperators.jl/generated/explanation/siddon/"/><meta property="twitter:url" content="https://JuliaImageRecon.github.io/CTOperators.jl/generated/explanation/siddon/"/><link rel="canonical" href="https://JuliaImageRecon.github.io/CTOperators.jl/generated/explanation/siddon/"/><script data-outdated-warner src="../../../assets/warner.js"></script><link href="https://cdnjs.cloudflare.com/ajax/libs/lato-font/3.0.0/css/lato-font.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/juliamono/0.63.2/juliamono.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/fontawesome.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/solid.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/brands.min.css" rel="stylesheet" type="text/css"/><link href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.8/katex.min.css" rel="stylesheet" type="text/css"/><script>documenterBaseURL="../../.."</script><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" data-main="../../../assets/documenter.js"></script><script src="../../../search_index.js"></script><script src="../../../siteinfo.js"></script><script src="../../../../versions.js"></script><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-mocha.css" data-theme-name="catppuccin-mocha"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-macchiato.css" data-theme-name="catppuccin-macchiato"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-frappe.css" data-theme-name="catppuccin-frappe"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/catppuccin-latte.css" data-theme-name="catppuccin-latte"/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-dark.css" data-theme-name="documenter-dark" data-theme-primary-dark/><link class="docs-theme-link" rel="stylesheet" type="text/css" href="../../../assets/themes/documenter-light.css" data-theme-name="documenter-light" data-theme-primary/><script src="../../../assets/themeswap.js"></script></head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href="../../../">CTOperators.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li><a class="tocitem" href="../../../">Home</a></li><li><a class="tocitem" href="../../examples/getting_started/">Getting Started</a></li><li><span class="tocitem">How-to Guides</span><ul><li><a class="tocitem" href="../../howto/geometries/">Set up a Geometry</a></li><li><a class="tocitem" href="../../howto/gpu/">Run on a GPU</a></li><li><a class="tocitem" href="../../howto/subsets/">Ordered Subsets and Normalisation</a></li><li><a class="tocitem" href="../../howto/differentiation/">Differentiate through a Projector</a></li></ul></li><li><span class="tocitem">Explanation</span><ul><li><a class="tocitem" href="../conventions/">Coordinates and Conventions</a></li><li class="is-active"><a class="tocitem" href>Siddon&#39;s Method</a><ul class="internal"><li><a class="tocitem" href="#The-idea"><span>The idea</span></a></li><li><a class="tocitem" href="#Properties"><span>Properties</span></a></li><li><a class="tocitem" href="#Coverage-of-the-voxels"><span>Coverage of the voxels</span></a></li><li><a class="tocitem" href="#Implementation"><span>Implementation</span></a></li><li><a class="tocitem" href="#References"><span>References</span></a></li></ul></li><li><a class="tocitem" href="../joseph/">Joseph&#39;s Method</a></li></ul></li><li><span class="tocitem">Reference</span><ul><li><a class="tocitem" href="../../../api/">API</a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li><a class="is-disabled">Explanation</a></li><li class="is-active"><a href>Siddon&#39;s Method</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>Siddon&#39;s Method</a></li></ul></nav><div class="docs-right"><a class="docs-navbar-link" href="https://github.com/JuliaImageRecon/CTOperators.jl" title="View the repository on GitHub"><span class="docs-icon fa-brands"></span><span class="docs-label is-hidden-touch">GitHub</span></a><a class="docs-navbar-link" href="https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/docs/literate/explanation/siddon.jl" title="Edit source on GitHub"><span class="docs-icon fa-solid"></span></a><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="Siddon&#39;s-method"><a class="docs-heading-anchor" href="#Siddon&#39;s-method">Siddon&#39;s method</a><a id="Siddon&#39;s-method-1"></a><a class="docs-heading-anchor-permalink" href="#Siddon&#39;s-method" title="Permalink"></a></h1><p>A projector computes line integrals of an image along rays. For an image of voxels, each with a constant value, the line integral along a ray is a weighted sum: every voxel the ray passes through contributes its value times the length of the ray inside it,</p><p class="math-container">\[y_i = \sum_j a_{ij} x_j, \qquad a_{ij} = \text{length of ray } i \text{ in voxel } j.\]</p><p>The weights <span>$a_{ij}$</span> form the system matrix. It is far too large to store (a 256³ volume and 10⁷ rays), so projectors compute the weights of a ray on the fly, every time they need them. Siddon&#39;s method computes them exactly.</p><pre><code class="language-julia hljs">using CTOperators</code></pre><h2 id="The-idea"><a class="docs-heading-anchor" href="#The-idea">The idea</a><a id="The-idea-1"></a><a class="docs-heading-anchor-permalink" href="#The-idea" title="Permalink"></a></h2><p>Siddon (1985) does not look at the voxels but at the planes between them: three sets of equally spaced parallel planes, one per axis. Where a ray crosses these planes is a simple computation per axis, and between two consecutive crossings the ray lies inside a single voxel. The intersection lengths are the distances between consecutive crossings, the voxels follow from the order of the crossings.</p><p>Siddon computed all crossings, sorted them and then found the voxel of every segment. Jacobs et al. (1998) avoid both: starting from the voxel where the ray enters, they take the nearest next crossing of the three axes, which says which axis the ray crosses next, and step that axis&#39;s voxel index by one. Every step costs a few additions and comparisons, and a ray through a volume of n³ voxels takes about 3n steps.</p><p>In the figure a ray crosses a 2D image. Orange circles are its crossings of the planes between columns, red diamonds those between rows; the pixels are coloured by the length of the ray inside them. Move the slider to change the ray.</p><div><div data-jscall-id="root" id="90f65cfc-ee8b-4314-a6c4-88f33879b19d" class="bonito-fragment" style="display:contents"><div style="display:contents"><script src="bonito/js/Bonito.bundled5040008371911548254.js" type="module"></script><style></style><style>@media (prefers-color-scheme: light) {
+  :root {
+    --bonito-widget-hover-bg: #f3f4f6;
+    color-scheme: light;
+    --bonito-widget-muted-bg: #f3f4f6;
+    accent-color: #3182bb;
+    --bonito-widget-accent: #3182bb;
+    --bonito-widget-fg: #1a1a1a;
+    --bonito-widget-bg: #ffffff;
+    --bonito-widget-border: #9ca3af;
+  }
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bonito-widget-hover-bg: #3a3a40;
+    color-scheme: dark;
+    --bonito-widget-muted-bg: #36363c;
+    accent-color: #6ea8e0;
+    --bonito-widget-accent: #6ea8e0;
+    --bonito-widget-fg: #e8e8ea;
+    --bonito-widget-bg: #2a2a2e;
+    --bonito-widget-border: #52525b;
+  }
+}
+html .noUi-target {
+  box-shadow: none;
+  background: var(--bonito-widget-muted-bg, #fafafa);
+  border-color: var(--bonito-widget-border, #d3d3d3);
+}
+html .noUi-connects {
+  background: var(--bonito-widget-muted-bg, #fafafa);
+}
+html .noUi-connect {
+  background: var(--bonito-widget-accent, #3182bb);
+}
+html .noUi-handle {
+  box-shadow: none;
+  background: var(--bonito-widget-bg, #fff);
+  border-color: var(--bonito-widget-border, #d3d3d3);
+}
+html .noUi-handle::before {
+  background: var(--bonito-widget-border, #d3d3d3);
+}
+html .noUi-handle::after {
+  background: var(--bonito-widget-border, #d3d3d3);
+}
+html .noUi-tooltip {
+  background: var(--bonito-widget-bg, #fff);
+  border-color: var(--bonito-widget-border, #d3d3d3);
+  color: var(--bonito-widget-fg, #000);
+}
+html .noUi-marker {
+  background: var(--bonito-widget-border, #ccc);
+}
+html .noUi-value {
+  color: var(--bonito-widget-fg, inherit);
+}
+</style></div><div style="display:contents"><script type="module">Bonito.init_session("90f65cfc-ee8b-4314-a6c4-88f33879b19d", Bonito.fetch_binary('bonito/bin/ccc5d17b1ff54b287bf52c06d1990473a31bcb45-13092740431876631515.bin'), "root", false);
+</script><div></div></div></div><div data-jscall-id="subsession-application-dom" id="42ab9a52-810f-4fc5-8fc8-7f0ea98799ef" class="bonito-fragment" style="display:contents"><div style="display:contents"><style></style><style>.wglmakie-spinner {
+  animation: wglmakie-spin 1.0s linear infinite;
+  position: absolute;
+  left: 50%;
+  z-index: 1000;
+  border-radius: 50%;
+  width: 40px;
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  transform: translate(-50%, -50%);
+  border-top: 4px solid currentColor;
+  height: 40px;
+  pointer-events: none;
+  top: 50%;
+}
+@keyframes wglmakie-spin {
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+}
+</style><script src="bonito/js/WGLMakie.bundled1870091951256107923.js" type="module"></script></div><div style="display:contents"><script type="module">Bonito.init_session("42ab9a52-810f-4fc5-8fc8-7f0ea98799ef", Bonito.fetch_binary('bonito/bin/04635bd2dc0de1e180577c5c39c556727c4dc921-16994219705979011681.bin'), "sub", false);
+</script><div data-jscall-id="1"><div data-jscall-id="2">ray <input data-jscall-id="3" step="1" type="range" min="1" max="60" oninput="" value="1" autocomplete="off" /></div><div data-jscall-id="4" style="width: 100%; height: 100%; position: relative;"><canvas data-jscall-id="5" height="560px" data-lm-suppress-shortcuts="true" width="620px" data-jp-suppress-context-menu tabindex="0" style="display: block"></canvas><div data-jscall-id="6" class="wglmakie-spinner"></div></div></div></div></div></div><p>The weights in the figure come from the package itself: the back projection of the value 1 along a single ray puts its intersection lengths into the pixels. Rounded to two digits, first index x (rows of the printout), second index y:</p><pre><code class="language-julia hljs">image = ImageGeom(; dims=(8, 8), deltas=(1.0, 1.0))
+ray = RayList([-6.0; -2.0; 0.0;;], [6.0; 3.0; 0.0;;])
+weights = reshape(adjoint(SiddonProjector(image, ray; eltype=Float64)) * [1.0], 8, 8)
+round.(weights; digits=2)</code></pre><pre class="documenter-example-output"><code class="nohighlight hljs ansi">8×8 Matrix{Float64}:
+ 0.0  0.0  0.43  0.65  0.0   0.0   0.0   0.0
+ 0.0  0.0  0.0   1.08  0.0   0.0   0.0   0.0
+ 0.0  0.0  0.0   0.87  0.22  0.0   0.0   0.0
+ 0.0  0.0  0.0   0.0   1.08  0.0   0.0   0.0
+ 0.0  0.0  0.0   0.0   1.08  0.0   0.0   0.0
+ 0.0  0.0  0.0   0.0   0.22  0.87  0.0   0.0
+ 0.0  0.0  0.0   0.0   0.0   1.08  0.0   0.0
+ 0.0  0.0  0.0   0.0   0.0   0.65  0.43  0.0</code></pre><h2 id="Properties"><a class="docs-heading-anchor" href="#Properties">Properties</a><a id="Properties-1"></a><a class="docs-heading-anchor-permalink" href="#Properties" title="Permalink"></a></h2><ul><li><strong>Exact for voxel images.</strong> The weights are the exact lengths, so the projection of an object made of whole voxels equals its analytic line integrals (the test suite checks this against <a href="https://github.com/JuliaImageRecon/ImagePhantoms.jl">ImagePhantoms.jl</a>). For smooth objects the error is that of representing the object by voxels.</li><li><strong>Exact adjoint.</strong> The back projection uses the same weights, so it is exactly the transpose of the forward projection, as iterative solvers require.</li><li><strong>Any geometry.</strong> The method only needs the start and end point of each ray: ray lists, cone and parallel beam and any trajectory work the same way.</li></ul><h2 id="Coverage-of-the-voxels"><a class="docs-heading-anchor" href="#Coverage-of-the-voxels">Coverage of the voxels</a><a id="Coverage-of-the-voxels-1"></a><a class="docs-heading-anchor-permalink" href="#Coverage-of-the-voxels" title="Permalink"></a></h2><p>Siddon&#39;s method is <em>ray-driven</em>: it follows individual rays, and the detector cells are points. Whether a voxel is hit by many or by few rays then depends on how the rays fall onto the voxel grid. The figure shows, for one parallel-beam view at 45°, the summed lengths of all rays in every pixel (scaled by the cell size, so that even coverage is 1). With one ray per pixel some pixels get 20 % more than others, in a regular pattern; more rays per pixel even it out.</p><p><img src="../coverage.png" alt="Coverage of the pixels by the rays of one view"/></p><p>In an iterative reconstruction this pattern appears as a checkerboard in the image, as in the <a href="../../examples/getting_started/#Getting-Started">Getting Started</a> example with one ray per voxel (De Man &amp; Basu 2004 describe the effect). Remedies are more rays than voxels (finer detector sampling), <a href="../joseph/#Joseph&#39;s-method">Joseph&#39;s method</a>, whose interpolation evens out the coverage at most angles, or projectors that integrate over the detector cells, such as distance-driven or separable-footprint projectors.</p><h2 id="Implementation"><a class="docs-heading-anchor" href="#Implementation">Implementation</a><a id="Implementation-1"></a><a class="docs-heading-anchor-permalink" href="#Implementation" title="Permalink"></a></h2><ul><li>The ray is traversed in voxel coordinates, where every voxel is a unit cube, so voxels of any size, also anisotropic or with flipped axes, need no special cases.</li><li>The forward projection runs one work-item per ray and accumulates the weighted voxel values in a register. The back projection follows the same rays and adds the weighted value of the ray to every voxel it visits with an atomic addition, because rays of different work-items meet in the same voxels.</li><li>A ray that lies exactly in a plane between two voxels is ambiguous: its line integral could be taken from either side. Siddon&#39;s method takes the side that the rounding gives, which may differ between Float32 and Float64 or between devices.</li></ul><h2 id="References"><a class="docs-heading-anchor" href="#References">References</a><a id="References-1"></a><a class="docs-heading-anchor-permalink" href="#References" title="Permalink"></a></h2><ul><li>R. L. Siddon, &quot;Fast calculation of the exact radiological path for a three-dimensional CT array&quot;, Med. Phys. 12(2), 252–255, 1985.</li><li>F. Jacobs, E. Sundermann, B. De Sutter, M. Christiaens, I. Lemahieu, &quot;A fast algorithm to calculate the exact radiological path through a pixel or voxel space&quot;, J. Comput. Inf. Technol. 6(1), 89–94, 1998.</li><li>B. De Man, S. Basu, &quot;Distance-driven projection and backprojection in three dimensions&quot;, Phys. Med. Biol. 49(11), 2463–2475, 2004.</li></ul><hr/><p><em>This page was generated using <a href="https://github.com/fredrikekre/Literate.jl">Literate.jl</a>.</em></p></article><nav class="docs-footer"><a class="docs-footer-prevpage" href="../conventions/">« Coordinates and Conventions</a><a class="docs-footer-nextpage" href="../joseph/">Joseph&#39;s Method »</a><div class="flexbox-break"></div><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.19.0 on <span class="colophon-date" title="Saturday 31 October 2026 19:18">Saturday 31 October 2026</span>. Using Julia version 1.13.3.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
