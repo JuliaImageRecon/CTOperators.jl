@@ -40,5 +40,5 @@ reused by every application, the setting of iterative solvers such as those of
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/nHackel/CTOperators.jl")
+Pkg.add(url="https://github.com/JuliaImageRecon/CTOperators.jl")
 ```

@@ -17,10 +17,10 @@ makedocs(;
   modules=[CTOperators],
   sitename="CTOperators.jl",
   authors="Niklas Hackelberg and contributors",
-  repo=Remotes.GitHub("nHackel", "CTOperators.jl"),
+  repo=Remotes.GitHub("JuliaImageRecon", "CTOperators.jl"),
   format=Documenter.HTML(;
     prettyurls=get(ENV, "CI", "false") == "true",
-    canonical="https://nHackel.github.io/CTOperators.jl",
+    canonical="https://JuliaImageRecon.github.io/CTOperators.jl",
     edit_link="main",
   ),
   # Diátaxis: a tutorial to learn, how-to guides for tasks, explanation for understanding,
@@ -45,4 +45,4 @@ makedocs(;
   ],
 )
 
-deploydocs(repo="github.com/nHackel/CTOperators.jl.git", devbranch="main", push_preview=true)
+deploydocs(repo="github.com/JuliaImageRecon/CTOperators.jl.git", devbranch="main", push_preview=true)

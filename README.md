@@ -3,9 +3,9 @@
 This package provides matched forward and back projectors for X-ray computed tomography that run
 multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code base.
 
-[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://nHackel.github.io/CTOperators.jl/dev)
-[![Build Status](https://github.com/nHackel/CTOperators.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/nHackel/CTOperators.jl/actions/workflows/CI.yml?query=branch%3Amain)
-[![codecov](https://codecov.io/gh/nHackel/CTOperators.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/nHackel/CTOperators.jl)
+[![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaImageRecon.github.io/CTOperators.jl/dev)
+[![Build Status](https://github.com/JuliaImageRecon/CTOperators.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaImageRecon/CTOperators.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![codecov](https://codecov.io/gh/JuliaImageRecon/CTOperators.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaImageRecon/CTOperators.jl)
 
 > [!IMPORTANT]
 > CTOperators.jl is in an early stage of development and not registered yet. Its interface may
@@ -50,7 +50,7 @@ storage=CuArray)`, and pass data that lives on the GPU.
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/nHackel/CTOperators.jl")
+Pkg.add(url="https://github.com/JuliaImageRecon/CTOperators.jl")
 ```
 
 ## Benchmarks
