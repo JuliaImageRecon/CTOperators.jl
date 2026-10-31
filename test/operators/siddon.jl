@@ -18,7 +18,8 @@ end
   @test op * vec(x) == vec(op * x) && size(op * x) == datasize(op)
   y = op * x
   @test mul!(similar(vec(y)), op, vec(x)) == vec(y)
-  @test adjoint(op) * vec(y) == vec(adjoint(op) * y)
+  # the back projection adds with atomics, so with several threads the order (and rounding) varies
+  @test isapprox(adjoint(op) * vec(y), vec(adjoint(op) * y); rtol=1e-12)
   @test_throws DimensionMismatch op * rand(10)
   @test_throws DimensionMismatch mul!(rand(3), op, x)
 
