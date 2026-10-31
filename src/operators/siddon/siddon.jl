@@ -53,7 +53,7 @@ KA.get_backend(op::SiddonProjector) = op.backend
 function forward!(y, op::SiddonProjector, x)
   n = nrays(op.geometry)
   n == 0 && return y
-  siddon_forward_kernel!(op.backend)(y, reshape(x, op.grid.dims), op.grid, op.geometry; ndrange=n)
+  siddon_forward_kernel!(op.backend)(y, vec(x), op.grid, op.geometry; ndrange=n)
   y
 end
 
@@ -61,7 +61,7 @@ function backward!(x, op::SiddonProjector, y)
   fill!(x, zero(eltype(x)))
   n = nrays(op.geometry)
   n == 0 && return x
-  siddon_backward_kernel!(op.backend)(reshape(x, op.grid.dims), y, op.grid, op.geometry; ndrange=n)
+  siddon_backward_kernel!(op.backend)(vec(x), y, op.grid, op.geometry; ndrange=n)
   x
 end
 

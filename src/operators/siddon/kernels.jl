@@ -4,12 +4,14 @@
 # [amin, amax] after clipping; a step in alpha is a length alpha * len in world units
 # (len = |b - a|).
 #
-# Per ray: the first plane crossing after amin on each axis and the voxel of the first segment
-# (from the midpoint of that segment, the one float -> int conversion of the ray), then repeatedly
-# the nearest crossing: segment length, step that axis's voxel index by +-1. Plane crossings are
-# computed from the plane index rather than accumulated, so rounding errors do not add up along the
-# ray. Simultaneous crossings give zero-length segments; voxels outside the volume (possible in the
-# first or last such segment through rounding) are skipped.
+# Per ray: the voxel of the entry point (clamped into the volume, the one float -> int conversion of
+# the ray) and, from it, the next plane on each axis; then repeatedly the nearest crossing: segment
+# length, step that axis's voxel index (and the linear index) by +-1. Leaving the volume on the
+# stepped axis ends the ray. The planes are derived from the voxel, never computed independently
+# of it: in Float32 an entry point within rounding of a plane could otherwise put voxel and plane
+# counter one apart, shifting all later voxels of that axis (found by comparing with Float64).
+# Plane crossings are computed from the plane index rather than accumulated, so rounding errors do
+# not add up along the ray. Simultaneous crossings give zero-length segments.
 #
 # No closures in this code: a closure capturing a variable that is reassigned (the loop state) is
 # boxed and the kernel no longer compiles for GPUs (docs/memory/ka-lessons.md of the project).
@@ -25,10 +27,10 @@ struct Scatter{A,T}
   value::T
 end
 
-@inline visit(g::Gather, acc, ix, iy, iz, w) = @inbounds muladd(w, g.image[ix, iy, iz], acc)
+@inline visit(g::Gather, acc, lin, w) = @inbounds muladd(w, g.image[lin], acc)
 
-@inline function visit(s::Scatter, acc, ix, iy, iz, w)
-  @inbounds Atomix.@atomic :monotonic s.image[ix, iy, iz] += w * s.value
+@inline function visit(s::Scatter, acc, lin, w)
+  @inbounds Atomix.@atomic :monotonic s.image[lin] += w * s.value
   acc
 end
 
@@ -55,36 +57,61 @@ end
   siddon_traverse(action, grid.dims, p, d, norm(b - a), amin, amax)
 end
 
-# index w of the next plane (at w + 1/2) after the coordinate q in direction s
-@inline next_plane(q, s) = s > 0 ? floor(q - oftype(q, 0.5)) + 1 : s < 0 ? ceil(q - oftype(q, 0.5)) - 1 : zero(q)
-# parameter of the crossing of the plane w + 1/2 by the ray coordinate p + alpha d
-@inline crossing(w, p, d) = iszero(d) ? typemax(d) : (w + oftype(d, 0.5) - p) / d
-# the voxel containing the coordinate q
-@inline voxel_index(q) = unsafe_trunc(Int, floor(q + oftype(q, 0.5)))
+# the voxel containing the voxel coordinate q, clamped to 1:n
+@inline voxel_index(q, n) = clamp(unsafe_trunc(Int, floor(q + oftype(q, 0.5))), 1, n)
+# index w of the next plane (at w + 1/2) from voxel v in direction s
+@inline first_plane(v, s) = s > 0 ? oftype(s, v) : s < 0 ? oftype(s, v - 1) : zero(s)
+# The crossing of the plane w + 1/2 by the ray coordinate p + alpha d is at
+# alpha = (w + 1/2 - p) / d = w * invd + offset with invd = 1 / d, offset = (1/2 - p) / d: one fused
+# multiply-add per step instead of a division on the loop's critical path. Axes the ray is parallel
+# to have no crossings (alpha = Inf; their invd is never used).
+@inline inverse(d) = iszero(d) ? zero(d) : inv(d)
+@inline crossing_offset(p, d) = iszero(d) ? zero(d) : (oftype(d, 0.5) - p) / d
+@inline crossing(w, invd, offset, d) = iszero(d) ? typemax(d) : muladd(w, invd, offset)
 @inline step_index(s) = unsafe_trunc(Int, s)
 
 @inline function siddon_traverse(action, dims, p::SVector{3,T}, d::SVector{3,T}, len, amin, amax) where {T}
   s = sign.(d)
   step = map(step_index, s)
-  plane = map(next_plane, p + amin * d, s)
-  alpha = map(crossing, plane, p, d)
-  # voxel of the first segment, from its midpoint
-  amid = (amin + min(minimum(alpha), amax)) / 2
-  vox = map(voxel_index, p + amid * d)
+  vox = map(voxel_index, p + amin * d, SVector(dims))
+  plane = map(first_plane, vox, s)
+  invd = map(inverse, d)
+  offset = map(crossing_offset, p, d)
+  alpha = map(crossing, plane, invd, offset, d)
+  # The loop state in scalars, one branch per axis: indexing the small vectors with a run-time axis
+  # would keep them in memory instead of registers (measured: 9.0 ns per step with SVectors).
+  nx, ny, nz = dims
+  ix, iy, iz = vox[1], vox[2], vox[3]
+  sx, sy, sz = step[1], step[2], step[3]
+  wx, wy, wz = plane[1], plane[2], plane[3]
+  fx, fy, fz = s[1], s[2], s[3]
+  ax, ay, az = alpha[1], alpha[2], alpha[3]
+  lx, ly, lz = sx, sy * nx, sz * nx * ny
+  lin = ix + (iy - 1) * nx + (iz - 1) * nx * ny
   acc = zero(T)
   acur = amin
   # every iteration crosses one plane: at most sum(dims) + 3 crossings (bounds NaN rays too)
-  for _ in 1:sum(dims)+3
-    k = alpha[1] <= alpha[2] ? (alpha[1] <= alpha[3] ? 1 : 3) : (alpha[2] <= alpha[3] ? 2 : 3)
-    anext = min(alpha[k], amax)
-    if 1 <= vox[1] <= dims[1] && 1 <= vox[2] <= dims[2] && 1 <= vox[3] <= dims[3]
-      acc = visit(action, acc, vox[1], vox[2], vox[3], (anext - acur) * len)
+  for _ in 1:nx+ny+nz+3
+    if ax <= ay && ax <= az
+      anext = min(ax, amax)
+      acc = visit(action, acc, lin, (anext - acur) * len)
+      (anext >= amax || !(1 <= ix + sx <= nx)) && break
+      ix += sx; lin += lx; wx += fx
+      ax = muladd(wx, invd[1], offset[1])
+    elseif ay <= az
+      anext = min(ay, amax)
+      acc = visit(action, acc, lin, (anext - acur) * len)
+      (anext >= amax || !(1 <= iy + sy <= ny)) && break
+      iy += sy; lin += ly; wy += fy
+      ay = muladd(wy, invd[2], offset[2])
+    else
+      anext = min(az, amax)
+      acc = visit(action, acc, lin, (anext - acur) * len)
+      (anext >= amax || !(1 <= iz + sz <= nz)) && break
+      iz += sz; lin += lz; wz += fz
+      az = muladd(wz, invd[3], offset[3])
     end
-    anext >= amax && break
     acur = anext
-    plane = Base.setindex(plane, plane[k] + s[k], k)
-    alpha = Base.setindex(alpha, crossing(plane[k], p[k], d[k]), k)
-    vox = Base.setindex(vox, vox[k] + step[k], k)
   end
   acc
 end

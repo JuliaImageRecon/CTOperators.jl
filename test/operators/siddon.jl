@@ -139,3 +139,30 @@ end
   @test op32 isa SiddonProjector{Float32} && image_geometry(op32) === image
   @test_throws MethodError subset(SiddonProjector(image, RayList(rand(3, 4), rand(3, 4))), [1])
 end
+
+# Every ray in Float32 agrees with Float64 to Float32 accuracy. Regression: an entry point within
+# rounding of a plane between voxels put the start voxel and the plane counter one apart, shifting
+# all later voxels of that axis (errors of 10-30 % on single rays, invisible in the norm over all
+# rays). The rays enter through the face x = min at heights y, z exactly on planes between voxels,
+# with large voxel coordinates (in Float32 they land within rounding of the plane on either side).
+@testitem "Siddon: Float32 rays entering on planes" tags = [:siddon] begin
+  using ImageGeoms: axis
+  using Random
+  Random.seed!(1)
+  image = ImageGeom(; dims=(64, 128, 128), offsets=(0.37, 0.11, -0.23))
+  planes(d) = axis(image, d)[1:end-1] .+ 0.5   # world positions of the planes between voxels
+  xmin = axis(image, 1)[1] - 0.5
+  nr = 2000
+  starts = zeros(3, nr); ends = zeros(3, nr)
+  for r in 1:nr
+    entry = [xmin, rand(planes(2)), rand(planes(3))]
+    dir = [1.0, 2rand() - 1, 2rand() - 1]
+    starts[:, r] = entry - 50dir
+    ends[:, r] = entry + 300dir
+  end
+  g = RayList(starts, ends)
+  x = rand(64, 128, 128)
+  y64 = SiddonProjector(image, g; eltype=Float64) * x
+  y32 = SiddonProjector(image, g; eltype=Float32) * Float32.(x)
+  @test maximum(abs.(y32 .- y64)) < 1e-4 * maximum(y64)
+end
