@@ -1,13 +1,11 @@
-using CTOperators
-using Test
+# Test items (TestItemRunner): run all with `Pkg.test()`, a selection by tags with e.g.
+# `Pkg.test(test_args=["geometry"])`, single items from VS Code. Items tagged :gpu run on Array here
+# and on JLArrays or a GPU device with `julia test/gpu/run.jl <backend>`.
+#
+# Tags: :image, :geometry, :gpu, :aqua
 
-include("utils.jl")
+using TestItemRunner
 
-# CPU tests, then the KernelAbstractions code paths through JLArrays (GPU-style arrays whose
-# kernels run on the CPU) and Aqua. Tests on GPU devices run separately: test/gpu/run.jl.
-@testset "CTOperators" begin
-  include("image/voxelgrid.jl")
-  include("geometry/geometry.jl")
-  include("gpu/jlarrays.jl")
-  include("aqua.jl")
-end
+const TAGS = Symbol.(ARGS)
+
+@run_package_tests filter = ti -> isempty(TAGS) || any(in(ti.tags), TAGS)

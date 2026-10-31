@@ -1,5 +1,4 @@
-using Aqua
-
-@testset "Aqua" begin
+@testitem "Aqua" tags = [:aqua] begin
+  using Aqua
   Aqua.test_all(CTOperators)
 end
