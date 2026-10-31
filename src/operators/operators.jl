@@ -92,6 +92,13 @@ function LinearAlgebra.mul!(y::AbstractArray, op::AbstractCTOperator, x::Abstrac
   y
 end
 
+# 5-argument mul!, y = alpha * op * x + beta * y, through a temporary projection (iterative solvers
+# use it only for start values)
+function LinearAlgebra.mul!(y::AbstractArray, op::AbstractCTOperator, x::AbstractArray, alpha::Number, beta::Number)
+  tmp = op * x
+  y .= alpha .* reshape(tmp, size(y)) .+ beta .* y
+end
+
 function check_length(a, dims, what)
   length(a) == prod(dims) ||
     throw(DimensionMismatch("$what has $(length(a)) elements, the operator expects $(prod(dims)) $dims"))

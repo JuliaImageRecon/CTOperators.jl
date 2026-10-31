@@ -1,4 +1,7 @@
 using Documenter, Literate, CTOperators
+# Loaded before makedocs: loading Bonito inside an example would load its Documenter extension in the
+# middle of the build, whose methods Documenter then cannot see (world age).
+using Bonito, WGLMakie
 
 # Examples are Literate scripts in literate/<section>/, rendered to src/generated/<section>/
 # and run when the documentation is built.

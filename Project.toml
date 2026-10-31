@@ -11,10 +11,18 @@ KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
+[weakdeps]
+ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+
+[extensions]
+CTOperatorsChainRulesCoreExt = "ChainRulesCore"
+
 [compat]
 Adapt = "4"
 Aqua = "0.8"
 Atomix = "1"
+ChainRulesCore = "1"
+ChainRulesTestUtils = "1"
 ImageGeoms = "0.11"
 ImagePhantoms = "0.8"
 KernelAbstractions = "0.9, 0.10"
@@ -27,10 +35,11 @@ julia = "1.12"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ChainRulesTestUtils = "cdddcdb0-9152-4a09-a978-84456f9df70a"
 ImagePhantoms = "71a99df6-f52c-4da1-bd2a-69d6f37f3252"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
 
 [targets]
-test = ["Aqua", "ImagePhantoms", "Random", "Test", "TestItemRunner"]
+test = ["Aqua", "ChainRulesCore", "ChainRulesTestUtils", "ImagePhantoms", "Random", "Test", "TestItemRunner"]

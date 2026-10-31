@@ -27,8 +27,8 @@ References:
   calculate the exact radiological path through a pixel or voxel space", J. Comput. Inf.
   Technol. 6(1), 89–94, 1998.
 """
-struct SiddonProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend} <: AbstractProjector{T,G}
-  image::ImageGeom
+struct SiddonProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom} <: AbstractProjector{T,G}
+  image::I
   grid::VoxelGrid{T}
   geometry::G
   backend::B
@@ -42,7 +42,7 @@ end
 # from a geometry already in the operator's element type and on its device
 function siddon_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}) where {T}
   backend = KA.get_backend(storage_array(geometry))
-  SiddonProjector{T,typeof(geometry),typeof(backend)}(image, VoxelGrid{T}(image), geometry, backend)
+  SiddonProjector{T,typeof(geometry),typeof(backend),typeof(image)}(image, VoxelGrid{T}(image), geometry, backend)
 end
 
 geometry(op::SiddonProjector) = op.geometry
