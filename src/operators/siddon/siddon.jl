@@ -39,6 +39,9 @@ function SiddonProjector(image::ImageGeom, geometry::AbstractProjectionGeometry;
   siddon_projector(image, device_geometry(geometry, T, storage))
 end
 
+SiddonProjector(image::ImageGeom, geometry; kwargs...) =
+  SiddonProjector(image, projection_geometry(geometry); kwargs...)
+
 # from a geometry already in the operator's element type and on its device
 function siddon_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}) where {T}
   backend = KA.get_backend(storage_array(geometry))

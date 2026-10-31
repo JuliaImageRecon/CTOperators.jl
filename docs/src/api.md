@@ -23,7 +23,7 @@ Private = false
 
 ```@autodocs
 Modules = [CTOperators]
-Pages = ["geometry/raylist.jl", "geometry/conebeam.jl", "geometry/parallelbeam.jl"]
+Pages = ["geometry/raylist.jl", "geometry/conebeam.jl", "geometry/arcconebeam.jl", "geometry/parallelbeam.jl"]
 Private = false
 ```
 

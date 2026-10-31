@@ -5,18 +5,24 @@
 # positions along u are ((0:nu-1) .- (nu - 1)/2 .- offset_u) .* du.
 
 """
-    circular_cone_beam(; angles, dso, dsd, nu, nv, du, dv=du, offset_u=0, offset_v=0, source_z=0)
+    circular_cone_beam(; angles, dso, dsd, nu, nv, du, dv=du, offset_u=0, offset_v=0, source_z=0,
+                       detector=:flat)
 
-[`ConeBeam`](@ref) geometry of a source on a circle of radius `dso` about the `z` axis and a flat
-detector at distance `dsd` from the source, `nu × nv` cells of size `du × dv`, one view per
-angle in `angles` (radians, source counter-clockwise from the `y` axis).
+Cone-beam geometry of a source on a circle of radius `dso` about the `z` axis and a detector at
+distance `dsd` from the source, `nu × nv` cells of size `du × dv`, one view per angle in `angles`
+(radians, source counter-clockwise from the `y` axis).
+
+`detector=:flat` gives a flat detector ([`ConeBeam`](@ref)), `detector=:arc` a detector curved on
+a cylinder about the source ([`ArcConeBeam`](@ref)), with `du` the cell size along the arc at
+distance `dsd` (an angle of `du / dsd` per cell) and `offset_u` shifting the cells along the arc.
 
 `source_z` is the height of source and detector centre, a number or one value per view; with
 `source_z` varying the trajectory is no longer circular (see [`helical_cone_beam`](@ref)).
 """
 function circular_cone_beam(; angles::AbstractVector{<:Real}, dso::Real, dsd::Real, nu::Integer, nv::Integer,
                             du::Real, dv::Real=du, offset_u::Real=0, offset_v::Real=0,
-                            source_z::Union{Real,AbstractVector{<:Real}}=0)
+                            source_z::Union{Real,AbstractVector{<:Real}}=0, detector::Symbol=:flat)
+  detector in (:flat, :arc) || throw(ArgumentError("detector must be :flat or :arc, got :$detector"))
   0 < dso < dsd || throw(ArgumentError("need 0 < dso < dsd, got dso = $dso, dsd = $dsd"))
   source_z isa AbstractVector && length(source_z) != length(angles) &&
     throw(DimensionMismatch("$(length(source_z)) source heights for $(length(angles)) angles"))
@@ -28,12 +34,21 @@ function circular_cone_beam(; angles::AbstractVector{<:Real}, dso::Real, dsd::Re
     z = source_z isa Real ? source_z : source_z[k]
     eu = SVector(c, s, 0.0)
     ev = SVector(0.0, 0.0, 1.0)
-    source[:, k] = SVector(-dso * s, dso * c, z)
-    centre[:, k] = SVector(dod * s, -dod * c, z) - offset_u * du * eu - offset_v * dv * ev
-    u[:, k] = du * eu
+    src = SVector(-dso * s, dso * c, z)
+    source[:, k] = src
+    if detector === :flat
+      centre[:, k] = SVector(dod * s, -dod * c, z) - offset_u * du * eu - offset_v * dv * ev
+      u[:, k] = du * eu
+    else
+      # the centre turned on the arc by the offset, about the source; the row direction with it
+      ew = SVector(s, -c, 0.0)          # from the source towards the rotation axis
+      sg, cg = sincos(-offset_u * du / dsd)
+      centre[:, k] = src + dsd * (cg * ew + sg * eu) - offset_v * dv * ev
+      u[:, k] = du * (cg * eu - sg * ew)
+    end
     v[:, k] = dv * ev
   end
-  ConeBeam(source, centre, u, v; nu, nv)
+  detector === :flat ? ConeBeam(source, centre, u, v; nu, nv) : ArcConeBeam(source, centre, u, v; nu, nv)
 end
 
 """

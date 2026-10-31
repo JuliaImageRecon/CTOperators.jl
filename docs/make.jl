@@ -33,6 +33,7 @@ makedocs(;
       "Run on a GPU" => "generated/howto/gpu.md",
       "Ordered Subsets and Normalisation" => "generated/howto/subsets.md",
       "Differentiate through a Projector" => "generated/howto/differentiation.md",
+      "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
     ],
     "Explanation" => [
       "Coordinates and Conventions" => "generated/explanation/conventions.md",

@@ -21,7 +21,9 @@ multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code base
   voxel centres.
   Footprint-based projectors are planned.
 - **Generic geometries**: arbitrary rays given by start and end points, and per-view descriptions of
-  cone-beam and parallel-beam scanners with any trajectory: circular, helical, or a moving object.
+  cone-beam (flat or curved detector) and parallel-beam scanners with any trajectory: circular,
+  helical, or a moving object. Geometries of
+  [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) work directly.
 - **One code base for CPU and GPU**, written with
   [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl).
 - **Differentiable** with respect to image and projection data (ChainRulesCore rules).

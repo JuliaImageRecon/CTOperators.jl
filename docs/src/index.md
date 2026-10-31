@@ -21,7 +21,9 @@ reused by every application, the setting of iterative solvers such as those of
   voxel centres, see [Siddon's method](@ref) and [Joseph's method](@ref).
   Footprint-based projectors are planned.
 - **Generic geometries**: arbitrary rays given by start and end points, and per-view descriptions of
-  cone-beam and parallel-beam scanners with any trajectory: circular, helical, or a moving object.
+  cone-beam (flat or curved detector) and parallel-beam scanners with any trajectory: circular,
+  helical, or a moving object. Geometries of
+  [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) work directly.
 - **One code base for CPU and GPU.**
 - **Differentiable** with respect to image and projection data (ChainRulesCore rules).
 
@@ -32,7 +34,8 @@ reused by every application, the setting of iterative solvers such as those of
 - The how-to guides show how to [set up a geometry](@ref "Set up a geometry"), including an object
   that moves during the scan, how to [run on a GPU](@ref "Run on a GPU"), how to build
   [ordered-subset methods](@ref "Ordered subsets and normalisation") and how to
-  [differentiate through a projector](@ref "Differentiate through a projector").
+  [differentiate through a projector](@ref "Differentiate through a projector") and how to
+  [use geometries of Sinograms.jl](@ref "Use geometries of Sinograms.jl").
 - The explanation pages describe the [coordinates and conventions](@ref "Coordinates and conventions")
   and the projection methods, [Siddon's method](@ref) and [Joseph's method](@ref).
 

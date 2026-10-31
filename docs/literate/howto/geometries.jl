@@ -52,6 +52,14 @@ save("cone_beam.png", fig) #hide
 nothing #hide
 # ![One view of the circular and of the helical cone beam](cone_beam.png)
 
+# ## Curved detectors
+#
+# Clinical CT scanners have detectors curved on a cylinder about the source. `detector=:arc` gives
+# such an [`ArcConeBeam`](@ref); `du` is then the cell size along the arc at distance `dsd`:
+
+clinical = helical_cone_beam(; angles=range(0, 6pi, 1081)[1:1080], pitch=20, z0=-30, dso=200, dsd=400,
+                             nu=400, nv=64, du=0.4, dv=0.4, detector=:arc);
+
 # An object that moves along the rotation axis during a circular scan, as on a table or a conveyor,
 # sees exactly this geometry: only the relative position of object and scanner matters. An object that
 # moves by `+s` per turn corresponds to `pitch = -s`.

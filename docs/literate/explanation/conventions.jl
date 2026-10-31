@@ -49,6 +49,11 @@ save("topview.png", fig) #hide
 nothing #hide
 # ![One cone-beam view from above](topview.png)
 
+# A curved detector ([`ArcConeBeam`](@ref), `detector=:arc`) lies on a cylinder of radius `dsd`
+# about the source, with its axis along `z`; its cells are equally spaced in the fan angle,
+# ``γ_i = (i - (n_u + 1)/2 - \text{offset}_u)\, d_u / d_\text{sd}``, and ``γ`` counts in the
+# direction of `u`.
+#
 # Detector offsets `offset_u`, `offset_v` are given in cells and have the sign of ImageGeoms'
 # offsets: the cell positions along `u` are `((0:nu-1) .- (nu - 1)/2 .- offset_u) .* du`.
 #

@@ -34,6 +34,11 @@ storage_array(g::RayList) = g.starts
 raytype(::RayList) = RaySegment()
 @inline ray(g::RayList, i) = column(g.starts, i), column(g.ends, i)
 
+function Base.show(io::IO, ::MIME"text/plain", g::RayList{T}) where {T}
+  print(io, "RayList{", T, "}: ", nrays(g), " rays, data size ", datasize(g), ", stored in ",
+        nameof(typeof(storage_array(g))))
+end
+
 Adapt.adapt_structure(to, g::RayList) = RayList(adapt(to, g.starts), adapt(to, g.ends); datasize=g.datasize)
 
 RayList(g::AbstractProjectionGeometry) = RayList(raytype(g), g)

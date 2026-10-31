@@ -123,10 +123,28 @@ end
 
 check_detector(nu, nv) = nu > 0 && nv > 0 || throw(ArgumentError("detector size must be positive, got ($nu, $nv)"))
 
+"""
+    projection_geometry(g)
+
+The projection geometry of CTOperators.jl that describes `g`: `g` itself for the geometries of
+this package; package extensions convert the geometries of other packages, e.g. those of
+Sinograms.jl (`SinoPar`, `SinoFanFlat`, `SinoFanArc`, `CtPar`, `CtFanFlat`, `CtFanArc`). The
+projectors call it, so they accept these geometries directly.
+"""
+projection_geometry(g::AbstractProjectionGeometry) = g
+
+# compact display: kind, size and storage instead of the arrays
+function Base.show(io::IO, ::MIME"text/plain", g::AbstractDetectorGeometry{T}) where {T}
+  nu, nv = detectorsize(g)
+  print(io, nameof(typeof(g)), "{", T, "}: ", nviews(g), " views, detector of ", nu, " x ", nv, " cells, stored in ",
+        nameof(typeof(storage_array(g))))
+end
+
 # A new array on the device of the geometry's arrays (storage_array(g): one of them).
 geometry_array(g, dims...) = similar(storage_array(g), dims...)
 
 include("raylist.jl")
 include("conebeam.jl")
+include("arcconebeam.jl")
 include("parallelbeam.jl")
 include("trajectories.jl")

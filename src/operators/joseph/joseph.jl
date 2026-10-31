@@ -45,6 +45,9 @@ function JosephProjector(image::ImageGeom, geometry::AbstractProjectionGeometry;
   joseph_projector(image, device_geometry(geometry, T, storage))
 end
 
+JosephProjector(image::ImageGeom, geometry; kwargs...) =
+  JosephProjector(image, projection_geometry(geometry); kwargs...)
+
 # from a geometry already in the operator's element type and on its device
 function joseph_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}) where {T}
   backend = KA.get_backend(storage_array(geometry))
