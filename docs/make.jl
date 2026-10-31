@@ -28,6 +28,9 @@ makedocs(;
   pages=[
     "Home" => "index.md",
     "Getting Started" => "generated/examples/getting_started.md",
+    "Explanation" => [
+      "Siddon's Method" => "generated/explanation/siddon.md",
+    ],
     "Reference" => [
       "API" => "api.md",
     ],
