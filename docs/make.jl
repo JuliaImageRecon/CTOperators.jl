@@ -28,7 +28,14 @@ makedocs(;
   pages=[
     "Home" => "index.md",
     "Getting Started" => "generated/examples/getting_started.md",
+    "How-to Guides" => [
+      "Set up a Geometry" => "generated/howto/geometries.md",
+      "Run on a GPU" => "generated/howto/gpu.md",
+      "Ordered Subsets and Normalisation" => "generated/howto/subsets.md",
+      "Differentiate through a Projector" => "generated/howto/differentiation.md",
+    ],
     "Explanation" => [
+      "Coordinates and Conventions" => "generated/explanation/conventions.md",
       "Siddon's Method" => "generated/explanation/siddon.md",
       "Joseph's Method" => "generated/explanation/joseph.md",
     ],

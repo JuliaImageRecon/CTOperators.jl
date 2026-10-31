@@ -25,8 +25,16 @@ reused by every application, the setting of iterative solvers such as those of
 - **One code base for CPU and GPU.**
 - **Differentiable** with respect to image and projection data (ChainRulesCore rules).
 
-[Getting Started](@ref) simulates a helical cone-beam scan and reconstructs it with
-RegularizedLeastSquares.jl.
+## Where to go next
+
+- [Getting Started](@ref) simulates a helical cone-beam scan and reconstructs it with
+  RegularizedLeastSquares.jl.
+- The how-to guides show how to [set up a geometry](@ref "Set up a geometry"), including an object
+  that moves during the scan, how to [run on a GPU](@ref "Run on a GPU"), how to build
+  [ordered-subset methods](@ref "Ordered subsets and normalisation") and how to
+  [differentiate through a projector](@ref "Differentiate through a projector").
+- The explanation pages describe the [coordinates and conventions](@ref "Coordinates and conventions")
+  and the projection methods, [Siddon's method](@ref) and [Joseph's method](@ref).
 
 ## Installation
 
