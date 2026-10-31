@@ -14,7 +14,7 @@ export AbstractProjectionGeometry, AbstractDetectorGeometry, RaySegment, RayLine
 export RayList, ConeBeam, ParallelBeam
 export circular_cone_beam, helical_cone_beam, parallel_beam
 export datasize, nrays, ray, raytype, nviews, detectorsize, subset
-export AbstractProjector, AdjointCTOperator, SiddonProjector
+export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector
 export geometry, image_geometry, imagesize, rowsums, colsums
 
 """

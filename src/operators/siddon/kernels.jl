@@ -16,24 +16,6 @@
 # No closures in this code: a closure capturing a variable that is reassigned (the loop state) is
 # boxed and the kernel no longer compiles for GPUs (docs/memory/ka-lessons.md of the project).
 
-# What a ray does with the voxels it visits: sum the weighted image values (forward projection)
-# or add its weighted value to them (back projection).
-struct Gather{A}
-  image::A
-end
-
-struct Scatter{A,T}
-  image::A
-  value::T
-end
-
-@inline visit(g::Gather, acc, lin, w) = @inbounds muladd(w, g.image[lin], acc)
-
-@inline function visit(s::Scatter, acc, lin, w)
-  @inbounds Atomix.@atomic :monotonic s.image[lin] += w * s.value
-  acc
-end
-
 @kernel inbounds = true function siddon_forward_kernel!(y, @Const(image), grid, geometry)
   i = @index(Global, Linear)
   y[i] = siddon_ray(Gather(image), grid, geometry, i)
@@ -57,8 +39,6 @@ end
   siddon_traverse(action, grid.dims, p, d, norm(b - a), amin, amax)
 end
 
-# the voxel containing the voxel coordinate q, clamped to 1:n
-@inline voxel_index(q, n) = clamp(unsafe_trunc(Int, floor(q + oftype(q, 0.5))), 1, n)
 # index w of the next plane (at w + 1/2) from voxel v in direction s
 @inline first_plane(v, s) = s > 0 ? oftype(s, v) : s < 0 ? oftype(s, v - 1) : zero(s)
 # The crossing of the plane w + 1/2 by the ray coordinate p + alpha d is at

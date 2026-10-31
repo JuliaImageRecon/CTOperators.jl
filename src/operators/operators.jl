@@ -152,3 +152,4 @@ device_geometry(geometry, ::Type{T}, storage) where {T} =
   adapt(storage isa UnionAll ? storage{T} : storage, geometry)
 
 include("siddon/siddon.jl")
+include("joseph/joseph.jl")

@@ -30,6 +30,7 @@ makedocs(;
     "Getting Started" => "generated/examples/getting_started.md",
     "Explanation" => [
       "Siddon's Method" => "generated/explanation/siddon.md",
+      "Joseph's Method" => "generated/explanation/joseph.md",
     ],
     "Reference" => [
       "API" => "api.md",

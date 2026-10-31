@@ -28,11 +28,10 @@ function plane_crossings(a, b, n, axis)
   [Point2f(a[1] + t * (b[1] - a[1]), a[2] + t * (b[2] - a[2])) for t in ts]
 end
 
-# Siddon's weights of one ray: the back projection of the value 1 along it is the length of the ray
-# inside every pixel
-function ray_weights(image, a, b)
+# The weights of one ray (Siddon's by default): the back projection of the value 1 along it
+function ray_weights(image, a, b; projector=SiddonProjector)
   rays = RayList([a[1]; a[2]; 0.0;;], [b[1]; b[2]; 0.0;;])
-  reshape(adjoint(SiddonProjector(image, rays; eltype=Float64)) * [1.0], image.dims)
+  reshape(adjoint(projector(image, rays; eltype=Float64)) * [1.0], image.dims)
 end
 
 function siddon_app(n; nsweep=60)

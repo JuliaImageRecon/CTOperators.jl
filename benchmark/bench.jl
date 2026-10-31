@@ -3,7 +3,7 @@
 #
 #   julia benchmark/bench.jl list                      suites, problems and libraries
 #   julia benchmark/bench.jl run quick                 all libraries on the quick suite
-#   julia benchmark/bench.jl run standard --libs ctoperators,parallelproj --threads 1,24
+#   julia benchmark/bench.jl run standard --libs ctoperators-joseph,parallelproj --threads 1,24
 #
 # Options: --libs (comma separated), --threads (comma separated, default: all cores), --budget
 # (seconds of repeated calls per measurement, default 2). Each library runs in a worker process with
@@ -13,7 +13,11 @@
 using Dates, Printf
 
 const ROOT = @__DIR__
-const LIBS = ["ctoperators", "parallelproj", "radonka"]
+const LIBS = ["ctoperators-siddon", "ctoperators-joseph", "parallelproj", "radonka"]
+
+# the environment of a library: the part of its name before "-" (one environment for the methods
+# of CTOperators.jl)
+environment(lib) = joinpath(ROOT, "envs", first(split(lib, "-")))
 
 include(joinpath(ROOT, "src", "suites.jl"))
 
@@ -23,7 +27,7 @@ function option(args, name, default)
 end
 
 function instantiate(lib)
-  env = joinpath(ROOT, "envs", lib)
+  env = environment(lib)
   run(`$(Base.julia_cmd()) --project=$env -e "using Pkg; Pkg.instantiate()"`)
 end
 
@@ -35,7 +39,7 @@ function run_suite(suite, libs, threads, budget)
   for lib in libs
     instantiate(lib)
     for nt in threads
-      env = joinpath(ROOT, "envs", lib)
+      env = environment(lib)
       cmd = `$(Base.julia_cmd()) --project=$env --threads=$nt $worker $lib $out $budget $(SUITES[suite])`
       run(addenv(cmd, "OMP_NUM_THREADS" => string(nt)))   # OpenMP libraries (parallelproj)
     end

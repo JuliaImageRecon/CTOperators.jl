@@ -16,8 +16,10 @@ multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code base
 - **Projectors for iterative reconstruction**: geometry and workspace are set up once and reused by
   every forward and back projection; the back projection is the exact transpose of the forward
   projection.
-- **Siddon's method** (in the incremental form of Jacobs et al.): exact intersection lengths of rays
-  and voxels. Footprint-based projectors are planned.
+- **Two ray-driven projectors**: Siddon's method (in the incremental form of Jacobs et al.), exact
+  intersection lengths of rays and voxels, and Joseph's method, linear interpolation between the
+  voxel centres.
+  Footprint-based projectors are planned.
 - **Generic geometries**: arbitrary rays given by start and end points, and per-view descriptions of
   cone-beam and parallel-beam scanners with any trajectory: circular, helical, or a moving object.
 - **One code base for CPU and GPU**, written with

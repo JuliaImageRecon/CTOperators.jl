@@ -73,8 +73,9 @@ nothing #hide
 
 # In an iterative reconstruction this pattern appears as a checkerboard in the image, as in the
 # [Getting Started](@ref) example with one ray per voxel (De Man & Basu 2004 describe the effect).
-# Remedies are more rays than voxels (finer detector sampling), or projectors that integrate over the
-# detector cells, such as distance-driven or separable-footprint projectors.
+# Remedies are more rays than voxels (finer detector sampling), [Joseph's method](@ref), whose
+# interpolation evens out the coverage at most angles, or projectors that integrate over the detector
+# cells, such as distance-driven or separable-footprint projectors.
 #
 # ## Implementation
 #

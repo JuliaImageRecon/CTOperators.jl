@@ -57,6 +57,14 @@ Pages = ["operators/siddon/siddon.jl", "operators/siddon/kernels.jl"]
 Private = false
 ```
 
+### Joseph
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["operators/joseph/joseph.jl", "operators/joseph/kernels.jl"]
+Private = false
+```
+
 ## Internals
 
 For developers of operators: the kernel form of the image grid, clipping of rays and the

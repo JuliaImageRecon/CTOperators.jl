@@ -48,3 +48,6 @@ Continuous voxel coordinates of the world point `p`: voxel `(i, j, k)` covers
 the voxels are unit cubes with positive orientation, whatever the sign of `deltas`.
 """
 @inline to_index(g::VoxelGrid, p) = (p .- g.first) ./ g.deltas .+ one(eltype(g))
+
+# the voxel containing the voxel coordinate q, clamped to 1:n
+@inline voxel_index(q, n) = clamp(unsafe_trunc(Int, floor(q + oftype(q, 0.5))), 1, n)
