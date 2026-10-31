@@ -11,14 +11,14 @@
     @test size(g) == (5, 4, 3)
     for I in CartesianIndices(size(g))
       centre = SVector(ntuple(d -> axis(ig, d)[I[d]], 3))
-      @test g.first + (SVector(Tuple(I)) .- 1) .* g.deltas ≈ centre
-      @test to_index(g, centre) ≈ SVector(Tuple(I))
+      @test isapprox(g.first + (SVector(Tuple(I)) .- 1) .* g.deltas, centre)
+      @test isapprox(to_index(g, centre), SVector(Tuple(I)))
     end
     # the box is the hull of the voxel faces: centres ± half a voxel
     lo, hi = bounds(g)
     @test all(lo .< hi)
-    @test hi - lo ≈ abs.(g.deltas) .* SVector(size(g))
-    @test lo ≈ min.(g.first, g.first + (SVector(size(g)) .- 1) .* g.deltas) - abs.(g.deltas) / 2
+    @test isapprox(hi - lo, abs.(g.deltas) .* SVector(size(g)))
+    @test isapprox(lo, min.(g.first, g.first + (SVector(size(g)) .- 1) .* g.deltas) - abs.(g.deltas) / 2)
   end
 
   @test_throws ArgumentError VoxelGrid{Float64}(ImageGeom(; dims=(2, 2, 2, 2)))

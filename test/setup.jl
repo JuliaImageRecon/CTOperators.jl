@@ -9,13 +9,13 @@
   # (the direction) and e₃ = (sin ϕ sin θ, −cos ϕ sin θ, cos θ).
   function line_coordinates(a, b)
     d = normalize(b - a)
-    θ = asin(clamp(d[3], -1, 1))
-    ϕ = atan(-d[1], d[2])
-    sϕ, cϕ = sincos(ϕ)
-    sθ, cθ = sincos(θ)
-    e1 = SVector(cϕ, sϕ, 0)
-    e3 = SVector(sϕ * sθ, -cϕ * sθ, cθ)
-    dot(a, e1), dot(a, e3), ϕ, θ
+    theta = asin(clamp(d[3], -1, 1))
+    phi = atan(-d[1], d[2])
+    sphi, cphi = sincos(phi)
+    stheta, ctheta = sincos(theta)
+    e1 = SVector(cphi, sphi, 0)
+    e3 = SVector(sphi * stheta, -cphi * stheta, ctheta)
+    dot(a, e1), dot(a, e3), phi, theta
   end
 
   # distance of the origin from the line through a and b

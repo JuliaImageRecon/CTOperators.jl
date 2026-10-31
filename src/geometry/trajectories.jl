@@ -23,8 +23,8 @@ function circular_cone_beam(; angles::AbstractVector{<:Real}, dso::Real, dsd::Re
   n = length(angles)
   source, centre, u, v = (zeros(3, n) for _ in 1:4)
   dod = dsd - dso
-  for (k, β) in enumerate(angles)
-    s, c = sincos(β)
+  for (k, beta) in enumerate(angles)
+    s, c = sincos(beta)
     z = source_z isa Real ? source_z : source_z[k]
     eu = SVector(c, s, 0.0)
     ev = SVector(0.0, 0.0, 1.0)
@@ -48,8 +48,8 @@ geometry with `pitch = −s · (time per turn)`.
 """
 function helical_cone_beam(; angles::AbstractVector{<:Real}, pitch::Real, z0::Real=0, kwargs...)
   haskey(kwargs, :source_z) && throw(ArgumentError("helical_cone_beam sets source_z from pitch and z0"))
-  β1 = isempty(angles) ? 0.0 : float(first(angles))
-  circular_cone_beam(; angles, source_z=[z0 + pitch * (β - β1) / 2π for β in angles], kwargs...)
+  beta1 = isempty(angles) ? 0.0 : float(first(angles))
+  circular_cone_beam(; angles, source_z=[z0 + pitch * (beta - beta1) / 2pi for beta in angles], kwargs...)
 end
 
 """
@@ -64,8 +64,8 @@ function parallel_beam(; angles::AbstractVector{<:Real}, nu::Integer, nv::Intege
                        offset_u::Real=0, offset_v::Real=0)
   n = length(angles)
   direction, centre, u, v = (zeros(3, n) for _ in 1:4)
-  for (k, ϕ) in enumerate(angles)
-    s, c = sincos(ϕ)
+  for (k, phi) in enumerate(angles)
+    s, c = sincos(phi)
     eu = SVector(c, s, 0.0)
     ev = SVector(0.0, 0.0, 1.0)
     direction[:, k] = SVector(-s, c, 0.0)

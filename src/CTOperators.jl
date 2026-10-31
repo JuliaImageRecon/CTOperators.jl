@@ -14,6 +14,8 @@ export AbstractProjectionGeometry, AbstractDetectorGeometry, RaySegment, RayLine
 export RayList, ConeBeam, ParallelBeam
 export circular_cone_beam, helical_cone_beam, parallel_beam
 export datasize, nrays, ray, raytype, nviews, detectorsize, subset
+export AbstractProjector, AdjointCTOperator, SiddonProjector
+export geometry, image_geometry, imagesize, rowsums, colsums
 
 """
     AbstractCTOperator{T}
@@ -24,11 +26,9 @@ kernels, created once and reused by every application.
 """
 abstract type AbstractCTOperator{T} end
 
-include("image/voxelgrid.jl")
+include("image/image.jl")
 include("geometry/geometry.jl")
-include("geometry/raylist.jl")
-include("geometry/conebeam.jl")
-include("geometry/parallelbeam.jl")
-include("geometry/trajectories.jl")
+include("raytracing/raytracing.jl")
+include("operators/operators.jl")
 
 end

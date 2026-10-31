@@ -125,3 +125,8 @@ check_detector(nu, nv) = nu > 0 && nv > 0 || throw(ArgumentError("detector size 
 
 # A new array on the device of the geometry's arrays (storage_array(g): one of them).
 geometry_array(g, dims...) = similar(storage_array(g), dims...)
+
+include("raylist.jl")
+include("conebeam.jl")
+include("parallelbeam.jl")
+include("trajectories.jl")

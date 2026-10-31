@@ -8,7 +8,7 @@
   @test_throws DimensionMismatch RayList(starts, rand(3, 5))
 
   # the rays of a segment geometry as a list
-  c = circular_cone_beam(; angles=range(0, 2π, 5), dso=500, dsd=900, nu=4, nv=3, du=1.0)
+  c = circular_cone_beam(; angles=range(0, 2pi, 5), dso=500, dsd=900, nu=4, nv=3, du=1.0)
   r = RayList(c)
   @test datasize(r) == datasize(c)
   @test allrays(r) == allrays(c)
@@ -16,7 +16,7 @@
 end
 
 @testitem "circular cone beam" tags = [:geometry] setup = [Rays] begin
-  angles = range(0, 2π, 9)[1:8]
+  angles = range(0, 2pi, 9)[1:8]
   dso, dsd, nu, nv, du, dv = 500.0, 900.0, 7, 5, 1.5, 2.0
   offset_u, offset_v = 0.25, -0.5
   g = circular_cone_beam(; angles, dso, dsd, nu, nv, du, dv, offset_u, offset_v)
@@ -28,17 +28,17 @@ end
   us = ((0:nu-1) .- (nu - 1) / 2 .- offset_u) .* du
   vs = ((0:nv-1) .- (nv - 1) / 2 .- offset_v) .* dv
   rays = reshape(allrays(g), nu, nv, :)
-  for (k, β) in enumerate(angles), iv in 1:nv, iu in 1:nu
+  for (k, beta) in enumerate(angles), iv in 1:nv, iu in 1:nu
     a, b = rays[iu, iv, k]
-    @test a ≈ SVector(-dso * sin(β), dso * cos(β), 0)
-    @test b ≈ SVector((dsd - dso) * sin(β), -(dsd - dso) * cos(β), 0) +
-              us[iu] * SVector(cos(β), sin(β), 0) + vs[iv] * SVector(0, 0, 1)
+    @test isapprox(a, SVector(-dso * sin(beta), dso * cos(beta), 0))
+    @test isapprox(b, SVector((dsd - dso) * sin(beta), -(dsd - dso) * cos(beta), 0) +
+                      us[iu] * SVector(cos(beta), sin(beta), 0) + vs[iv] * SVector(0, 0, 1))
   end
 
   # without offsets and with an odd detector the central ray crosses the rotation axis
   g0 = circular_cone_beam(; angles, dso, dsd, nu, nv, du)
   for k in eachindex(angles)
-    a, b = ray(g0, LinearIndices((nu, nv, length(angles)))[(nu + 1) ÷ 2, (nv + 1) ÷ 2, k])
+    a, b = ray(g0, LinearIndices((nu, nv, length(angles)))[div(nu + 1, 2), div(nv + 1, 2), k])
     @test line_distance(a, b) < 1e-12 * dsd
   end
 
@@ -47,23 +47,24 @@ end
 end
 
 @testitem "helical cone beam" tags = [:geometry] setup = [Rays] begin
-  angles = range(0, 4π, 17)
+  angles = range(0, 4pi, 17)
   pitch, z0 = 30.0, -10.0
   g = helical_cone_beam(; angles, pitch, z0, dso=500, dsd=900, nu=4, nv=3, du=1.0)
   # source and detector rise by pitch per turn; per view the rays equal those of the circular
   # geometry shifted along z
   gc = circular_cone_beam(; angles, dso=500, dsd=900, nu=4, nv=3, du=1.0)
-  for (k, β) in enumerate(angles)
-    dz = SVector(0, 0, z0 + pitch * β / 2π)
+  for (k, beta) in enumerate(angles)
+    dz = SVector(0, 0, z0 + pitch * beta / 2pi)
     for i in LinearIndices((4, 3, length(angles)))[:, :, k]
-      @test all(ray(g, i) .≈ ray(gc, i) .+ Ref(dz))
+      (a, b), (ac, bc) = ray(g, i), ray(gc, i)
+      @test isapprox(a, ac + dz) && isapprox(b, bc + dz)
     end
   end
   @test_throws ArgumentError helical_cone_beam(; angles, pitch, source_z=0, dso=500, dsd=900, nu=4, nv=3, du=1.0)
 end
 
 @testitem "parallel beam" tags = [:geometry] setup = [Rays] begin
-  angles = range(0, π, 7)[1:6]
+  angles = range(0, pi, 7)[1:6]
   nu, nv, du, dv = 5, 3, 0.8, 1.2
   g = parallel_beam(; angles, nu, nv, du, dv)
   @test datasize(g) == (nu, nv, 6) && raytype(g) == RayLine()
@@ -71,16 +72,16 @@ end
   us = ((0:nu-1) .- (nu - 1) / 2) .* du
   vs = ((0:nv-1) .- (nv - 1) / 2) .* dv
   rays = reshape(allrays(g), nu, nv, :)
-  for (k, ϕ) in enumerate(angles), iv in 1:nv, iu in 1:nu
-    u, v, ϕr, θ = line_coordinates(rays[iu, iv, k]...)
-    @test isapprox(SVector(u, v, ϕr, θ), SVector(us[iu], vs[iv], ϕ, 0); atol=1e-12)
+  for (k, phi) in enumerate(angles), iv in 1:nv, iu in 1:nu
+    u, v, phir, theta = line_coordinates(rays[iu, iv, k]...)
+    @test isapprox(SVector(u, v, phir, theta), SVector(us[iu], vs[iv], phi, 0); atol=1e-12)
   end
 end
 
 @testitem "subset" tags = [:geometry] setup = [Rays] begin
   views = [2, 5, 6]
-  for g in (helical_cone_beam(; angles=range(0, 2π, 8), pitch=10, dso=500, dsd=900, nu=4, nv=3, du=1.0),
-            parallel_beam(; angles=range(0, π, 8), nu=4, nv=3, du=1.0))
+  for g in (helical_cone_beam(; angles=range(0, 2pi, 8), pitch=10, dso=500, dsd=900, nu=4, nv=3, du=1.0),
+            parallel_beam(; angles=range(0, pi, 8), nu=4, nv=3, du=1.0))
     s = subset(g, views)
     @test typeof(s) == typeof(g) && datasize(s) == (4, 3, 3)
     # view j of the subset is view views[j] of the geometry
@@ -95,10 +96,10 @@ end
   using ImagePhantoms: ellipsoid, radon
   R = 40.0
   ball = ellipsoid((0, 0, 0), (R, R, R), (0, 0, 0), 1.0)
-  g = helical_cone_beam(; angles=range(0, 2π, 6), pitch=20, dso=200, dsd=400, nu=9, nv=7, du=10.0)
+  g = helical_cone_beam(; angles=range(0, 2pi, 6), pitch=20, dso=200, dsd=400, nu=9, nv=7, du=10.0)
   for (a, b) in allrays(g)
     d = line_distance(a, b)
-    @test radon(ball)(line_coordinates(a, b)...) ≈ 2sqrt(max(R^2 - d^2, 0)) atol = 1e-9
+    @test isapprox(radon(ball)(line_coordinates(a, b)...), 2sqrt(max(R^2 - d^2, 0)); atol=1e-9)
   end
 end
 
@@ -107,8 +108,8 @@ end
 @testitem "geometry on the device" tags = [:geometry, :gpu] setup = [Backends] begin
   for arrayType in arrayTypes, T in floatTypes
     @testset "$arrayType{$T} $(nameof(typeof(g)))" for g in (
-        circular_cone_beam(; angles=range(0, 2π, 7)[1:6], dso=500, dsd=900, nu=5, nv=4, du=1.5),
-        helical_cone_beam(; angles=range(0, 4π, 12), pitch=20, dso=500, dsd=900, nu=5, nv=4, du=1.5),
+        circular_cone_beam(; angles=range(0, 2pi, 7)[1:6], dso=500, dsd=900, nu=5, nv=4, du=1.5),
+        helical_cone_beam(; angles=range(0, 4pi, 12), pitch=20, dso=500, dsd=900, nu=5, nv=4, du=1.5),
         RayList(rand(3, 10), rand(3, 10)))
       gd = adapt(arrayType{T}, g)
       @test eltype(gd) == T
@@ -116,12 +117,12 @@ end
       @test datasize(gd) == datasize(g)
       rd, r = RayList(gd), RayList(g)
       @test rd.starts isa arrayType{T}
-      @test Array(rd.starts) ≈ r.starts && Array(rd.ends) ≈ r.ends
+      @test isapprox(Array(rd.starts), r.starts) && isapprox(Array(rd.ends), r.ends)
     end
     @testset "$arrayType{$T} subset" begin
-      g = parallel_beam(; angles=range(0, π, 6), nu=4, nv=2, du=1.0)
+      g = parallel_beam(; angles=range(0, pi, 6), nu=4, nv=2, du=1.0)
       gd = subset(adapt(arrayType{T}, g), 2:3)
-      @test Array(gd.direction) ≈ g.direction[:, 2:3]
+      @test isapprox(Array(gd.direction), g.direction[:, 2:3])
     end
   end
 end
