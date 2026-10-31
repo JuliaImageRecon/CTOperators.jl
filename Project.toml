@@ -6,6 +6,7 @@ authors = ["Niklas Hackelberg <nHackel@users.noreply.github.com> and contributor
 [deps]
 Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
 Atomix = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
+ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
 KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
@@ -14,7 +15,9 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 Adapt = "4"
 Aqua = "0.8"
 Atomix = "1"
-JLArrays = "0.2, 0.3"
+ImageGeoms = "0.11"
+ImagePhantoms = "0.8"
+JLArrays = "0.3, 0.4"
 KernelAbstractions = "0.9, 0.10"
 LinearAlgebra = "1"
 StaticArrays = "1"
@@ -23,8 +26,9 @@ julia = "1.12"
 
 [extras]
 Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+ImagePhantoms = "71a99df6-f52c-4da1-bd2a-69d6f37f3252"
 JLArrays = "27aeb0d3-9eb9-45fb-866b-73c2ecf80fcb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "JLArrays", "Test"]
+test = ["Aqua", "ImagePhantoms", "JLArrays", "Test"]

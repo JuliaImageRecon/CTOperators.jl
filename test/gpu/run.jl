@@ -10,6 +10,6 @@ length(ARGS) == 1 && haskey(BACKENDS, ARGS[1]) ||
 
 Pkg.activate(; temp=true)
 Pkg.develop(path=joinpath(@__DIR__, "..", ".."))
-Pkg.add([BACKENDS[ARGS[1]], "Test"])
+Pkg.add([BACKENDS[ARGS[1]], "Adapt", "Test"])
 
 include(joinpath(@__DIR__, ARGS[1] * ".jl"))
