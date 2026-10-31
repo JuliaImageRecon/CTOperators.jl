@@ -10,7 +10,8 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "normal_operator.jl")) #h
 using WGLMakie, Bonito #hide
 WGLMakie.activate!(px_per_unit=2, scalefactor=1) #hide
 CairoMakie.activate!() #hide
-Page(offline=true) #hide
+include(joinpath(pkgdir(CTOperators), "docs", "utils", "bonito_page.jl")) #hide
+bonito_page("getting_started") #hide
 
 # ## The image
 #

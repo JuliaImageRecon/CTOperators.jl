@@ -16,7 +16,8 @@ using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "siddon_figures.jl")) #hide
 WGLMakie.activate!(px_per_unit=2, scalefactor=1) #hide
 CairoMakie.activate!() #hide
-Page(offline=true) #hide
+include(joinpath(pkgdir(CTOperators), "docs", "utils", "bonito_page.jl")) #hide
+bonito_page("siddon") #hide
 
 # ## The idea
 #

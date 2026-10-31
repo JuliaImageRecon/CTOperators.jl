@@ -19,7 +19,7 @@ makedocs(;
   authors="Niklas Hackelberg and contributors",
   repo=Remotes.GitHub("JuliaImageRecon", "CTOperators.jl"),
   format=Documenter.HTML(;
-    prettyurls=get(ENV, "CI", "false") == "true",
+    prettyurls=get(ENV, "CI", "false") == "true",   # also in utils/bonito_page.jl
     canonical="https://JuliaImageRecon.github.io/CTOperators.jl",
     edit_link="main",
   ),
