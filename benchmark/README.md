@@ -9,7 +9,10 @@ julia benchmark/bench.jl list                       # suites, problems, librarie
 julia benchmark/bench.jl run quick                  # all libraries, 128³ problems, ≈ 3 min
 julia benchmark/bench.jl run standard --threads 1,24
 julia benchmark/bench.jl run quick --libs ctoperators-joseph,parallelproj --budget 1
+julia benchmark/bench.jl run standard --libs ctoperators-siddon-rocm,ctoperators-joseph-rocm,radonka-rocm --threads 1
 ```
+
+GPU libraries (`*-rocm`, AMD GPUs through AMDGPU.jl) run only when named with `--libs`.
 
 Options: `--libs` (comma separated), `--threads` (comma separated, default all cores), `--budget`
 (seconds of repeated calls per measurement, default 2). Measure on a quiet machine.
@@ -38,9 +41,14 @@ OpenMP).
     `(nz, ny, nx)` array).
   - `radonka`: `radon`/`backproject` on the same image size, number of angles and detector cells
     per slice. Its geometry is not expressed in our rays, so only the time is compared.
+  - `ctoperators-siddon-rocm`, `ctoperators-joseph-rocm`, `radonka-rocm`: the same on an AMD GPU,
+    with image, data (and RadonKA's angles) as `ROCArray`s. Adapters for devices define
+    `device_array` (moves the worker's arrays to the device), `synchronize` (the timings wait for
+    the device) and `device_name`; the defaults are those of the CPU. RadonKA requires
+    KernelAbstractions 0.9, so its environment resolves an older AMDGPU (2.8) than ours (2.10).
 
 Results go to `out/<time>-<suite>.csv` (not versioned), one row per library, problem and thread
-count.
+count, with the device.
 
 The methods differ: Siddon's weights are exact intersection lengths, Joseph's interpolate linearly
 within planes, RadonKA's interpolate in a circular field of view. The error column shows what each
@@ -70,3 +78,40 @@ projected voxelised phantom against its analytic line integrals.
 CTOperators' Joseph gives the same phantom error as parallelproj's (the same method) and runs at the
 same speed; Siddon is about twice as fast as Joseph on the CPU (one memory read per visited voxel
 against four per sample).
+
+### GPU
+
+AMD Radeon RX 7900 XT (ROCm 7.2, AMDGPU.jl 2.10; RadonKA with AMDGPU 2.8), Float32, CTOperators at
+4d3b472 (benchmark adapters uncommitted at the time), RadonKA 0.6.3; standard suite, minimum time,
+2026-11-01. The CPU columns (24 threads) were measured in the same session. The phantom errors on
+the GPU equal those on the CPU.
+
+| problem | library | forward, GPU | back, GPU | forward, CPU | back, CPU | speedup forward / back |
+|---|---|---|---|---|---|---|
+| cone128 | CTOperators (Siddon) | 5.6 ms | 13.0 ms | 77 ms | 160 ms | 14× / 12× |
+| cone128 | CTOperators (Joseph) | 7.2 ms | 29.3 ms | 138 ms | 336 ms | 19× / 11× |
+| parallel128 | CTOperators (Siddon) | 5.6 ms | 10.4 ms | 57 ms | 134 ms | 10× / 13× |
+| parallel128 | CTOperators (Joseph) | 7.2 ms | 27.9 ms | 105 ms | 310 ms | 15× / 11× |
+| parallel128 | RadonKA | 20.3 ms | 30.4 ms | 180 ms | 186 ms | 9× / 6× |
+| cone256 | CTOperators (Siddon) | 147 ms | 247 ms | 1.21 s | 2.48 s | 8× / 10× |
+| cone256 | CTOperators (Joseph) | 231 ms | 543 ms | 2.26 s | 5.15 s | 10× / 9× |
+| helix256 | CTOperators (Siddon) | 61 ms | 112 ms | 0.65 s | 1.29 s | 11× / 11× |
+| helix256 | CTOperators (Joseph) | 104 ms | 272 ms | 1.30 s | 2.82 s | 12× / 10× |
+| parallel256 | CTOperators (Siddon) | 166 ms | 218 ms | 0.89 s | 2.05 s | 5× / 9× |
+| parallel256 | CTOperators (Joseph) | 224 ms | 517 ms | 1.74 s | 4.85 s | 8× / 9× |
+| parallel256 | RadonKA | 91 ms | 252 ms | 2.96 s | 3.02 s | 33× / 12× |
+
+cone256: 256³ volume, cone beam with a 256² detector and 360 views (23.6 M rays); helix256: 256³
+volume, helical cone beam with 540 views over three turns; parallel256: 256³ volume, parallel beam
+with a 256² detector and 360 views.
+
+Observations (starting points for tuning, not yet investigated):
+
+- From 128³ to 256³ the work grows 16× (8× the rays, each twice as long), our GPU times 26–32×. A
+  128³ Float32 image (8 MB) fits into the GPU's 80 MB last-level cache, a 256³ image (64 MB) hardly;
+  the order in which rays reach the cache (which rays run in one workgroup) then matters.
+- RadonKA, slice by slice, is faster than our parallel-beam forward projection at 256³ (91 ms
+  against 166 ms), slower at 128³ (20 ms against 5.6 ms).
+- Joseph's back projection takes 2–4× its forward projection (four atomic additions per sample),
+  Siddon's about 2× (one per voxel).
+

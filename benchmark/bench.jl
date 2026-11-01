@@ -4,6 +4,7 @@
 #   julia benchmark/bench.jl list                      suites, problems and libraries
 #   julia benchmark/bench.jl run quick                 all libraries on the quick suite
 #   julia benchmark/bench.jl run standard --libs ctoperators-joseph,parallelproj --threads 1,24
+#   julia benchmark/bench.jl run standard --libs ctoperators-siddon-rocm,ctoperators-joseph-rocm --threads 1
 #
 # Options: --libs (comma separated), --threads (comma separated, default: all cores), --budget
 # (seconds of repeated calls per measurement, default 2). Each library runs in a worker process with
@@ -14,6 +15,8 @@ using Dates, Printf
 
 const ROOT = @__DIR__
 const LIBS = ["ctoperators-siddon", "ctoperators-joseph", "parallelproj", "radonka"]
+# GPU libraries: only run when named with --libs (they need the device)
+const GPU_LIBS = ["ctoperators-siddon-rocm", "ctoperators-joseph-rocm", "radonka-rocm"]
 
 # the environment of a library: the part of its name before "-" (one environment for the methods
 # of CTOperators.jl)
@@ -52,6 +55,7 @@ function main(args)
   if args[1] == "list"
     for (s, ps) in sort(collect(SUITES)); println("suite $s: ", join(ps, ", ")); end
     println("libraries: ", join(LIBS, ", "))
+    println("GPU libraries (with --libs): ", join(GPU_LIBS, ", "))
   elseif args[1] == "run"
     libs = split(option(args, "libs", join(LIBS, ",")), ",")
     threads = parse.(Int, split(option(args, "threads", string(Sys.CPU_THREADS)), ","))

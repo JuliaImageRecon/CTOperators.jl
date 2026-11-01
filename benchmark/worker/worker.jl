@@ -9,29 +9,35 @@ using BenchmarkTools, Printf
 const LIB, OUT, BUDGET = ARGS[1], ARGS[2], parse(Float64, ARGS[3])
 const PROBLEM_NAMES = ARGS[4:end]
 
+# Defaults for CPU libraries; adapters for devices override them: the device in the results, moving
+# arrays to the device, and waiting for the device to finish (timings include it).
+device_name() = "CPU"
+device_array(state, a) = a
+synchronize(state) = nothing
+
 include(joinpath(@__DIR__, "..", "src", "problems.jl"))
 include(joinpath(@__DIR__, "adapters", LIB * ".jl"))
 
-const HEADER = "lib,version,method,problem,nvoxels,nrays,threads,setup_s,forward_min_s,forward_median_s," *
+const HEADER = "lib,version,method,device,problem,nvoxels,nrays,threads,setup_s,forward_min_s,forward_median_s," *
                "backward_min_s,backward_median_s,rel_error"
 
 function measure(p::Problem)
   t_setup = @elapsed state = setup(p)
   t_setup = min(t_setup, @elapsed setup(p))          # second call: without compilation
-  x = phantom_image(p)
-  y = zeros(Float32, datashape(state, p))
+  x = device_array(state, phantom_image(p))
+  y = device_array(state, zeros(Float32, datashape(state, p)))
   xb = similar(x)
-  forward!(state, y, x); backward!(state, xb, y)    # compile
-  bf = @benchmark forward!($state, $y, $x) seconds = BUDGET evals = 1
+  forward!(state, y, x); backward!(state, xb, y); synchronize(state)    # compile
+  bf = @benchmark (forward!($state, $y, $x); synchronize($state)) seconds = BUDGET evals = 1
   # back projection of random data: the phantom's projection is zero for the rays that miss it,
   # which some libraries skip
-  yr = rand(Float32, size(y))
-  bb = @benchmark backward!($state, $xb, $yr) seconds = BUDGET evals = 1
+  yr = device_array(state, rand(Float32, size(y)))
+  bb = @benchmark (backward!($state, $xb, $yr); synchronize($state)) seconds = BUDGET evals = 1
   err = NaN
   if measures_error(p)
     forward!(state, y, x)
     idx, exact = error_rays(p)
-    err = norm(Float64.(vec(y)[idx]) - exact) / norm(exact)
+    err = norm(Float64.(vec(Array(y))[idx]) - exact) / norm(exact)
   end
   (minimum(bf).time / 1e9, median(bf).time / 1e9, minimum(bb).time / 1e9, median(bb).time / 1e9, t_setup, err)
 end
@@ -41,10 +47,10 @@ for name in PROBLEM_NAMES
   p = PROBLEMS[name]()
   supports(p) || continue
   fmin, fmed, bmin, bmed, tsetup, err = measure(p)
-  row = join([LIB, library_version(), "\"$(method_name())\"", name, prod(p.image.dims), nrays(p.geometry),
+  row = join([LIB, library_version(), "\"$(method_name())\"", "\"$(device_name())\"", name, prod(p.image.dims), nrays(p.geometry),
               Threads.nthreads(), @sprintf("%.4g", tsetup), @sprintf("%.4g", fmin), @sprintf("%.4g", fmed),
               @sprintf("%.4g", bmin), @sprintf("%.4g", bmed), @sprintf("%.4g", err)], ",")
   open(io -> println(io, row), OUT, "a")
-  @printf("%-13s %-12s forward %8.1f ms  back %8.1f ms  setup %7.2f s  error %.4f\n", LIB, name,
+  @printf("%-24s %-12s forward %8.2f ms  back %8.2f ms  setup %7.2f s  error %.4f\n", LIB, name,
           1e3fmin, 1e3bmin, tsetup, err)
 end
