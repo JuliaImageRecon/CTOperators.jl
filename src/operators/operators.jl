@@ -146,6 +146,44 @@ indices), for ordered-subset methods. It shares the image geometry and options w
 subset(op::AbstractProjector{T,<:AbstractDetectorGeometry}, views) where {T} =
   similar_projector(op, subset(geometry(op), views))
 
+"""
+    subset_blocks(op::AbstractProjector, nsubsets; mode=:interleaved) -> (ops, rows)
+
+The projectors of `nsubsets` subsets of the views of `op` (detector geometries) and, for each, the
+indices of its data in `vec(op * x)`: the blocks of rows of ordered-subset methods. With
+LinearOperatorCollection.jl, `RowBlockOp(subset_blocks(op, 10)...)` stacks them into one operator,
+e.g. for the keyword `blocks` of the OS-SART solver of RegularizedLeastSquares.jl:
+`createLinearSolver(OSSART, op; blocks=RowBlockOp(subset_blocks(op, 10)...))`.
+
+`mode=:interleaved` takes every `nsubsets`-th view, so that consecutive subsets see the object from
+different directions; `:contiguous` takes consecutive views, whose data indices are ranges (no
+copies of the data, cheapest on GPUs). Index vectors live on the device of the projector.
+"""
+function subset_blocks(op::AbstractProjector{T,<:AbstractDetectorGeometry}, nsubsets::Integer;
+                       mode::Symbol=:interleaved) where {T}
+  nv = nviews(geometry(op))
+  n = clamp(nsubsets, 1, nv)
+  views = if mode == :interleaved
+    [k:n:nv for k in 1:n]
+  elseif mode == :contiguous
+    [(div((k - 1) * nv, n) + 1):div(k * nv, n) for k in 1:n]
+  else
+    throw(ArgumentError("mode must be :interleaved or :contiguous, got :$mode"))
+  end
+  cells = prod(detectorsize(geometry(op)))
+  [subset(op, v) for v in views], [data_rows(op, v, cells) for v in views]
+end
+
+# the indices of the data of the views v in the flat data of op: a range for consecutive views,
+# else an index vector on the device of op
+function data_rows(op, v, cells)
+  if step(v) == 1
+    return ((first(v) - 1) * cells + 1):(last(v) * cells)
+  end
+  idx = [(k - 1) * cells + j for k in v for j in 1:cells]
+  copyto!(KA.allocate(KA.get_backend(op), Int, length(idx)), idx)
+end
+
 Adapt.adapt_structure(to, op::AbstractProjector) = similar_projector(op, adapt(to, geometry(op)))
 
 """
