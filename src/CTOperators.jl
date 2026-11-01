@@ -16,7 +16,7 @@ export MultiRay, AbstractPoints, RegularPoints, JitteredPoints, RandomPoints, Ga
 export AbstractWeights, UniformWeights, GaussianWeights
 export circular_cone_beam, helical_cone_beam, parallel_beam
 export datasize, nrays, ray, raytype, nviews, detectorsize, subset, projection_geometry
-export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, LaunchConfig
+export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, DistanceDrivenProjector, LaunchConfig
 export geometry, image_geometry, imagesize, rowsums, colsums
 
 # not exported, but part of the interface: for projectors, geometries and strategies of other packages

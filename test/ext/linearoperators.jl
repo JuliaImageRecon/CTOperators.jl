@@ -6,7 +6,7 @@
   using LinearOperators
   image = ImageGeom(; dims=(6, 5, 4))
   g = circular_cone_beam(; angles=range(0, 2pi, 6)[1:5], dso=15, dsd=30, nu=7, nv=5, du=1.2)
-  for P in (SiddonProjector, JosephProjector), arrayType in arrayTypes, T in floatTypes
+  for P in (SiddonProjector, JosephProjector, DistanceDrivenProjector), arrayType in arrayTypes, T in floatTypes
     op = P(image, g; eltype=T, storage=arrayType)
     S = typeof(adapt(arrayType{T}, zeros(2)))
     @test LinearOperators.storage_type(op) == S

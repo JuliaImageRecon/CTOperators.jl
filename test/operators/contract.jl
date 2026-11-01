@@ -49,8 +49,10 @@
     @test isapprox(Array(adjoint(op) * adapt(arrayType{T}, y)), adjoint(ref) * y; rtol=sqrt(eps(T)))
   end
 
-  function contract_tests(make_op, arrayTypes, floatTypes)
-    for (name, image, geometry) in contract_problems(), arrayType in arrayTypes, T in floatTypes
+  # `raylists=false` for projectors that need detector geometries
+  function contract_tests(make_op, arrayTypes, floatTypes; raylists=true)
+    problems = filter(p -> raylists || !(p[3] isa RayList), contract_problems())
+    for (name, image, geometry) in problems, arrayType in arrayTypes, T in floatTypes
       @testset "$name, $arrayType{$T}" begin
         op = make_op(image, geometry; eltype=T, storage=arrayType)
         @test eltype(op) == T

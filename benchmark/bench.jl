@@ -14,10 +14,11 @@
 using Dates, Printf
 
 const ROOT = @__DIR__
-const LIBS = ["ctoperators-siddon", "ctoperators-joseph", "parallelproj", "radonka"]
+const LIBS = ["ctoperators-siddon", "ctoperators-joseph", "ctoperators-distancedriven", "parallelproj", "radonka"]
 # GPU libraries: only run when named with --libs (they need the device)
-const GPU_LIBS = ["ctoperators-siddon-rocm", "ctoperators-joseph-rocm", "radonka-rocm",
-                  "ctoperators-siddon-cuda", "ctoperators-joseph-cuda", "parallelproj-cuda"]
+const GPU_LIBS = ["ctoperators-siddon-rocm", "ctoperators-joseph-rocm", "ctoperators-distancedriven-rocm", "radonka-rocm",
+                  "ctoperators-siddon-cuda", "ctoperators-joseph-cuda", "ctoperators-distancedriven-cuda",
+                  "parallelproj-cuda"]
 
 # the environment of a library: envs/<lib> if it exists (parallelproj-cuda: the CUDA build), else the
 # part of its name before "-" (one environment for the methods and devices of CTOperators.jl)
