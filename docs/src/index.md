@@ -31,6 +31,11 @@ reused by every application, the setting of iterative solvers such as those of
 
 - [Getting Started](@ref) simulates a helical cone-beam scan and reconstructs it with
   RegularizedLeastSquares.jl.
+- The tutorials go through the common scans, each from its geometry to the reconstruction:
+  [parallel beam](@ref "Parallel beam in 2D"), [fan beam](@ref "Fan beam with a curved detector"),
+  [circular](@ref "Circular cone-beam CT") and [helical](@ref "Helical cone-beam CT") cone beam,
+  [sparse views and limited angles](@ref "Sparse views and limited angles") and
+  [tomosynthesis](@ref "Tomosynthesis").
 - The how-to guides show how to [set up a geometry](@ref "Set up a geometry"), including an object
   that moves during the scan, how to [run on a GPU](@ref "Run on a GPU"), how to build
   [ordered-subset methods](@ref "Ordered subsets and normalisation"), how to

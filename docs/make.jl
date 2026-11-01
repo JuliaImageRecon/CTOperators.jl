@@ -23,11 +23,19 @@ makedocs(;
     canonical="https://JuliaImageRecon.github.io/CTOperators.jl",
     edit_link="main",
   ),
-  # Diátaxis: a tutorial to learn, how-to guides for tasks, explanation for understanding,
+  # Diátaxis: tutorials to learn, how-to guides for tasks, explanation for understanding,
   # reference for looking things up
   pages=[
     "Home" => "index.md",
     "Getting Started" => "generated/examples/getting_started.md",
+    "Tutorials" => [
+      "Parallel Beam in 2D" => "generated/tutorials/parallel_beam.md",
+      "Fan Beam with a Curved Detector" => "generated/tutorials/fan_beam.md",
+      "Circular Cone-Beam CT" => "generated/tutorials/cone_beam.md",
+      "Helical Cone-Beam CT" => "generated/tutorials/helical.md",
+      "Sparse Views and Limited Angles" => "generated/tutorials/sparse_views.md",
+      "Tomosynthesis" => "generated/tutorials/tomosynthesis.md",
+    ],
     "How to" => [
       "Set up a Geometry" => "generated/howto/geometries.md",
       "Run on a GPU" => "generated/howto/gpu.md",
