@@ -21,5 +21,6 @@ CTOperators = {path = ".."}
 
 [compat]
 Documenter = "1"
+ImageGeoms = "0.11.3"
 LinearOperatorCollection = "2.4"
 Literate = "2"
