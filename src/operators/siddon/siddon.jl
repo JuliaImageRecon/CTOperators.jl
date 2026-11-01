@@ -5,10 +5,13 @@ Projector with Siddon's method: the weight of a voxel for a ray is the exact len
 inside the voxel (Siddon 1985), computed incrementally as in Jacobs et al. 1998. Works with every
 [`AbstractProjectionGeometry`](@ref). The back projection is the exact adjoint.
 
-`eltype` is the element type of the computation and of the stored geometry; `storage` the array
-type that selects the device (`Array`, `CuArray`, `ROCArray`, …). Image and projection data passed
-to the operator must live on that device. `launch` a [`LaunchConfig`](@ref) to tune the kernel
-launches for a device, `nothing` for the defaults of the device.
+Keywords:
+
+* `eltype` is the element type of the computation and of the stored geometry.
+* `storage` is the array type that selects the device (`Array`, `CuArray`, `ROCArray`, …). Image
+  and projection data passed to the operator must live on that device.
+* `launch` is a [`LaunchConfig`](@ref) to tune the kernel launches for a device, `nothing` for the
+  defaults of the device.
 
 # Example
 
@@ -17,6 +20,7 @@ image = ImageGeom(; dims=(128, 128, 64), deltas=(1, 1, 1))
 geometry = circular_cone_beam(; angles=range(0, 2pi, 361)[1:360], dso=500, dsd=1000,
                               nu=256, nv=128, du=1, dv=1)
 op = SiddonProjector(image, geometry)
+x = rand(Float32, 128, 128, 64)
 y = op * x                 # forward projection, size (256, 128, 360)
 z = adjoint(op) * y        # back projection
 ```

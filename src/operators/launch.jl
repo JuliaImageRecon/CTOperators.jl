@@ -22,13 +22,15 @@ Without `launch` (or with `launch=nothing`) a projector takes the defaults of it
 `adapt` to another device: on GPUs workgroups of 64 and tiles of 8 × 8 cells, on the CPU data order
 and the backend's workgroups.
 
-The GPU defaults were chosen on an AMD Radeon RX 7900 XT. See the explanation page
-[Workgroups and ray order on GPUs](@ref) in the documentation.
+The GPU defaults were tuned on one AMD GPU; tune them for yours. See the explanation page
+[Workgroups and Ray Order on GPUs](@ref) in the documentation.
 
 # Example
 
 ```julia
-op = JosephProjector(image, geometry; storage=CuArray, launch=LaunchConfig(; workgroupsize=128, tile=(16, 8)))
+using CUDA
+launch = LaunchConfig(; workgroupsize=128, tile=(16, 8))
+op = JosephProjector(image, geometry; storage=CuArray, launch)
 ```
 """
 struct LaunchConfig

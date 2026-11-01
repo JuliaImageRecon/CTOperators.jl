@@ -2,9 +2,9 @@
     VoxelGrid{T}(ig::ImageGeom)
 
 The voxel grid of an `ImageGeom` in the form the kernels use: three dimensions (a 2D `ImageGeom`
-becomes a volume with `nz = 1` and voxel size 1 along `z`, centred at `z = 0`), element type `T`,
-no units, no mask. `first` is the world coordinate of the centre of voxel `(1, 1, 1)`; voxel
-`(i, j, k)` has its centre at `first + ((i, j, k) .- 1) .* deltas`. Negative `deltas` (flipped
+becomes a volume with `nz = 1` and voxel size 1 along `z`, centered at `z = 0`), element type `T`,
+no units, no mask. `first` is the world coordinate of the center of voxel `(1, 1, 1)`; voxel
+`(i, j, k)` has its center at `first + ((i, j, k) .- 1) .* deltas`. Negative `deltas` (flipped
 axes, allowed by ImageGeoms) are kept.
 
 Units of the `ImageGeom` are stripped; they must be the units of the projection geometry.
@@ -32,7 +32,7 @@ Base.eltype(::VoxelGrid{T}) where {T} = T
 """
     bounds(g::VoxelGrid) -> (lo, hi)
 
-Corners of the box covered by the voxels (outer faces, not centres), `lo .<= hi`.
+Corners of the box covered by the voxels (outer faces, not centers), `lo .<= hi`.
 """
 function bounds(g::VoxelGrid)
   a = g.first .- g.deltas ./ 2
@@ -44,7 +44,7 @@ end
     to_index(g::VoxelGrid, p)
 
 Continuous voxel coordinates of the world point `p`: voxel `(i, j, k)` covers
-`[i − 1/2, i + 1/2) × …`, its centre has the integer coordinates `(i, j, k)`. In these coordinates
+`[i − 1/2, i + 1/2) × …`, its center has the integer coordinates `(i, j, k)`. In these coordinates
 the voxels are unit cubes with positive orientation, whatever the sign of `deltas`.
 """
 @inline to_index(g::VoxelGrid, p) = (p .- g.first) ./ g.deltas .+ one(eltype(g))

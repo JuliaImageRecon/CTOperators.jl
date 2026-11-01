@@ -21,8 +21,14 @@ export geometry, image_geometry, imagesize, rowsums, colsums
     AbstractCTOperator{T}
 
 Supertype of the CT projection operators of CTOperators.jl. `T` is the real element type of image
-and projection data. An operator holds its geometry on the device and the workspace of its
-kernels, created once and reused by every application.
+and projection data. An operator is created once and applied many times: `op * x` is the forward
+projection, `adjoint(op) * y` the back projection (its adjoint; `transpose(op)` is the same).
+`op * x` returns an array on the operator's device, a vector for a vector `x` and an array of the
+data shape otherwise; `mul!` accepts both shapes.
+
+With LinearOperators.jl loaded, `LinearOperators.storage_type(op)` is the vector type of the
+operator's device, so that operators of LinearOperatorCollection.jl take CT operators, e.g. the
+normal operator `normalOperator(op)` for the solvers of RegularizedLeastSquares.jl.
 """
 abstract type AbstractCTOperator{T} end
 

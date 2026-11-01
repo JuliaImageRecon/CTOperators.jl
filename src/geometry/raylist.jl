@@ -2,12 +2,14 @@
     RayList(starts, ends; datasize=(size(starts, 2),))
 
 Arbitrary rays given by their start and end points (columns of the `3 × nrays` matrices `starts`
-and `ends`), as in parallelproj. Ray `i` is the segment from `starts[:, i]` to `ends[:, i]`.
-`datasize` gives the projection data a shape (column-major order of the rays), e.g. a sinogram.
+and `ends`). Ray `i` is the segment from `starts[:, i]` to `ends[:, i]`. `datasize` gives the
+projection data a shape, e.g. a sinogram: ray `i` is element `i` of the data array in column-major
+order.
 
     RayList(g::AbstractProjectionGeometry)
 
-The rays of a geometry with [`RaySegment`](@ref) rays, computed on the device of `g`.
+The rays of a geometry with [`RaySegment`](@ref) rays, computed on the device of `g` (geometries
+with [`RayLine`](@ref) rays, such as parallel beams, have no end points and throw an error).
 """
 struct RayList{T,M<:AbstractMatrix{T},N} <: AbstractProjectionGeometry{T}
   starts::M

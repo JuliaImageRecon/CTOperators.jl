@@ -1,5 +1,5 @@
 # The geometries of Sinograms.jl converted to ours describe the same rays: the analytic line
-# integrals of an off-centre ellipsoid (ImagePhantoms) along Sinograms' own rays (`rays(rg)`, in
+# integrals of an off-center ellipsoid (ImagePhantoms) along Sinograms' own rays (`rays(rg)`, in
 # the coordinates of `radon`) and along our rays agree. This checks directions, offsets and angles
 # end to end.
 @testsnippet SinogramsRays begin
@@ -49,11 +49,11 @@ end
                  src=CtSourceHelix(; pitch=0.8, source_z0=-5))
   g = projection_geometry(rg)
   @test isapprox(g.source[3, :], Sinograms._source_zs(rg))
-  @test isapprox(g.centre[3, :], Sinograms._source_zs(rg))
+  @test isapprox(g.center[3, :], Sinograms._source_zs(rg))
   ref = helical_cone_beam(; angles=deg2rad.(collect(Sinograms.angles(rg))), z0=-5,
                           pitch=Sinograms._source_dz_per_view(rg) * 12, dso=60, dsd=100, nu=16, nv=8, du=1.0)
   # Sinograms stores the angles in Float32
-  @test isapprox(g.source, ref.source; rtol=1e-5) && isapprox(g.centre, ref.centre; rtol=1e-5)
+  @test isapprox(g.source, ref.source; rtol=1e-5) && isapprox(g.center, ref.center; rtol=1e-5)
 
   # source_offset moves source and detector sideways: the detector cells of view 1 (beta = 0) are
   # at Sinograms' detector positions _xds, _yds

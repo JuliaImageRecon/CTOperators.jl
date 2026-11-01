@@ -1,23 +1,30 @@
 """
     JosephProjector(image::ImageGeom, geometry; eltype=Float32, storage=Array, launch=nothing)
 
-Projector with Joseph's method: the image is interpolated linearly between the voxel centres in
-every layer of voxels perpendicular to the axis the ray runs most along, and the line integral is
-the sum over these layers of the interpolated value times the length of the ray in the layer
-(Joseph 1982). Compared with [`SiddonProjector`](@ref) the image model is smooth: the projection
-changes continuously with the rays, the rays of a view cover the voxels more evenly (except near
-45°, where both methods coincide), and the projection is exact for images that are linear functions
-of the position rather than for voxel images. Works with every
-[`AbstractProjectionGeometry`](@ref). The back projection is the exact adjoint.
+Projector with Joseph's method (Joseph 1982): the image is interpolated bilinearly within each
+layer of voxels perpendicular to the axis the ray runs most along (its principal axis), and the
+line integral is the sum over the layers of the interpolated value times the length of the ray in
+the layer. Compared with [`SiddonProjector`](@ref):
 
-Outside the volume the image is zero; across the ray it fades to zero within one voxel outside the
-outermost voxel centres. Segments that start or end inside the volume take the part of the first
-and last layer they cover.
+* the image model is smooth, so the projection changes continuously when a ray moves;
+* the rays of a view cover the voxels more evenly, except near 45°, where the two methods give
+  similar weights;
+* the projection is exact for images that are linear functions of the position rather than for
+  voxel images.
 
-`eltype` is the element type of the computation and of the stored geometry; `storage` the array
-type that selects the device (`Array`, `CuArray`, `ROCArray`, …). Image and projection data passed
-to the operator must live on that device. `launch` a [`LaunchConfig`](@ref) to tune the kernel
-launches for a device, `nothing` for the defaults of the device.
+Works with every [`AbstractProjectionGeometry`](@ref). The back projection is the exact adjoint.
+
+Outside the volume the image is zero; across the ray it fades to zero up to half a voxel beyond
+the faces of the volume. If a segment starts or ends inside the volume, only the part of the end
+layer it actually crosses is counted.
+
+Keywords:
+
+* `eltype` is the element type of the computation and of the stored geometry.
+* `storage` is the array type that selects the device (`Array`, `CuArray`, `ROCArray`, …). Image
+  and projection data passed to the operator must live on that device.
+* `launch` is a [`LaunchConfig`](@ref) to tune the kernel launches for a device, `nothing` for the
+  defaults of the device.
 
 # Example
 
@@ -26,6 +33,7 @@ image = ImageGeom(; dims=(128, 128, 64), deltas=(1, 1, 1))
 geometry = circular_cone_beam(; angles=range(0, 2pi, 361)[1:360], dso=500, dsd=1000,
                               nu=256, nv=128, du=1, dv=1)
 op = JosephProjector(image, geometry)
+x = rand(Float32, 128, 128, 64)
 y = op * x                 # forward projection, size (256, 128, 360)
 z = adjoint(op) * y        # back projection
 ```

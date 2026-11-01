@@ -26,7 +26,7 @@ struct PPState
 end
 
 # the rays as segments: lines (parallel beam) extended by the volume's diagonal on both sides of
-# their point on the detector plane, which lies in the volume's centre plane
+# their point on the detector plane, which lies in the volume's center plane
 segments(g, image) = segments(raytype(g), g, image)
 segments(::RaySegment, g, image) = RayList(g)
 function segments(::RayLine, g, image)

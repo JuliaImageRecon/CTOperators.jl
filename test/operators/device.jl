@@ -44,7 +44,7 @@ end
       @test agree(mul!(copy(yd), op, xd, T(2), T(-0.5)), 2 * (ref * x) - 0.5 * y, T)
       @test agree(mul!(copy(xd), adjoint(op), yd, T(1), T(1)), adjoint(ref) * y + x, T)
 
-      # normalisations
+      # normalizations
       r, c = rowsums(op), colsums(op)
       @test on_device(r, arrayType) && on_device(c, arrayType) && eltype(r) == eltype(c) == T
       @test agree(r, rowsums(ref), T) && agree(c, colsums(ref), T)

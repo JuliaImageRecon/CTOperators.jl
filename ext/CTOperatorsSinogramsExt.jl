@@ -41,11 +41,11 @@ function fan_beam(rg, angles, nv, dv, offset_v, zs, detector)
   so = strip_unit(rg.source_offset)
   iszero(so) && return g
   shift = so .* vcat(cos.(angles)', sin.(angles)', zeros(1, length(angles)))
-  shifted(g, g.source .+ shift, g.centre .+ shift)
+  shifted(g, g.source .+ shift, g.center .+ shift)
 end
 
-shifted(g::ConeBeam, source, centre) = ConeBeam(source, centre, g.u, g.v; nu=g.nu, nv=g.nv)
-shifted(g::ArcConeBeam, source, centre) = ArcConeBeam(source, centre, g.u, g.v; nu=g.nu, nv=g.nv)
+shifted(g::ConeBeam, source, center) = ConeBeam(source, center, g.u, g.v; nu=g.nu, nv=g.nv)
+shifted(g::ArcConeBeam, source, center) = ArcConeBeam(source, center, g.u, g.v; nu=g.nu, nv=g.nv)
 
 nb(rg::Union{CtFanFlat,CtFanArc,CtPar}) = rg.ns
 nb(rg::Union{SinoFanFlat,SinoFanArc,SinoPar}) = rg.nb

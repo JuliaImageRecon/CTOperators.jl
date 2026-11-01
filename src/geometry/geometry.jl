@@ -12,17 +12,17 @@ Interface:
 * `raytype(g)`: [`RaySegment()`](@ref RaySegment) if the ray is the segment from `a` to `b`,
   [`RayLine()`](@ref RayLine) if it is the whole line through `a` and `b`
 
-Geometries are adapted (moved and converted) with `Adapt.adapt`, e.g.
-`adapt(CuArray{Float32}, g)`.
+Geometries are moved to another device and converted to another element type with `adapt` of
+Adapt.jl (`using Adapt`), e.g. `adapt(CuArray{Float32}, g)`. Lengths have no fixed unit; they must
+be in the unit of the `ImageGeom` they are used with.
 """
 abstract type AbstractProjectionGeometry{T} end
 
 """
     AbstractDetectorGeometry{T} <: AbstractProjectionGeometry{T}
 
-Geometries of a source (or ray direction) and a flat detector per view; the projection data has
-size `(nu, nv, nviews)`. Besides rays they describe the detector cells, which footprint methods
-need.
+Geometries of a source (or ray direction) and a flat or curved detector per view; the projection
+data has size `(nu, nv, nviews)`. Besides the rays they describe the detector cells.
 
 Interface (in addition to that of `AbstractProjectionGeometry`):
 
@@ -71,18 +71,23 @@ function ray end
 
 """
     nviews(g::AbstractDetectorGeometry)
+
+Number of views, the last dimension of the projection data.
 """
 function nviews end
 
 """
     detectorsize(g::AbstractDetectorGeometry) -> (nu, nv)
+
+Number of detector cells along `u` (a detector row) and along `v` (a detector column).
 """
 function detectorsize end
 
 """
     subset(g::AbstractDetectorGeometry, views)
 
-The geometry of the views `views` (indices or a range) of `g`, for ordered-subset methods.
+The geometry of the views `views` of `g` (a vector or range of view indices; one view: `k:k`),
+for ordered-subset methods. `subset(op, views)` gives the projector of such a subset.
 """
 function subset end
 
@@ -108,7 +113,7 @@ datasize(g::AbstractDetectorGeometry) = (detectorsize(g)..., nviews(g))
   ju + 1, jv + 1, k + 1
 end
 
-# the position of pixel (iu, iv) on a detector with centre c and cell vectors u, v
+# the position of pixel (iu, iv) on a detector with center c and cell vectors u, v
 @inline function pixel_position(c, u, v, iu, iv, nu, nv)
   T = eltype(c)
   c + (T(iu) - T(nu + 1) / 2) * u + (T(iv) - T(nv + 1) / 2) * v

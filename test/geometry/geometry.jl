@@ -71,7 +71,7 @@ end
   @test line_distance(a, b) < 1e-12 * dsd
   @test subset(g, 2:3) isa ArcConeBeam && nviews(subset(g, 2:3)) == 2
   @test_throws ArgumentError circular_cone_beam(; angles, dso, dsd, nu, nv, du, detector=:curved)
-  @test_throws ArgumentError ArcConeBeam(g.source, g.centre, g.u .+ [0.0, 0.0, 1.0], g.v; nu, nv)
+  @test_throws ArgumentError ArcConeBeam(g.source, g.center, g.u .+ [0.0, 0.0, 1.0], g.v; nu, nv)
 end
 
 @testitem "helical cone beam" tags = [:geometry] setup = [Rays] begin

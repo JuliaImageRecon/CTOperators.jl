@@ -53,7 +53,8 @@ function backward! end
 """
     imagesize(op)
 
-Size of the image the operator takes (2D or 3D, as its `ImageGeom`).
+Size of the operator's input: the image for a projector (2D or 3D, as its `ImageGeom`), the
+projection data for its adjoint.
 """
 function imagesize end
 
@@ -114,8 +115,8 @@ end
 """
     rowsums(op::AbstractCTOperator)
 
-`op * ones`: for projectors the length of each ray inside the image. A normalisation of
-SART/SIRT-type methods.
+`op * ones`: for projectors the length of each ray inside the image (exactly for Siddon's method,
+approximately for Joseph's). A normalization of SART/SIRT-type methods.
 """
 function rowsums(op::AbstractCTOperator)
   x = KA.ones(KA.get_backend(op), eltype(op), imagesize(op)...)
@@ -126,7 +127,7 @@ end
     colsums(op::AbstractCTOperator)
 
 `adjoint(op) * ones`: for projectors the sensitivity image, the summed weights of all rays per
-voxel. A normalisation of SART/SIRT/OS-EM-type methods.
+voxel. A normalization of SART/SIRT/OS-EM-type methods.
 """
 colsums(op::AbstractCTOperator) = rowsums(adjoint(op))
 
@@ -139,8 +140,8 @@ KA.get_backend(op::AbstractProjector) = KA.get_backend(storage_array(geometry(op
 """
     subset(op::AbstractProjector, views)
 
-The projector of the views `views` of `op` (detector geometries), for ordered-subset methods. It
-shares the image geometry and options with `op`.
+The projector of the views `views` of `op` (detector geometries; a vector or range of view
+indices), for ordered-subset methods. It shares the image geometry and options with `op`.
 """
 subset(op::AbstractProjector{T,<:AbstractDetectorGeometry}, views) where {T} =
   similar_projector(op, subset(geometry(op), views))

@@ -18,7 +18,7 @@ end
 
 # Joseph's sum is the midpoint rule on every layer of voxels with bilinear interpolation across the
 # ray, so it is exact for an image that is a linear function of the position, along rays that cross
-# the whole volume and stay within the voxel centres across the principal axis.
+# the whole volume and stay within the voxel centers across the principal axis.
 @testitem "Joseph: exact for linear images" tags = [:joseph] begin
   using LinearAlgebra, Random
   using ImageGeoms: axis
@@ -47,7 +47,7 @@ end
   using LinearAlgebra
   image = ImageGeom(; dims=(10, 10, 10), deltas=(1.0, 1.0, 1.0))
   ones3 = ones(10, 10, 10)
-  # in a constant image, segments within the voxel centres integrate their own length (partial
+  # in a constant image, segments within the voxel centers integrate their own length (partial
   # first and last layers), a segment leaving the volume along its principal axis the part inside
   starts = [-2.0 1.0 0.3; 0.5 -3.0 0.2; 1.0 2.0 0.1]
   ends = [3.0 1.5 9.0; 2.0 4.0 0.2; -1.0 -2.5 0.1]
@@ -56,13 +56,13 @@ end
   @test isapprox(y[2], norm(ends[:, 2] - starts[:, 2]))
   @test isapprox(y[3], 5.0 - 0.3)
 
-  # axis-aligned rays through voxel centres sum the column, times the voxel size
+  # axis-aligned rays through voxel centers sum the column, times the voxel size
   x = rand(10, 10, 10)
   g = parallel_beam(; angles=[0.0], nu=10, nv=10, du=1.0)   # rays along +y
   op = JosephProjector(ImageGeom(; dims=(10, 10, 10), deltas=(1.0, 2.0, 1.0)), g; eltype=Float64)
   @test isapprox(op * x, 2 * dropdims(sum(x; dims=2); dims=2))
 
-  # a ray between two voxel centres takes their mean, and its integral varies continuously with
+  # a ray between two voxel centers takes their mean, and its integral varies continuously with
   # its position (Siddon's jumps between the voxels)
   shifted = parallel_beam(; angles=[0.0], nu=10, nv=10, du=1.0, offset_u=0.5)
   y = JosephProjector(ImageGeom(; dims=(10, 10, 10)), shifted; eltype=Float64) * x

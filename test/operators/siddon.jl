@@ -43,9 +43,9 @@ end
     if length(image.dims) == 2   # a 2D image is one voxel of thickness 1 at z = 0
       push!(lims, (0.0, 0.0)); push!(deltas, 1.0)
     end
-    centre = Tuple((l[1] + l[2]) / 2 for l in lims)
+    center = Tuple((l[1] + l[2]) / 2 for l in lims)
     width = Tuple(l[2] - l[1] + abs(d) for (l, d) in zip(lims, deltas))
-    ob = cuboid(centre, width, (0, 0, 0), 2.0)
+    ob = cuboid(center, width, (0, 0, 0), 2.0)
     x = zeros(image.dims)
     x[block[1:length(image.dims)]...] .= 2
 
@@ -81,7 +81,7 @@ end
   reversed = RayList(rays.ends, rays.starts)
   @test isapprox(SiddonProjector(image, rays; eltype=Float64) * x, SiddonProjector(image, reversed; eltype=Float64) * x)
 
-  # axis-aligned rays through voxel centres sum the column, times the voxel size
+  # axis-aligned rays through voxel centers sum the column, times the voxel size
   g = parallel_beam(; angles=[0.0], nu=10, nv=10, du=1.0)   # rays along +y
   opy = SiddonProjector(ImageGeom(; dims=(10, 10, 10), deltas=(1.0, 2.0, 1.0)), g; eltype=Float64)
   @test isapprox(opy * x, 2 * dropdims(sum(x; dims=2); dims=2))
@@ -116,7 +116,7 @@ end
   @test errors[2] < errors[1] / 1.8
 end
 
-@testitem "Siddon: normalisations" tags = [:siddon] begin
+@testitem "Siddon: normalizations" tags = [:siddon] begin
   image = ImageGeom(; dims=(9, 8, 7))
   g = helical_cone_beam(; angles=range(0, 2pi, 6), pitch=3, dso=25, dsd=50, nu=15, nv=11, du=1.0)
   op = SiddonProjector(image, g; eltype=Float64)

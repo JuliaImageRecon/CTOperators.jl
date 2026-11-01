@@ -10,7 +10,7 @@
     idx = [ray_index(o, j) for j in 1:nthreads(o, g)]
     @test nthreads(o, g) % (tu * tv) == 0
     @test sort(filter(>(0), idx)) == 1:nrays(g)
-    # the threads of the first tile take neighbouring cells of the first view
+    # the threads of the first tile take neighboring cells of the first view
     cells = [CartesianIndices(datasize(g))[i] for i in idx[1:tu*tv] if i > 0]
     @test all(c -> c[1] <= tu && c[2] <= tv && c[3] == 1, cells)
   end

@@ -1,19 +1,19 @@
 # Joseph's method (Joseph 1982) in three dimensions, in continuous voxel coordinates (`to_index`):
-# voxel centres at integer coordinates, voxel v covers [v - 1/2, v + 1/2) per dimension. The ray is
+# voxel centers at integer coordinates, voxel v covers [v - 1/2, v + 1/2) per dimension. The ray is
 # p + alpha d, a step in alpha is a length alpha * len in world units (len = |b - a|).
 #
-# The image is a function that is bilinear between the voxel centres within every layer of voxels
+# The image is a function that is bilinear between the voxel centers within every layer of voxels
 # perpendicular to the principal axis k of the ray (the axis along which d is largest in voxel
 # coordinates) and zero outside the volume. The ray crosses one slab [i - 1/2, i + 1/2) per layer i
 # along k; it contributes the length of the ray inside the slab times the interpolated image at the
 # middle of that part. A ray through the whole slab has the length len / |d_k| in it and its middle
-# lies in the centre plane of the layer: Joseph's sum. Only the first and last slab of a segment
+# lies in the center plane of the layer: Joseph's sum. Only the first and last slab of a segment
 # that starts or ends inside the volume are partial, which is Joseph's treatment of the end points
 # proportional to the length of the ray in them.
 #
 # Interpolation needs no plane crossings: the slabs are counted along k, the transverse coordinates
-# follow from the slab index. The neighbours of the interpolation outside the volume count zero, so
-# the image fades to zero within one voxel outside the outermost centres across the ray; the plane
+# follow from the slab index. The neighbors of the interpolation outside the volume count zero, so
+# the image fades to zero within one voxel outside the outermost centers across the ray; the plane
 # range is clipped to that support.
 #
 # No closures in this code (see siddon/kernels.jl).
@@ -35,7 +35,7 @@ end
   end
 end
 
-# The four neighbours of a sample inside the volume, with weights wb0, wb1 across b and 1 - fc, fc
+# The four neighbors of a sample inside the volume, with weights wb0, wb1 across b and 1 - fc, fc
 # across c. The forward projection interpolates first and weights once.
 @inline function visit_bilinear(g::Gather, acc, lin, sb, sc, wb0, wb1, fc)
   x = g.image
@@ -64,7 +64,7 @@ end
 end
 
 # the region where the image can be nonzero for rays with principal axis k: the slabs of the
-# layers along k, and up to the next voxel centre outside the volume across k
+# layers along k, and up to the next voxel center outside the volume across k
 @inline function joseph_support(dims, k, ::Type{T}) where {T}
   lo = SVector(ntuple(m -> m == k ? T(1 // 2) : zero(T), 3))
   hi = SVector(ntuple(m -> m == k ? T(dims[m]) + T(1 // 2) : T(dims[m] + 1), 3))
@@ -106,9 +106,9 @@ end
   acc = zero(T)
   for t in 0:abs(last - first)
     i = first + t * step
-    centre = (i - pa) * invd    # the parameter of the centre plane of layer i
-    lo = max(centre - half, smin)
-    hi = min(centre + half, smax)
+    center = (i - pa) * invd    # the parameter of the center plane of layer i
+    lo = max(center - half, smin)
+    hi = min(center + half, smax)
     if lo < hi
       w = (hi - lo) * len
       mid = (lo + hi) / 2
@@ -121,7 +121,7 @@ end
       lin = 1 + (i - 1) * sa + (jb - 1) * sb + (jc - 1) * sc
       wb0, wb1 = w * (one_t - fb), w * fb
       if 1 <= jb < nb && 1 <= jc < nc
-        # all four neighbours inside the volume: no bounds checks (most samples)
+        # all four neighbors inside the volume: no bounds checks (most samples)
         acc = visit_bilinear(action, acc, lin, sb, sc, wb0, wb1, fc)
       else
         inb0, inb1 = 1 <= jb <= nb, 0 <= jb <= nb - 1
