@@ -26,11 +26,14 @@
   end
 
   # <A x, y> = <x, A' y>: the back projection is the transpose of the forward projection. Both sides
-  # sum the same products in different order, so they agree to rounding error.
+  # sum the same products in different order, so they agree to rounding error. The inner product is
+  # a plain reduction: `dot` of device arrays needs the vendor's BLAS (rocBLAS is an optional system
+  # library on AMD GPUs).
+  inner(a, b) = sum(vec(a) .* vec(b))
   function test_adjointness(op, arrayType, T)
     x = adapt(arrayType, rand(T, imagesize(op)))
     y = adapt(arrayType, rand(T, datasize(op)))
-    @test isapprox(dot(op * x, y), dot(x, adjoint(op) * y); rtol=100eps(T))
+    @test isapprox(inner(op * x, y), inner(x, adjoint(op) * y); rtol=100eps(T))
   end
 
   # the operator on the device and in precision T against the Float64 operator on the CPU
