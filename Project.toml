@@ -13,10 +13,12 @@ StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [weakdeps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+LinearOperators = "5c8ed15e-5a4c-59e4-a42b-c7e8811fb125"
 Sinograms = "02a14def-c6e6-4ab0-b2df-0ab64bc8cdd7"
 
 [extensions]
 CTOperatorsChainRulesCoreExt = "ChainRulesCore"
+CTOperatorsLinearOperatorsExt = "LinearOperators"
 CTOperatorsSinogramsExt = "Sinograms"
 
 [compat]
@@ -29,6 +31,7 @@ ImageGeoms = "0.11"
 ImagePhantoms = "0.8"
 KernelAbstractions = "0.9, 0.10"
 LinearAlgebra = "1"
+LinearOperators = "2"
 Random = "1"
 Sinograms = "0.5"
 StaticArrays = "1"
@@ -46,4 +49,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
 
 [targets]
-test = ["Aqua", "ChainRulesCore", "ChainRulesTestUtils", "ImagePhantoms", "Random", "Sinograms", "Test", "TestItemRunner"]
+test = ["Aqua", "ChainRulesCore", "ChainRulesTestUtils", "ImagePhantoms", "LinearOperators", "Random", "Sinograms", "Test", "TestItemRunner"]
