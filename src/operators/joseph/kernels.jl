@@ -18,16 +18,20 @@
 #
 # No closures in this code (see siddon/kernels.jl).
 
-@kernel inbounds = true function joseph_forward_kernel!(y, @Const(image), grid, geometry)
-  i = @index(Global, Linear)
-  y[i] = joseph_ray(Gather(image), grid, geometry, i)
+@kernel inbounds = true function joseph_forward_kernel!(y, @Const(image), grid, geometry, order)
+  i = ray_index(order, @index(Global, Linear))
+  if i > 0
+    y[i] = joseph_ray(Gather(image), grid, geometry, i)
+  end
 end
 
-@kernel inbounds = true function joseph_backward_kernel!(image, @Const(y), grid, geometry)
-  i = @index(Global, Linear)
-  v = y[i]
-  if !iszero(v)
-    joseph_ray(Scatter(image, v), grid, geometry, i)
+@kernel inbounds = true function joseph_backward_kernel!(image, @Const(y), grid, geometry, order)
+  i = ray_index(order, @index(Global, Linear))
+  if i > 0
+    v = y[i]
+    if !iszero(v)
+      joseph_ray(Scatter(image, v), grid, geometry, i)
+    end
   end
 end
 

@@ -1,5 +1,5 @@
 """
-    JosephProjector(image::ImageGeom, geometry; eltype=Float32, storage=Array)
+    JosephProjector(image::ImageGeom, geometry; eltype=Float32, storage=Array, launch=nothing)
 
 Projector with Joseph's method: the image is interpolated linearly between the voxel centres in
 every layer of voxels perpendicular to the axis the ray runs most along, and the line integral is
@@ -16,7 +16,8 @@ and last layer they cover.
 
 `eltype` is the element type of the computation and of the stored geometry; `storage` the array
 type that selects the device (`Array`, `CuArray`, `ROCArray`, …). Image and projection data passed
-to the operator must live on that device.
+to the operator must live on that device. `launch` a [`LaunchConfig`](@ref) to tune the kernel
+launches for a device, `nothing` for the defaults of the device.
 
 # Example
 
@@ -33,44 +34,38 @@ Reference:
 * P. M. Joseph, "An improved algorithm for reprojecting rays through pixel images", IEEE Trans.
   Med. Imaging 1(3), 192–196, 1982.
 """
-struct JosephProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom} <: AbstractProjector{T,G}
+struct JosephProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig}} <: AbstractProjector{T,G}
   image::I
   grid::VoxelGrid{T}
   geometry::G
   backend::B
+  launch::L
 end
 
 function JosephProjector(image::ImageGeom, geometry::AbstractProjectionGeometry; eltype::Type{T}=Float32,
-                         storage=Array) where {T<:AbstractFloat}
-  joseph_projector(image, device_geometry(geometry, T, storage))
+                         storage=Array, launch::Union{Nothing,LaunchConfig}=nothing) where {T<:AbstractFloat}
+  joseph_projector(image, device_geometry(geometry, T, storage), launch)
 end
 
 JosephProjector(image::ImageGeom, geometry; kwargs...) =
   JosephProjector(image, projection_geometry(geometry); kwargs...)
 
 # from a geometry already in the operator's element type and on its device
-function joseph_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}) where {T}
+function joseph_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}, launch) where {T}
   backend = KA.get_backend(storage_array(geometry))
-  JosephProjector{T,typeof(geometry),typeof(backend),typeof(image)}(image, VoxelGrid{T}(image), geometry, backend)
+  JosephProjector(image, VoxelGrid{T}(image), geometry, backend, launch)
 end
 
 geometry(op::JosephProjector) = op.geometry
 image_geometry(op::JosephProjector) = op.image
-similar_projector(op::JosephProjector, geometry::AbstractProjectionGeometry) = joseph_projector(op.image, geometry)
+similar_projector(op::JosephProjector, geometry::AbstractProjectionGeometry) = joseph_projector(op.image, geometry, op.launch)
 KA.get_backend(op::JosephProjector) = op.backend
 
-function forward!(y, op::JosephProjector, x)
-  n = nrays(op.geometry)
-  n == 0 && return y
-  joseph_forward_kernel!(op.backend)(y, vec(x), op.grid, op.geometry; ndrange=n)
-  y
-end
+forward!(y, op::JosephProjector, x) = launch_rays!(joseph_forward_kernel!, op, y, vec(x))
 
 function backward!(x, op::JosephProjector, y)
   fill!(x, zero(eltype(x)))
-  n = nrays(op.geometry)
-  n == 0 && return x
-  joseph_backward_kernel!(op.backend)(vec(x), y, op.grid, op.geometry; ndrange=n)
+  launch_rays!(joseph_backward_kernel!, op, vec(x), y)
   x
 end
 

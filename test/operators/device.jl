@@ -130,3 +130,24 @@ end
     end
   end
 end
+
+# The default launch per device: on GPUs workgroups of 64 and tiles of 8 × 8 detector cells (none for
+# ray lists), on the CPU the backend's choice; an explicit configuration gives the same results
+@testitem "device: launch configuration" tags = [:operators, :gpu] setup = [Backends, DeviceProblem] begin
+  using CTOperators: launch_config
+  image, g = device_problem()
+  for arrayType in arrayTypes
+    backend = KA.get_backend(adapt(arrayType, zeros(1)))
+    gpu = !(backend isa KA.CPU)
+    @test launch_config(nothing, g, backend) ==
+          (gpu ? LaunchConfig(; workgroupsize=64, tile=(8, 8)) : LaunchConfig())
+    @test launch_config(nothing, RayList(g), backend) == (gpu ? LaunchConfig(; workgroupsize=64) : LaunchConfig())
+    x, y = rand(imagesize(JosephProjector(image, g))...), rand(datasize(g)...)
+    for P in PROJECTORS
+      ref = P(image, g; eltype=Float64)
+      op = P(image, g; eltype=Float32, storage=arrayType, launch=LaunchConfig(; workgroupsize=32, tile=(4, 8)))
+      @test agree(op * adapt(arrayType{Float32}, x), ref * x, Float32)
+      @test agree(adjoint(op) * adapt(arrayType{Float32}, y), adjoint(ref) * y, Float32)
+    end
+  end
+end
