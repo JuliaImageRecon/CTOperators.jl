@@ -28,7 +28,7 @@ makedocs(;
   pages=[
     "Home" => "index.md",
     "Getting Started" => "generated/examples/getting_started.md",
-    "How-to Guides" => [
+    "How to" => [
       "Set up a Geometry" => "generated/howto/geometries.md",
       "Run on a GPU" => "generated/howto/gpu.md",
       "Ordered Subsets and Normalisation" => "generated/howto/subsets.md",

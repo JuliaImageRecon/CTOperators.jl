@@ -39,6 +39,25 @@ reused by every application, the setting of iterative solvers such as those of
 - The explanation pages describe the [coordinates and conventions](@ref "Coordinates and conventions")
   and the projection methods, [Siddon's method](@ref) and [Joseph's method](@ref).
 
+## Related packages
+
+- [ImageGeoms.jl](https://github.com/JuliaImageRecon/ImageGeoms.jl) describes the voxel grid of the
+  image; CTOperators.jl takes its `ImageGeom` and re-exports it.
+- [ImagePhantoms.jl](https://github.com/JuliaImageRecon/ImagePhantoms.jl) provides phantoms and
+  their analytic projections; the examples and tests use them.
+- [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) describes CT geometries and
+  provides analytic reconstruction (FBP, FDK); the projectors accept its geometries directly.
+- [RadonKA.jl](https://github.com/roflmaostc/RadonKA.jl) computes Radon transforms and back
+  projections, parallel-beam (also attenuated) and of arbitrary in-plane rays, slice by slice with
+  KernelAbstractions.jl, also on GPUs.
+- [SPECTrecon.jl](https://github.com/JuliaImageRecon/SPECTrecon.jl) provides forward and back
+  projectors and ML-EM reconstruction for SPECT.
+- [LinearOperatorCollection.jl](https://github.com/JuliaImageRecon/LinearOperatorCollection.jl)
+  collects linear operators (FFT, NFFT, wavelets, ...) for composing system matrices.
+- [RegularizedLeastSquares.jl](https://github.com/JuliaImageRecon/RegularizedLeastSquares.jl)
+  solves regularised least-squares problems (CGNR, FISTA, ADMM, Kaczmarz, ...); its solvers work
+  with the projectors of CTOperators.jl.
+
 ## Installation
 
 ```julia
