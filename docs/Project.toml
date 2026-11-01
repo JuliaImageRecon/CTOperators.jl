@@ -21,5 +21,6 @@ CTOperators = {path = ".."}
 
 [compat]
 Documenter = "1"
+LinearAlgebra = "<0.0.1, 1"
 LinearOperatorCollection = "2.4"
 Literate = "2"
