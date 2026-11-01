@@ -140,6 +140,14 @@ function Base.show(io::IO, ::MIME"text/plain", g::AbstractDetectorGeometry{T}) w
         nameof(typeof(storage_array(g))))
 end
 
+"""
+    storage_array(g::AbstractProjectionGeometry)
+
+One of the arrays the geometry stores, which tells its device (`KA.get_backend(storage_array(g))`)
+and array type. Every geometry type implements it.
+"""
+function storage_array end
+
 # A new array on the device of the geometry's arrays (storage_array(g): one of them).
 geometry_array(g, dims...) = similar(storage_array(g), dims...)
 

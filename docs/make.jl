@@ -34,6 +34,7 @@ makedocs(;
       "Ordered Subsets and Normalisation" => "generated/howto/subsets.md",
       "Differentiate through a Projector" => "generated/howto/differentiation.md",
       "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
+      "Implement a CT Operator" => "generated/howto/implement_operator.md",
     ],
     "Explanation" => [
       "Coordinates and Conventions" => "generated/explanation/conventions.md",

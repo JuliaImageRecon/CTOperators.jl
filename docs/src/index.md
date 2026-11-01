@@ -33,9 +33,10 @@ reused by every application, the setting of iterative solvers such as those of
   RegularizedLeastSquares.jl.
 - The how-to guides show how to [set up a geometry](@ref "Set up a geometry"), including an object
   that moves during the scan, how to [run on a GPU](@ref "Run on a GPU"), how to build
-  [ordered-subset methods](@ref "Ordered subsets and normalisation") and how to
-  [differentiate through a projector](@ref "Differentiate through a projector") and how to
-  [use geometries of Sinograms.jl](@ref "Use geometries of Sinograms.jl").
+  [ordered-subset methods](@ref "Ordered subsets and normalisation"), how to
+  [differentiate through a projector](@ref "Differentiate through a projector"), how to
+  [use geometries of Sinograms.jl](@ref "Use geometries of Sinograms.jl") and how to
+  [implement a CT operator](@ref "Implement a CT operator").
 - The explanation pages describe the [coordinates and conventions](@ref "Coordinates and conventions")
   and the projection methods, [Siddon's method](@ref) and [Joseph's method](@ref).
 

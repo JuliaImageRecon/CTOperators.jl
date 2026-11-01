@@ -1,10 +1,12 @@
 [deps]
+Atomix = "a9b6321e-bd34-4604-b9c9-b65b8de01458"
 Bonito = "824d6782-a2ef-11e9-3a09-e5662e0c26f8"
 CTOperators = "99c336b8-d208-42d5-a173-9011a20607ec"
 CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
 ImagePhantoms = "71a99df6-f52c-4da1-bd2a-69d6f37f3252"
+KernelAbstractions = "63c18a36-062a-441e-b654-da1e3ab1ce7c"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LinearOperators = "5c8ed15e-5a4c-59e4-a42b-c7e8811fb125"
 Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"

@@ -147,7 +147,13 @@ subset(op::AbstractProjector{T,<:AbstractDetectorGeometry}, views) where {T} =
 
 Adapt.adapt_structure(to, op::AbstractProjector) = similar_projector(op, adapt(to, geometry(op)))
 
-# the geometry in element type T on the device of `storage` (an array type, e.g. CuArray)
+"""
+    device_geometry(geometry, T, storage)
+
+`geometry` with its arrays in element type `T` on the device of `storage`, an array type such as
+`Array` or `CuArray` (or a concrete one such as `CuArray{Float32}`). Projector constructors call it
+with their keywords `eltype` and `storage`.
+"""
 device_geometry(geometry, ::Type{T}, storage) where {T} =
   adapt(storage isa UnionAll ? storage{T} : storage, geometry)
 
