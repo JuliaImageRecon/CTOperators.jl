@@ -81,37 +81,50 @@ against four per sample).
 
 ### GPU
 
-AMD Radeon RX 7900 XT (ROCm 7.2, AMDGPU.jl 2.10; RadonKA with AMDGPU 2.8), Float32, CTOperators at
-4d3b472 (benchmark adapters uncommitted at the time), RadonKA 0.6.3; standard suite, minimum time,
-2026-11-01. The CPU columns (24 threads) were measured in the same session. The phantom errors on
-the GPU equal those on the CPU.
+AMD Radeon RX 7900 XT (ROCm 7.2, AMDGPU.jl 2.10; RadonKA with AMDGPU 2.8), Float32, standard suite,
+minimum time, 2026-11-01. CTOperators with the default launch configuration of GPUs (workgroups of
+64, tiles of 8 × 8 detector cells, see `LaunchConfig`); the column "forward, before" is the earlier
+run at 4d3b472 with the backend's workgroups and data order, as are RadonKA's rows. The CPU columns
+(24 threads) were measured with the earlier run; the CPU code path is unchanged. The phantom
+errors on the GPU equal those on the CPU.
 
-| problem | library | forward, GPU | back, GPU | forward, CPU | back, CPU | speedup forward / back |
-|---|---|---|---|---|---|---|
-| cone128 | CTOperators (Siddon) | 5.6 ms | 13.0 ms | 77 ms | 160 ms | 14× / 12× |
-| cone128 | CTOperators (Joseph) | 7.2 ms | 29.3 ms | 138 ms | 336 ms | 19× / 11× |
-| parallel128 | CTOperators (Siddon) | 5.6 ms | 10.4 ms | 57 ms | 134 ms | 10× / 13× |
-| parallel128 | CTOperators (Joseph) | 7.2 ms | 27.9 ms | 105 ms | 310 ms | 15× / 11× |
-| parallel128 | RadonKA | 20.3 ms | 30.4 ms | 180 ms | 186 ms | 9× / 6× |
-| cone256 | CTOperators (Siddon) | 147 ms | 247 ms | 1.21 s | 2.48 s | 8× / 10× |
-| cone256 | CTOperators (Joseph) | 231 ms | 543 ms | 2.26 s | 5.15 s | 10× / 9× |
-| helix256 | CTOperators (Siddon) | 61 ms | 112 ms | 0.65 s | 1.29 s | 11× / 11× |
-| helix256 | CTOperators (Joseph) | 104 ms | 272 ms | 1.30 s | 2.82 s | 12× / 10× |
-| parallel256 | CTOperators (Siddon) | 166 ms | 218 ms | 0.89 s | 2.05 s | 5× / 9× |
-| parallel256 | CTOperators (Joseph) | 224 ms | 517 ms | 1.74 s | 4.85 s | 8× / 9× |
-| parallel256 | RadonKA | 91 ms | 252 ms | 2.96 s | 3.02 s | 33× / 12× |
+| problem | library | forward, GPU | forward, before | back, GPU | forward, CPU | back, CPU | speedup forward / back |
+|---|---|---|---|---|---|---|---|
+| cone128 | CTOperators (Siddon) | 5.6 ms | 5.6 ms | 13.5 ms | 77 ms | 160 ms | 14× / 12× |
+| cone128 | CTOperators (Joseph) | 6.3 ms | 7.2 ms | 30.7 ms | 138 ms | 336 ms | 22× / 11× |
+| parallel128 | CTOperators (Siddon) | 4.9 ms | 5.6 ms | 10.9 ms | 57 ms | 134 ms | 12× / 12× |
+| parallel128 | CTOperators (Joseph) | 5.9 ms | 7.2 ms | 28.8 ms | 105 ms | 310 ms | 18× / 11× |
+| parallel128 | RadonKA | 20.3 ms | – | 30.4 ms | 180 ms | 186 ms | 9× / 6× |
+| cone256 | CTOperators (Siddon) | 109 ms | 147 ms | 260 ms | 1.21 s | 2.48 s | 11× / 10× |
+| cone256 | CTOperators (Joseph) | 108 ms | 231 ms | 537 ms | 2.26 s | 5.15 s | 21× / 10× |
+| helix256 | CTOperators (Siddon) | 53 ms | 61 ms | 118 ms | 0.65 s | 1.29 s | 12× / 11× |
+| helix256 | CTOperators (Joseph) | 59 ms | 104 ms | 272 ms | 1.30 s | 2.82 s | 22× / 10× |
+| parallel256 | CTOperators (Siddon) | 102 ms | 166 ms | 236 ms | 0.89 s | 2.05 s | 9× / 9× |
+| parallel256 | CTOperators (Joseph) | 111 ms | 224 ms | 512 ms | 1.74 s | 4.85 s | 16× / 9× |
+| parallel256 | RadonKA | 91 ms | – | 252 ms | 2.96 s | 3.02 s | 33× / 12× |
 
 cone256: 256³ volume, cone beam with a 256² detector and 360 views (23.6 M rays); helix256: 256³
 volume, helical cone beam with 540 views over three turns; parallel256: 256³ volume, parallel beam
 with a 256² detector and 360 views.
 
-Observations (starting points for tuning, not yet investigated):
+Observations:
 
-- From 128³ to 256³ the work grows 16× (8× the rays, each twice as long), our GPU times 26–32×. A
-  128³ Float32 image (8 MB) fits into the GPU's 80 MB last-level cache, a 256³ image (64 MB) hardly;
-  the order in which rays reach the cache (which rays run in one workgroup) then matters.
+- Launch configuration (`LaunchConfig`): workgroups of 64 instead of the backend's default (chosen
+  for maximal occupancy) make the forward projection 1.2–1.9× faster even in data order; tiles of
+  8 × 8 detector cells per workgroup instead of consecutive cells of a row give Joseph another
+  1.4–1.8×, Siddon little. Together at 256³: Joseph about 2×, Siddon 1.2–1.6× faster, at 128³ up
+  to 1.25×. The back projection, dominated by its atomic additions, gains nothing (1–6 % slower,
+  close to the noise); it runs with the same configuration to keep one code path. On the CPU tiles
+  change the forward projection by less than 4 % (8², 16², 32², 24 threads), so the CPU keeps data
+  order and the backend's workgroups. A count of the cache lines per load instruction of a
+  wavefront (32 lanes) gives about 17 in both orders: the gain of tiles is not better coalescing
+  within one load; finding the cause needs hardware counters.
+- Ray setup is negligible: computing and clipping all rays of cone256 takes 0.8 ms, and a
+  precomputed ray list (540 MB) gives the same times.
+- From 128³ to 256³ the work grows 16× (8× the rays, each twice as long), our GPU times 17–21×
+  forward (26–32× before) and 17–22× back. A 128³ Float32 image (8 MB) fits into the
+  GPU's 80 MB last-level cache, a 256³ image (64 MB) hardly.
 - RadonKA, slice by slice, is faster than our parallel-beam forward projection at 256³ (91 ms
-  against 166 ms), slower at 128³ (20 ms against 5.6 ms).
-- Joseph's back projection takes 2–4× its forward projection (four atomic additions per sample),
-  Siddon's about 2× (one per voxel).
-
+  against 102 ms), slower at 128³ (20 ms against 4.9 ms).
+- Joseph's back projection takes 4–5× its forward projection (four atomic additions per sample),
+  Siddon's about 2.3× (one per voxel): the next target.
