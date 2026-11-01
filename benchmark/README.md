@@ -10,9 +10,14 @@ julia benchmark/bench.jl run quick                  # all libraries, 128³ probl
 julia benchmark/bench.jl run standard --threads 1,24
 julia benchmark/bench.jl run quick --libs ctoperators-joseph,parallelproj --budget 1
 julia benchmark/bench.jl run standard --libs ctoperators-siddon-rocm,ctoperators-joseph-rocm,radonka-rocm --threads 1
+julia benchmark/bench.jl run standard --libs ctoperators-siddon-cuda,ctoperators-joseph-cuda,parallelproj-cuda --threads 1
 ```
 
-GPU libraries (`*-rocm`, AMD GPUs through AMDGPU.jl) run only when named with `--libs`.
+GPU libraries (`*-rocm`: AMD GPUs through AMDGPU.jl; `*-cuda`: NVIDIA GPUs through CUDA.jl, and
+`parallelproj-cuda`, the CUDA build of parallelproj with CuPy arrays in its own environment
+`envs/parallelproj-cuda`) run only when named with `--libs`. Before a first CUDA run,
+`julia --project=benchmark/envs/parallelproj-cuda benchmark/check_parallelproj_cuda.jl` checks that
+parallelproj computes on CuPy arrays directly (otherwise its timings would include transfers).
 
 Options: `--libs` (comma separated), `--threads` (comma separated, default all cores), `--budget`
 (seconds of repeated calls per measurement, default 2). Measure on a quiet machine.

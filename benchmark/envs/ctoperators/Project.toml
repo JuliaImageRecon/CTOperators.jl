@@ -2,6 +2,7 @@
 AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
 BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 CTOperators = "99c336b8-d208-42d5-a173-9011a20607ec"
+CUDA = "052768ef-5323-5732-b1bb-66c8b64840ba"
 ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
 ImagePhantoms = "71a99df6-f52c-4da1-bd2a-69d6f37f3252"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"

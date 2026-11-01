@@ -16,11 +16,15 @@ using Dates, Printf
 const ROOT = @__DIR__
 const LIBS = ["ctoperators-siddon", "ctoperators-joseph", "parallelproj", "radonka"]
 # GPU libraries: only run when named with --libs (they need the device)
-const GPU_LIBS = ["ctoperators-siddon-rocm", "ctoperators-joseph-rocm", "radonka-rocm"]
+const GPU_LIBS = ["ctoperators-siddon-rocm", "ctoperators-joseph-rocm", "radonka-rocm",
+                  "ctoperators-siddon-cuda", "ctoperators-joseph-cuda", "parallelproj-cuda"]
 
-# the environment of a library: the part of its name before "-" (one environment for the methods
-# of CTOperators.jl)
-environment(lib) = joinpath(ROOT, "envs", first(split(lib, "-")))
+# the environment of a library: envs/<lib> if it exists (parallelproj-cuda: the CUDA build), else the
+# part of its name before "-" (one environment for the methods and devices of CTOperators.jl)
+function environment(lib)
+  own = joinpath(ROOT, "envs", lib)
+  isdir(own) ? own : joinpath(ROOT, "envs", first(split(lib, "-")))
+end
 
 include(joinpath(ROOT, "src", "suites.jl"))
 
