@@ -1,9 +1,9 @@
-# Figures of the Siddon explanation page (WGLMakie through Bonito for the interactive one, CairoMakie
-# for the static one). Included invisibly by the page.
+# Figures of the Siddon explanation page (WGLMakie through Bonito for the interactive one,
+# CairoMakie for the static one). Included invisibly by the page.
 
 using CTOperators, WGLMakie, Bonito, CairoMakie
 
-# A ray of the sweep shown with the slider: angle theta, offset from the centre perpendicular to it;
+# A ray of the sweep shown with the slider: angle theta, offset from the center perpendicular to it;
 # start and end point far outside the n x n image of unit pixels.
 function sweep_ray(k, nsweep, n)
   theta = 0.15 + (pi - 0.3) * (k - 1) / (nsweep - 1)
@@ -42,8 +42,8 @@ function siddon_app(n; nsweep=60)
     fig = Figure(size=(620, 560))
     ax = Axis(fig[1, 1]; aspect=DataAspect(), limits=((-n / 2 - 1, n / 2 + 1), (-n / 2 - 1, n / 2 + 1)),
               xlabel="x", ylabel="y")
-    centres = range(-(n - 1) / 2, (n - 1) / 2, n)
-    hm = heatmap!(ax, centres, centres, map(r -> ray_weights(image, r...), ray); colormap=:Blues,
+    centers = range(-(n - 1) / 2, (n - 1) / 2, n)
+    hm = heatmap!(ax, centers, centers, map(r -> ray_weights(image, r...), ray); colormap=:Blues,
                   colorrange=(1e-6, sqrt(2)), lowclip=:white)
     for w in -n/2:n/2
       lines!(ax, [w, w], [-n / 2, n / 2]; color=:gray70, linewidth=0.5)
@@ -61,8 +61,8 @@ function siddon_app(n; nsweep=60)
 end
 
 # How evenly the rays of one parallel-beam view at 45 degrees cover the pixels: Siddon's column sums
-# (summed lengths of all rays per pixel, times the cell size; ideally 1 everywhere), for one, two and
-# four rays per pixel.
+# (summed lengths of all rays per pixel, times the cell size; ideally 1 everywhere), for one, two
+# and four rays per pixel.
 function coverage_figure(n)
   image = ImageGeom(; dims=(n, n), deltas=(1.0, 1.0))
   fig = Figure(size=(900, 330))
@@ -72,7 +72,7 @@ function coverage_figure(n)
     r = round(Int, 1 / du)
     ax = Axis(fig[1, j]; aspect=DataAspect(), title=r == 1 ? "1 ray per pixel" : "$r rays per pixel")
     hidedecorations!(ax)
-    hm = heatmap!(ax, c; colormap=:RdBu, colorrange=(0.7, 1.3))
+    hm = heatmap!(ax, c; colormap=:RdBu, colorrange=(0.6, 1.4))
     j == 3 && Colorbar(fig[1, 4], hm; label="coverage")
   end
   fig

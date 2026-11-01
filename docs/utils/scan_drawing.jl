@@ -3,9 +3,9 @@
 
 using LinearAlgebra: normalize
 
-# centres of every `step`-th detector cell of view k, as coordinate matrices (for `surface!`)
+# centers of every `step`-th detector cell of view k, as coordinate matrices (for `surface!`)
 function detector_grid(g::ConeBeam, k, step)
-  c, u, v = g.centre[:, k], g.u[:, k], g.v[:, k]
+  c, u, v = g.center[:, k], g.u[:, k], g.v[:, k]
   ius, ivs = 1:step:g.nu, 1:step:g.nv
   p(d, iu, iv) = c[d] + (iu - (g.nu + 1) / 2) * u[d] + (iv - (g.nv + 1) / 2) * v[d]
   ntuple(d -> Float32[p(d, iu, iv) for iu in ius, iv in ivs], 3)
@@ -13,7 +13,7 @@ end
 
 # the four detector corners of view k
 function detector_corners(g::ConeBeam, k)
-  c, u, v = g.centre[:, k], g.u[:, k], g.v[:, k]
+  c, u, v = g.center[:, k], g.u[:, k], g.v[:, k]
   [Point3f(c + su * g.nu / 2 * u + sv * g.nv / 2 * v) for (su, sv) in ((-1, -1), (1, -1), (1, 1), (-1, 1))]
 end
 
@@ -27,7 +27,7 @@ end
 # a few rays of view k: from the source to an evenly spaced subset of detector cells
 function ray_segments(g::ConeBeam, k; nu=7, nv=4)
   s = Point3f(g.source[:, k])
-  c, u, v = g.centre[:, k], g.u[:, k], g.v[:, k]
+  c, u, v = g.center[:, k], g.u[:, k], g.v[:, k]
   cells = [(iu, iv) for iu in round.(Int, range(1, g.nu, nu)), iv in round.(Int, range(1, g.nv, nv))]
   [s => Point3f(c + (iu - (g.nu + 1) / 2) * u + (iv - (g.nv + 1) / 2) * v) for (iu, iv) in vec(cells)]
 end
@@ -41,8 +41,9 @@ function draw_box!(ax, n)
   linesegments!(ax, edges; color=:gray40)
 end
 
-# The first ellipsoids of the Shepp-Logan phantom (head and inner structures) as transparent surfaces.
-# Parameters as from ImagePhantoms.ellipsoid_parameters: (cx, cy, cz, rx, ry, rz, phi, theta, psi, value).
+# The first ellipsoids of the Shepp-Logan phantom (head and inner structures) as transparent
+# surfaces. Parameters as from ImagePhantoms.ellipsoid_parameters: (cx, cy, cz, rx, ry, rz, phi,
+# theta, psi, value).
 function draw_phantom!(ax, params; count=4)
   t, p = range(0, 2pi, 40), range(0, pi, 20)
   for (cx, cy, cz, rx, ry, rz, phi, _, _, _) in params[1:count]

@@ -18,9 +18,9 @@ function workgroup_map(g, order, wg)
   groups
 end
 
-# The points where the rays of workgroup w cross the plane through the centre of the image
+# The points where the rays of workgroup w cross the plane through the center of the image
 # perpendicular to the axis the rays run most along, and the voxels Joseph's method reads there
-# (the four neighbours of every point). Unit voxels, the image centred at the origin.
+# (the four neighbors of every point). Unit voxels, the image centered at the origin.
 function workgroup_samples(g, order, wg, w)
   points = Point2f[]
   voxels = Set{Tuple{Int,Int}}()
@@ -34,7 +34,7 @@ function workgroup_samples(g, order, wg, w)
     o = [m for m in 1:3 if m != k]
     p = (q[o[1]], q[o[2]])
     push!(points, Point2f(p...))
-    lb, lc = floor(Int, p[1] - 0.5), floor(Int, p[2] - 0.5)   # lower neighbour: centre lb + 1/2
+    lb, lc = floor(Int, p[1] - 0.5), floor(Int, p[2] - 0.5)   # lower neighbor: center lb + 1/2
     for db in 0:1, dc in 0:1
       push!(voxels, (lb + db, lc + dc))
     end
@@ -48,7 +48,7 @@ function launch_figure(; n=64, nu=64, nv=32)
   fig = Figure(size=(1000, 560))
   for (col, (title, order)) in enumerate(orders)
     groups = workgroup_map(g, order, 64)
-    w = groups[nu÷2+4, nv÷2+4]          # a workgroup near the centre of the detector
+    w = groups[nu÷2+4, nv÷2+4]          # a workgroup near the center of the detector
     ax = Axis(fig[1, col]; aspect=DataAspect(), title, xlabel="detector cell u", ylabel="detector cell v")
     heatmap!(ax, 1:nu, 1:nv, mod.(groups, 6); colormap=Makie.Categorical(:Pastel1_6))
     heatmap!(ax, 1:nu, 1:nv, replace(Float64.(groups .== w), 0.0 => NaN); colormap=[:black], alpha=0.8)

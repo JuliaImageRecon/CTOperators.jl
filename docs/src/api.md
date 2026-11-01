@@ -6,8 +6,9 @@ their rays, the generic operator interface, and one section per projector.
 ## Image geometry
 
 Images are described by `ImageGeom` from [ImageGeoms.jl](https://github.com/JuliaImageRecon/ImageGeoms.jl),
-re-exported by CTOperators.jl. Voxel `i` has its centre at `((i - 1) - (n - 1)/2 - offset) * Δ` per
-dimension; a 2D image is treated as a volume of thickness one voxel.
+re-exported by CTOperators.jl. Voxel `i` has its center at `((i - 1) - (n - 1)/2 - offset) * Δ` per
+dimension; a 2D image is treated as a slice at `z = 0` that is 1 length unit thick. Lengths have
+no fixed unit: image and projection geometry must use the same one.
 
 ## Projection geometries
 

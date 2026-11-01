@@ -29,7 +29,7 @@ OpenMP).
   deterministically so that every worker sees the same problem. `src/suites.jl`: the suites.
 - `worker/worker.jl`: per problem the setup time (second call), forward and back projection
   (minimum and median of repeated calls within the budget; the back projection of random data), and
-  the relative error of the forward projection of the voxelised phantom against its analytic line
+  the relative error of the forward projection of the voxelized phantom against its analytic line
   integrals on up to 20 000 rays (where the library takes our rays).
 - `worker/adapters/<lib>.jl`: maps our problem onto the library:
   - `ctoperators-siddon`, `ctoperators-joseph`: `SiddonProjector`, `JosephProjector`, Float32,
@@ -73,7 +73,7 @@ later the same day; Siddon and parallelproj, measured again in that run, agree w
 
 cone128: 128³ volume, cone beam with a 128² detector and 180 views (2.95 M rays). parallel128: 128³
 volume, parallel beam with a 128² detector and 180 views. Phantom error: relative error of the
-projected voxelised phantom against its analytic line integrals.
+projected voxelized phantom against its analytic line integrals.
 
 CTOperators' Joseph gives the same phantom error as parallelproj's (the same method) and runs at the
 same speed; Siddon is about twice as fast as Joseph on the CPU (one memory read per visited voxel

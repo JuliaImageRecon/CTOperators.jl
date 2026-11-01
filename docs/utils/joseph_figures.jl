@@ -4,7 +4,7 @@
 include(joinpath(@__DIR__, "siddon_figures.jl"))
 
 # Joseph's samples of the ray a -> b in the n x n image of unit pixels: its crossings with the
-# centre lines of the columns (or rows, if it runs more along y), where the image can be nonzero
+# center lines of the columns (or rows, if it runs more along y), where the image can be nonzero
 function joseph_samples(a, b, n)
   d = (b[1] - a[1], b[2] - a[2])
   k = abs(d[1]) >= abs(d[2]) ? 1 : 2
@@ -26,14 +26,14 @@ function joseph_app(n; nsweep=60)
     fig = Figure(size=(620, 560))
     ax = Axis(fig[1, 1]; aspect=DataAspect(), limits=((-n / 2 - 1, n / 2 + 1), (-n / 2 - 1, n / 2 + 1)),
               xlabel="x", ylabel="y")
-    centres = range(-(n - 1) / 2, (n - 1) / 2, n)
-    hm = heatmap!(ax, centres, centres, map(r -> ray_weights(image, r...; projector=JosephProjector), ray);
+    centers = range(-(n - 1) / 2, (n - 1) / 2, n)
+    hm = heatmap!(ax, centers, centers, map(r -> ray_weights(image, r...; projector=JosephProjector), ray);
                   colormap=:Blues, colorrange=(1e-6, sqrt(2)), lowclip=:white)
     for w in -n/2:n/2
       lines!(ax, [w, w], [-n / 2, n / 2]; color=:gray70, linewidth=0.5)
       lines!(ax, [-n / 2, n / 2], [w, w]; color=:gray70, linewidth=0.5)
     end
-    scatter!(ax, vec([Point2f(a, b) for a in centres, b in centres]); color=:gray50, markersize=3)
+    scatter!(ax, vec([Point2f(a, b) for a in centers, b in centers]); color=:gray50, markersize=3)
     lines!(ax, map(r -> [Point2f(r[1]), Point2f(r[2])], ray); color=:black, linewidth=1.5)
     scatter!(ax, map(r -> joseph_samples(r..., n), ray); color=:orange, markersize=9,
              label="samples (interpolated)")

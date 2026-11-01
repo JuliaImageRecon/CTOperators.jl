@@ -1,7 +1,7 @@
-# # Ordered subsets and normalisation
+# # Ordered Subsets and Normalization
 #
 # Algebraic methods such as SIRT and SART, and the ordered-subset variants of statistical methods,
-# normalise each update by the sums of the rows and columns of the system matrix, and many of them
+# normalize each update by the sums of the rows and columns of the system matrix, and many of them
 # cycle through subsets of the views. This guide shows the two building blocks, `rowsums`/`colsums`
 # and `subset`, with an OS-SART reconstruction of a 2D phantom.
 
@@ -19,10 +19,11 @@ y = op * x_true;
 
 # ## Row and column sums
 #
-# `rowsums(op)` is `op * ones`: for a projector the length of every ray inside the image.
-# `colsums(op)` is `adjoint(op) * ones`: for every voxel the summed weights of all rays, its
-# sensitivity. Both have the shape of the data and of the image, respectively, and live on the
-# device of the projector.
+# `rowsums(op)` is `op * ones`: for a projector the length of every ray inside the image (exactly
+# for Siddon's method; for Joseph's method approximately, since its image fades to zero just outside
+# the volume). `colsums(op)` is `adjoint(op) * ones`: for every voxel the summed weights of all
+# rays, its sensitivity. `r` has the shape of the projection data, `c` that of the image; both live
+# on the device of the projector.
 
 r = rowsums(op)
 c = colsums(op)
@@ -30,22 +31,26 @@ size(r), size(c)
 
 # ## Subsets
 #
-# `subset(op, views)` is the projector of some of the views, sharing the image geometry. Ordered-subset
-# methods interleave the views so that consecutive subsets see the object from different directions:
+# `subset(op, views)` is the projector of some of the views, sharing the image geometry.
+# Ordered-subset methods interleave the views so that consecutive subsets see the object from
+# different directions. The data of a subset are its views, the last dimension of the `(nu, nv,
+# nviews)` data:
 
 nsubsets = 10
 views = [s:nsubsets:nviews(geometry) for s in 1:nsubsets]
 ops = [subset(op, v) for v in views]
 ys = [y[:, :, v] for v in views];
 
-# Create the subset projectors and their normalisations once; they are reused in every iteration.
+# Create the subset projectors and their normalizations once; they are reused in every iteration.
+# Rays that miss the image and voxels that no ray hits have sums of zero; a small lower bound avoids
+# dividing by zero.
 
 rs = [max.(rowsums(o), 1.0f-6) for o in ops]
 cs = [max.(colsums(o), 1.0f-6) for o in ops];
 
 # ## OS-SART
 #
-# One SART update per subset: back project the normalised residual of the subset and divide by the
+# One SART update per subset: back project the normalized residual of the subset and divide by the
 # sensitivity of the subset; then clip negative values. With one subset this is SIRT.
 
 function os_sart(ops, ys, rs, cs, iterations; relaxation=1.0f0)

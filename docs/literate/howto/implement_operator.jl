@@ -1,4 +1,4 @@
-# # Implement a CT operator
+# # Implement a CT Operator
 #
 # This guide shows what a new projector has to provide and what it gets in return, by implementing a
 # simple one: it samples the image at equally spaced points along each ray, taking the value of the
@@ -12,9 +12,11 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "sampling_figures.jl")) #
 
 # ## The method
 #
-# Along the part of a ray inside the image the projector places equally spaced samples, about a given
-# number per pixel length. Each sample stands for the length of ray around it and takes the value of
-# the pixel it lies in. A pixel's weight for the ray is the summed length of its samples (blue):
+# Along the part of a ray inside the image the projector places equally spaced samples, about a
+# given number per pixel length (voxel length in 3D). Each sample stands for the length of ray
+# around it and takes the value of the pixel it lies in. A pixel's weight for the ray is the summed
+# length of its samples (blue). The figure shows one ray through a small 2D image, with one sample
+# per pixel length (left) and two (right):
 
 fig = sampling_figure() #hide
 save("sampling.png", fig) #hide
@@ -24,22 +26,23 @@ nothing #hide
 # The weights depend on where the samples happen to fall: some pixels collect two samples, and some
 # that the ray crosses near a corner get none. More samples make the weights approach the lengths of
 # the ray in the pixels, Siddon's weights, at a higher cost. Siddon's and Joseph's methods compute
-# their weights directly; see [Siddon's method](@ref) and [Joseph's method](@ref).
+# their weights directly; see [Siddon's Method](@ref) and [Joseph's Method](@ref).
 
 # ## Two levels
 #
 # CTOperators.jl has two abstract types for operators:
 #
-# * [`AbstractCTOperator`](@ref): any linear operator between an image and projection data. It
-#   implements `imagesize`, `datasize`, `forward!(y, op, x)`, `backward!(x, op, y)` and
+# * [`AbstractCTOperator`](@ref): any linear operator between an image and projection data. A
+#   subtype implements `imagesize`, `datasize`, `forward!(y, op, x)`, `backward!(x, op, y)` and
 #   `KernelAbstractions.get_backend(op)`. This is enough to wrap a projector of another package,
 #   whatever its geometry.
 # * [`AbstractProjector`](@ref): an operator for an `ImageGeom` and one of the projection geometries
-#   of this package. It implements `geometry`, `image_geometry`, `similar_projector`, `forward!` and
-#   `backward!`; image size, data size and the device follow from the two geometries.
+#   of this package. A subtype implements `geometry`, `image_geometry`, `similar_projector`,
+#   `forward!` and `backward!`; image size, data size and the device follow from the two geometries.
 #
 # In return an operator works with `op * x`, `mul!`, `adjoint(op)`, `rowsums`, `colsums`, solvers of
-# RegularizedLeastSquares.jl and automatic differentiation (the ChainRulesCore rule); a projector
+# RegularizedLeastSquares.jl (with the normal operator `normalOperator(op)` of
+# LinearOperatorCollection.jl) and automatic differentiation (the ChainRulesCore rule); a projector
 # also with `subset` for ordered subsets and `adapt` to move it to another device.
 #
 # The sampling projector is an `AbstractProjector`. It works with every geometry, since it only asks
@@ -49,9 +52,9 @@ nothing #hide
 #
 # The projector stores what its kernels need: the image grid in the form the kernels use
 # ([`CTOperators.VoxelGrid`](@ref): size, voxel size and position, without units), the geometry with
-# its arrays on the device, the KernelAbstractions backend of that device and its option, the number
-# of samples per voxel length. The type parameters keep the fields concrete, so that applying the
-# operator is type-stable.
+# its arrays on the device, the KernelAbstractions backend of that device, and its one option,
+# `samples`, the number of samples per voxel length. The type parameters keep the fields concrete,
+# so that applying the operator is type-stable.
 
 struct SamplingProjector{T,G<:AbstractProjectionGeometry{T},B,I<:ImageGeom} <: AbstractProjector{T,G}
   image::I
@@ -63,8 +66,8 @@ end
 
 # The constructor follows those of the package: keywords `eltype` and `storage` choose the precision
 # and the device, and [`CTOperators.device_geometry`](@ref) converts and moves the geometry
-# accordingly. [`CTOperators.storage_array`](@ref) returns one of the geometry's arrays, which tells the
-# backend.
+# accordingly. [`CTOperators.storage_array`](@ref) returns one of the geometry's arrays, which tells
+# the backend.
 
 function SamplingProjector(image::ImageGeom, geometry::AbstractProjectionGeometry; eltype::Type{T}=Float32,
                            storage=Array, samples=2) where {T<:AbstractFloat}
@@ -74,21 +77,24 @@ end
 
 # ## The interface
 #
-# `geometry` and `image_geometry` return the two geometries. `similar_projector` builds the same kind
-# of projector, with the same image and options, for another geometry that is already on the right
-# device: `subset(op, views)` and `adapt(CuArray, op)` call it.
+# `geometry` and `image_geometry` return the two geometries. `similar_projector` builds the same
+# kind of projector, with the same image and options, for another geometry that is already on the
+# right device and possibly in another element type: `subset(op, views)` and `adapt(CuArray, op)`
+# call it.
 
 CTOperators.geometry(op::SamplingProjector) = op.geometry
 CTOperators.image_geometry(op::SamplingProjector) = op.image
-CTOperators.similar_projector(op::SamplingProjector, geometry::AbstractProjectionGeometry) =
-  SamplingProjector(op.image, op.grid, geometry, get_backend(storage_array(geometry)), op.samples)
+function CTOperators.similar_projector(op::SamplingProjector, geometry::AbstractProjectionGeometry{T}) where {T}
+  backend = get_backend(storage_array(geometry))
+  SamplingProjector(op.image, VoxelGrid{T}(op.image), geometry, backend, T(op.samples))
+end
 
 # ## The kernels
 #
-# Ray-driven projectors run one work-item per ray. [`ray`](@ref)`(geometry, i)` gives the two points
-# of ray `i`, a linear index into the projection data, and [`raytype`](@ref) whether the ray is the
-# segment between them or the whole line. The helpers of the package work in continuous voxel
-# coordinates, in which voxel `(i, j, k)` is the unit cube centred at `(i, j, k)`:
+# Ray-driven projectors run one thread per ray. [`ray`](@ref)`(geometry, i)` gives the two points of
+# ray `i`, where `i` is the linear index of the ray in the projection data, and [`raytype`](@ref)
+# whether the ray is the segment between them or the whole line. The helpers of the package work in
+# continuous voxel coordinates, in which voxel `(i, j, k)` is the unit cube centered at `(i, j, k)`:
 # [`CTOperators.to_index`](@ref) converts a point, and [`CTOperators.clip`](@ref) returns the part
 # `[amin, amax]` of the ray `p + α d` inside the volume.
 #
@@ -138,10 +144,10 @@ end
 end
 
 # Code in kernels has to compile for GPUs: no allocations, no dynamic dispatch, and no closures that
-# capture a variable which is reassigned (the loop state of a ray), since Julia boxes such variables.
-# Small vectors are `SVector`s, as those that `ray` and `to_index` return.
+# capture a variable which is reassigned (the loop state of a ray), since Julia boxes such
+# variables. Small vectors are `SVector`s, as those that `ray` and `to_index` return.
 #
-# `forward!` and `backward!` launch the kernels, one work-item per ray. They receive arrays of the
+# `forward!` and `backward!` launch the kernels, one thread per ray. They receive arrays of the
 # image and data shapes; the kernels index them linearly. The back projection accumulates, so it
 # first clears the image.
 
@@ -162,18 +168,18 @@ end
 
 n = 64
 image = ImageGeom(; dims=(n, n, n), deltas=(1.0, 1.0, 1.0))
-geometry = helical_cone_beam(; angles=range(0, 4pi, 120), pitch=n / 2, z0=-n / 2, dso=2n, dsd=4n,
+geometry = helical_cone_beam(; angles=range(0, 4pi, 121)[1:120], pitch=n / 2, z0=-n / 2, dso=2n, dsd=4n,
                              nu=192, nv=96, du=1.0)
 op = SamplingProjector(image, geometry)
 size(op), datasize(op)
 
-# The first check of every projector: the back projection is the transpose of the forward projection,
-# `⟨A x, y⟩ = ⟨x, Aᵀ y⟩` for any `x` and `y`, up to rounding.
+# The first check of every projector: the back projection is the transpose of the forward
+# projection, `⟨A x, y⟩ = ⟨x, Aᵀ y⟩` for any `x` and `y`, up to rounding.
 
 x, y = rand(Float32, imagesize(op)), rand(Float32, datasize(op))
 dot(op * x, y) / dot(x, adjoint(op) * y)
 
-# Subsets, normalisations and moving to another device come for free:
+# Subsets, normalizations and moving to another device come for free:
 
 datasize(subset(op, 1:10)), size(colsums(op))
 
@@ -188,9 +194,19 @@ y_joseph = JosephProjector(image, geometry) * x_true
 
 # ## Tests
 #
-# Inside the package, the test snippet `Contract` in `test/operators/contract.jl` runs the tests every
-# projector must pass, on problems that cover the geometry types: the adjoint test, and agreement of
-# Float32 and of devices (JLArrays, GPUs) with Float64 on the CPU. A projector's test file calls it:
+# Every projector should pass the adjoint test above for several geometry types, and its results in
+# Float32 and on other devices should agree with Float64 on the CPU:
+#
+# ```julia
+# op64 = SamplingProjector(image, geometry; eltype=Float64)
+# op32 = SamplingProjector(image, geometry; eltype=Float32)
+# x = rand(imagesize(op64)...)
+# isapprox(op32 * Float32.(x), op64 * x; rtol=1e-4)
+# ```
+#
+# Inside this repository, the test snippet `Contract` in `test/operators/contract.jl` runs these
+# tests on problems that cover the geometry types, also on JLArrays and GPUs. A projector's test
+# file calls it:
 #
 # ```julia
 # @testitem "Sampling: contract" tags = [:sampling, :gpu] setup = [Backends, Contract] begin
@@ -219,4 +235,5 @@ y_joseph = JosephProjector(image, geometry) * x_true
 # CTOperators.backward!(x, op::WrappedOperator, y) = backproject!(x, op.plan, y)
 # ```
 #
-# The rest of the interface, including use in solvers, then follows as for the projectors here.
+# The rest of the interface, including use in solvers (with `normalOperator(op)`), then follows as
+# for the projectors here.

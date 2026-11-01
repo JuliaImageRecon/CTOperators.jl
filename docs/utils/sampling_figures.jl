@@ -4,9 +4,9 @@
 using CairoMakie
 using LinearAlgebra: norm
 
-# Samples of the ray from a to b (voxel coordinates, pixel (i, j) is the unit square centred at
-# (i, j)) on a grid of nx × ny pixels, `samples` per pixel length: the sample points and the weight
-# of every pixel (the summed step lengths of the samples nearest to it). The same rule as the kernel.
+# Samples of the ray from a to b (voxel coordinates, pixel (i, j) is the unit square centered at (i,
+# j)) on a grid of nx × ny pixels, `samples` per pixel length: the sample points and the weight of
+# every pixel (the summed step lengths of the samples nearest to it). The same rule as the kernel.
 function sampling_weights(a, b, nx, ny, samples)
   d = b - a
   amin, amax = 0.0, 1.0

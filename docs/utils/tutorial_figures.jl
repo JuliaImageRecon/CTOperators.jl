@@ -23,8 +23,8 @@ end
 """
     topview!(ax, g, image; view=1, count=9, reach=150)
 
-A scan seen from above: the image (grey square), the rays of one view through the central detector
-row (orange), the detector (blue) and, for cone beams, the source positions of all views (grey dots)
+A scan seen from above: the image (gray square), the rays of one view through the central detector
+row (orange), the detector (blue) and, for cone beams, the source positions of all views (gray dots)
 with the source of the view (orange dot). Parallel-beam rays are lines, drawn `reach` long on both
 sides of the detector.
 """
@@ -117,7 +117,7 @@ function cone_scan_figure(g::ConeBeam, image; view=1, title="", height=true,
   fig
 end
 
-# the ray directions of all views of parallel-beam scans, as lines through the centre of the image;
+# the ray directions of all views of parallel-beam scans, as lines through the center of the image;
 # `scans` holds (title, geometry) pairs
 function directions_figure(scans, image; size=(330 * length(scans), 360), reach=100)
   fig = Figure(; size)

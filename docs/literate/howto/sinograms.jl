@@ -1,4 +1,4 @@
-# # Use geometries of Sinograms.jl
+# # Use Geometries of Sinograms.jl
 #
 # [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl) describes CT scans with geometry
 # types such as `CtFanArc` (cone beam with the curved detector of clinical scanners), `CtFanFlat`
@@ -6,14 +6,16 @@
 # With Sinograms loaded, the projectors of CTOperators.jl accept these geometries directly: both
 # packages follow the same conventions, and the data has Sinograms' layout.
 
-using CTOperators, Sinograms, ImagePhantoms, RegularizedLeastSquares, CairoMakie, LinearAlgebra
+using CTOperators, Sinograms, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection
+using CairoMakie, LinearAlgebra
 using ImageGeoms: axis
-include(joinpath(pkgdir(CTOperators), "docs", "utils", "normal_operator.jl")) #hide
 
 # ## A Sinograms geometry in a projector
 #
-# A cone-beam scan with an arc detector over a full circle, and the image grid (lengths in mm;
-# Sinograms.jl also accepts Unitful lengths, which CTOperators.jl strips):
+# A cone-beam scan with an arc detector over a full circle, and the image grid (lengths in mm).
+# Sinograms.jl also accepts Unitful lengths; CTOperators.jl strips the units without converting
+# them, so the lengths of the Sinograms geometry must be in the same unit as those of the
+# `ImageGeom`:
 
 rg = CtFanArc(; ns=130, ds=0.6, nt=40, dt=0.8, na=64, dsd=400, dod=100)
 image = ImageGeom(; dims=(64, 64, 24), deltas=(1.0, 1.0, 1.0))
@@ -25,7 +27,7 @@ datasize(op) == Sinograms.dims(rg)
 
 projection_geometry(rg)
 
-# Both packages describe the same rays: the projection of the voxelised Shepp-Logan phantom agrees
+# Both packages describe the same rays: the projection of the voxelized Shepp-Logan phantom agrees
 # with Sinograms' analytic projection along its rays, up to the error of representing the phantom
 # by voxels (largest at the thin skull):
 
@@ -52,9 +54,9 @@ nothing #hide
 # ## A helical scan
 #
 # Sinograms.jl describes helical scans (`CtSourceHelix`; the pitch is a fraction of the axial field
-# of view per turn), but its FDK assumes a circular orbit. The projectors handle any trajectory, so an
-# iterative method reconstructs the helical scan. Here four turns over a volume that is taller than
-# the field of view of one turn:
+# of view per turn), but its FDK assumes a circular orbit. The projectors handle any trajectory, so
+# an iterative method reconstructs the helical scan. Here four turns over a volume that is taller
+# than the field of view of one turn:
 
 rg_helix = CtFanArc(; ns=130, ds=0.6, nt=40, dt=0.8, na=4 * 64, orbit=4 * 360, dsd=400, dod=100,
                     src=CtSourceHelix(; pitch=1.0, source_z0=-48))
@@ -62,19 +64,19 @@ image = ImageGeom(; dims=(64, 64, 64), deltas=(1.0, 1.0, 1.0))
 objects = ellipsoid(ellipsoid_parameters(; fovs=(64, 64, 64)))
 x_true = Float32.(phantom(axis(image, 1), axis(image, 2), axis(image, 3), objects, 2));
 
-# Sinograms' `rays` covers circular orbits only, so the data comes from the projector, applied to the
-# phantom on a grid twice as fine (so that the reconstruction does not use the model that made the
-# data):
+# Sinograms' `rays` handles only circular orbits, so we simulate the data with the projector
+# instead. To avoid using the same model for data and reconstruction, it projects the phantom on a
+# grid twice as fine:
 
 fine = ImageGeom(; dims=(128, 128, 128), deltas=(0.5, 0.5, 0.5))
 x_fine = Float32.(phantom(axis(fine, 1), axis(fine, 2), axis(fine, 3), objects, 2))
 y = JosephProjector(fine, rg_helix) * x_fine;
 
-# CGNR with the projector on the reconstruction grid, and for comparison Sinograms' FDK, which treats
-# the scan as circular:
+# CGNR with the projector on the reconstruction grid, and for comparison Sinograms' FDK, which
+# treats the scan as circular:
 
 op = JosephProjector(image, rg_helix)
-solver = createLinearSolver(CGNR, op; iterations=20)
+solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations=20)
 x_cg = reshape(solve!(solver, vec(y)), size(x_true))
 x_fdk = Float32.(fdk(plan_fbp(rg_helix, image), y));
 
@@ -103,8 +105,7 @@ nothing #hide
 # 2D data has the shape `(nb, 1, na)`, Sinograms' `(nb, na)` with a detector row in the middle. The
 # Mojette geometries are not supported.
 #
-# !!! note
-#     In Sinograms.jl 0.5, the parallel-beam coordinates that `rays` returns for `CtFanFlat` have the
-#     wrong sign of the polar angle (the ray mirrored at the central detector row), so analytic
-#     projections with `radon(rays(rg), objects)` do not match flat-panel data. Arc detectors and
-#     parallel beams are not affected, nor is the geometry that CTOperators.jl builds from `CtFanFlat`.
+# !!! warning
+#     With Sinograms.jl 0.5, analytic projections `radon(rays(rg), objects)` of a `CtFanFlat`
+#     geometry do not match its flat-panel data (the polar angle of `rays` has the wrong sign). The
+#     geometry that CTOperators.jl builds from `CtFanFlat` is not affected.

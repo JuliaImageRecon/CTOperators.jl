@@ -1,13 +1,15 @@
-# # Differentiate through a projector
+# # Differentiate through a Projector
 #
 # Applying a projector, `op * x`, has a reverse-mode rule for
 # [ChainRulesCore.jl](https://github.com/JuliaDiff/ChainRulesCore.jl), so automatic differentiation
 # packages that use these rules, such as [Zygote.jl](https://github.com/FluxML/Zygote.jl), can
 # differentiate code that contains projections: loss functions, unrolled reconstruction networks or
-# physics-based models. The rule is loaded with ChainRulesCore (a package extension).
+# physics-based models. The rule lives in a package extension that loads with ChainRulesCore;
+# loading Zygote is enough, since Zygote loads ChainRulesCore. The rule covers `op * x`; the
+# in-place `mul!` is not differentiable.
 #
-# Since the operator is linear, the derivative of `op * x` with respect to `x` is the operator itself,
-# and the backward pass applies the back projection. The same holds for `adjoint(op) * y`.
+# Since the operator is linear, the derivative of `op * x` with respect to `x` is the operator
+# itself, and the backward pass applies the back projection. The same holds for `adjoint(op) * y`.
 # Derivatives with respect to the geometry (positions of source and detector) are not provided.
 
 using CTOperators, ImagePhantoms, Zygote, CairoMakie, LinearAlgebra, Random
@@ -23,8 +25,8 @@ y .+= 0.02f0 * maximum(y) .* randn(Float32, size(y));
 
 # ## The gradient of a data term
 #
-# For the least-squares data term the gradient is known in closed form, `adjoint(op) * (op * x - y)`;
-# Zygote finds the same:
+# For the least-squares data term the gradient is known in closed form, `adjoint(op) * (op * x -
+# y)`; Zygote finds the same:
 
 data_term(x) = sum(abs2, op * x .- y) / 2
 x0 = rand(Float32, n, n)
@@ -34,8 +36,9 @@ norm(g - adjoint(op) * (op * x0 - y)) / norm(g)
 # ## A custom objective
 #
 # The benefit is in objectives without such a closed form. Here a reconstruction from only 30 noisy
-# views, with a smoothed total-variation penalty that is easy to write down and has no ready-made
-# solver, minimised by plain projected gradient descent:
+# views, with a hand-written smoothed total-variation penalty (RegularizedLeastSquares.jl has a TV
+# regularization of its own; this one shows how any differentiable penalty works), minimized by
+# plain projected gradient descent:
 
 function smoothed_tv(x; epsilon=0.03f0)
   dx = x[2:end, 1:end-1] .- x[1:end-1, 1:end-1]

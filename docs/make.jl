@@ -37,9 +37,9 @@ makedocs(;
       "Tomosynthesis" => "generated/tutorials/tomosynthesis.md",
     ],
     "How to" => [
-      "Set up a Geometry" => "generated/howto/geometries.md",
+      "Set Up a Geometry" => "generated/howto/geometries.md",
       "Run on a GPU" => "generated/howto/gpu.md",
-      "Ordered Subsets and Normalisation" => "generated/howto/subsets.md",
+      "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
       "Differentiate through a Projector" => "generated/howto/differentiation.md",
       "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
       "Implement a CT Operator" => "generated/howto/implement_operator.md",

@@ -8,7 +8,8 @@
 # ## Create the projector on the device
 #
 # Load the GPU package and pass its array type as `storage`. The geometry is created on the CPU as
-# usual and copied to the device by the constructor, in the element type `eltype` (default `Float32`):
+# usual and copied to the device by the constructor, in the element type `eltype` (default
+# `Float32`):
 #
 # ```julia
 # using CTOperators, CUDA
@@ -18,8 +19,8 @@
 # op = JosephProjector(image, geometry; storage=CuArray)
 # ```
 #
-# For AMD GPUs use `ROCArray` (AMDGPU.jl), for Apple GPUs `MtlArray` (Metal.jl). Metal has no
-# `Float64`; production use is tested on CPUs and NVIDIA GPUs.
+# For AMD GPUs use `ROCArray` (AMDGPU.jl), for Apple GPUs `MtlArray` (Metal.jl); Metal has no
+# `Float64`. The test suite runs on CPUs and on NVIDIA and AMD GPUs.
 #
 # ## Apply it to data on the device
 #
@@ -29,15 +30,20 @@
 # x = CuArray(rand(Float32, 256, 256, 256))
 # y = op * x                 # a CuArray of size (512, 512, 720)
 # z = adjoint(op) * y        # back projection, a CuArray
+# z_cpu = Array(z)           # back to the CPU
 # ```
+#
+# Data on another device than the projector's raises an error from the GPU package (for example
+# when a kernel is given a CPU array).
 #
 # `mul!(y, op, x)` and `mul!(z, adjoint(op), y)` reuse preallocated arrays. Iterative solvers work
 # unchanged when their data lives on the device; the solvers of RegularizedLeastSquares.jl allocate
-# their work arrays like the measured data `b` (CGNR also needs the normal operator `adjoint(op) * op`,
-# see [Getting Started](@ref)):
+# their work arrays like the measured data. The normal operator of LinearOperatorCollection.jl
+# allocates its buffer on the projector's device (see [Getting Started](@ref)):
 #
 # ```julia
-# solver = createLinearSolver(CGNR, op; iterations=20)
+# using RegularizedLeastSquares, LinearOperatorCollection
+# solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations=20)
 # x = solve!(solver, vec(y))      # y a CuArray: the iterations run on the GPU
 # ```
 #
@@ -65,8 +71,8 @@
 # - The workgroup size and the order in which threads take the rays can be tuned for a device with
 #   the keyword `launch`, a [`LaunchConfig`](@ref); the defaults (workgroups of 64, tiles of 8 × 8
 #   detector cells) were chosen on an AMD Radeon RX 7900 XT. See
-#   [Workgroups and ray order on GPUs](@ref).
-# - The projector holds no large workspace: its memory is the geometry (a few numbers per view for
+#   [Workgroups and Ray Order on GPUs](@ref).
+# - The projector holds no workspace: its memory is the geometry (a few numbers per view for
 #   detector geometries, two points per ray for ray lists).
 # - Creating a projector is cheap; for ordered subsets, create the projectors of all subsets once
-#   (see [Ordered subsets and normalisation](@ref)).
+#   (see [Ordered Subsets and Normalization](@ref)).

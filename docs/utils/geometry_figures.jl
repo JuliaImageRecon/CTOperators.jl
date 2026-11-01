@@ -53,7 +53,7 @@ function parallel_beam_figure(g::ParallelBeam, image; view=1, length=120)
   fig = Figure(size=(600, 460))
   ax = scene_axis(fig, (1, 1); title="parallel beam, view 1")
   draw_volume!(ax, image)
-  c, u, v, d = (g.centre[:, view], g.u[:, view], g.v[:, view], g.direction[:, view])
+  c, u, v, d = (g.center[:, view], g.u[:, view], g.v[:, view], g.direction[:, view])
   cell(iu, iv) = c + (iu - (g.nu + 1) / 2) * u + (iv - (g.nv + 1) / 2) * v
   rays = [Point3f(cell(iu, iv) - length * d) => Point3f(cell(iu, iv) + length * d)
           for iu in round.(Int, range(1, g.nu, 6)), iv in round.(Int, range(1, g.nv, 3))]
@@ -69,7 +69,7 @@ end
 # lines of response of a ray list in the plane z = 0, with the image
 function raylist_figure(rl::RayList, image; every=7)
   fig = Figure(size=(460, 460))
-  ax = Axis(fig[1, 1]; aspect=DataAspect(), xlabel="x", ylabel="y", title="ray list: lines of response")
+  ax = Axis(fig[1, 1]; aspect=DataAspect(), xlabel="x", ylabel="y", title="ray list: every $(every)th line of response")
   idx = 1:every:size(rl.starts, 2)
   linesegments!(ax, [Point2f(rl.starts[1:2, i]) => Point2f(rl.ends[1:2, i]) for i in idx];
                 color=(:orange, 0.25))

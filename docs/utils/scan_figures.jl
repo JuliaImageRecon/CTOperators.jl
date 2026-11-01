@@ -1,12 +1,12 @@
-# Interactive 3D figures of a cone-beam scan for the documentation (WGLMakie through Bonito, exported
-# as static pages; see docs/make.jl). Included invisibly by the examples, so that the pages show the
-# construction of the scan, not the plotting code.
+# Interactive 3D figures of a cone-beam scan for the documentation (WGLMakie through Bonito,
+# exported as static pages; see docs/make.jl). Included invisibly by the examples, so that the pages
+# show the construction of the scan, not the plotting code.
 
 using CTOperators, WGLMakie, Bonito
 include(joinpath(@__DIR__, "scan_drawing.jl"))
 using LinearAlgebra: normalize
 
-# One view: phantom, a fan of rays, the detector coloured by the projection of that view.
+# One view: phantom, a fan of rays, the detector colored by the projection of that view.
 function single_view_app(g::ConeBeam, params, y, n; view=1, step=2)
   App() do session
     fig = Figure(size=(700, 600))
@@ -24,12 +24,12 @@ end
 
 # The detector of a ConeBeam view as a rigid transformation of a fixed surface: the surface lies in
 # the local frame (cells along x and z, normal along y); per view it is rotated into the frame
-# (u, v x u, v) and moved to the detector centre. Only this transformation and the image change
+# (u, v x u, v) and moved to the detector center. Only this transformation and the image change
 # from view to view, which keeps the recorded slider states small.
 function detector_frame(g::ConeBeam, k)
   u, v = normalize(g.u[:, k]), normalize(g.v[:, k])
   w = cross3(v, u)
-  rotation_quaternion(hcat(u, w, v)), Vec3f(g.centre[:, k])
+  rotation_quaternion(hcat(u, w, v)), Vec3f(g.center[:, k])
 end
 cross3(a, b) = [a[2] * b[3] - a[3] * b[2], a[3] * b[1] - a[1] * b[3], a[1] * b[2] - a[2] * b[1]]
 
@@ -59,7 +59,8 @@ function local_detector(g::ConeBeam, step)
   Float32[u for u in us, v in vs], zeros(Float32, length(us), length(vs)), Float32[v for u in us, v in vs]
 end
 
-# The motion: the source on its helix; the slider moves source, cone and detector with its projection.
+# The motion: the source on its helix; the slider moves source, cone and detector with its
+# projection.
 function motion_app(g::ConeBeam, params, y, n; every=6, step=3)
   App() do session
     view = Bonito.Slider(1:every:size(g.source, 2))
@@ -73,9 +74,9 @@ function motion_app(g::ConeBeam, params, y, n; every=6, step=3)
     detector = surface!(ax, local_detector(g, step)...; color=map(k -> y[1:step:end, 1:step:end, k], view.value),
                         colormap=:grays, colorrange=(0, maximum(y)))
     on(view.value; update=true) do k
-      q, centre = detector_frame(g, k)
+      q, center = detector_frame(g, k)
       Makie.rotate!(detector, q)
-      Makie.translate!(detector, centre)
+      Makie.translate!(detector, center)
     end
     Bonito.record_states(session, DOM.div(DOM.div("view ", view), fig))
   end

@@ -1,12 +1,12 @@
-# # Workgroups and ray order on GPUs
+# # Workgroups and Ray Order on GPUs
 #
 # The projectors trace one ray per thread (a work-item in the terms of KernelAbstractions.jl).
 # Threads are launched in workgroups, groups of threads that run together on the same part of the
-# device (thread blocks in CUDA; see the
-# [terminology of KernelAbstractions.jl](https://juliagpu.github.io/KernelAbstractions.jl/stable/quickstart/#Terminology)).
+# device (thread blocks in CUDA; see the [terminology of
+# KernelAbstractions.jl](https://juliagpu.github.io/KernelAbstractions.jl/stable/quickstart/#Terminology)).
 # How large the workgroups are, and which thread traces which ray, does not change the result, but
-# it does change the speed on GPUs. These choices are not part of [Siddon's method](@ref) or
-# [Joseph's method](@ref). This page describes what CTOperators.jl does by default and how to change
+# it does change the speed on GPUs. These choices are not part of [Siddon's Method](@ref) or
+# [Joseph's Method](@ref). This page describes what CTOperators.jl does by default and how to change
 # it with a [`LaunchConfig`](@ref).
 
 using CTOperators
@@ -20,7 +20,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "launch_figures.jl")) #hi
 # workgroup trace a square of detector cells instead, for example 8 × 8 cells for 64 threads.
 #
 # The figure shows both for one view of a cone-beam scan (a 64 × 32 detector, an image of 64³
-# voxels). Top: the detector cells, coloured by the workgroup that traces them (the colours repeat);
+# voxels). Top: the detector cells, colored by the workgroup that traces them (the colors repeat);
 # one workgroup is black. In data order, a workgroup covers a whole detector row here because the
 # detector is 64 cells wide. Bottom: the rays of the black workgroup in the central layer of the
 # image, a slice of voxels perpendicular to the direction the rays mainly run in (Joseph's method
@@ -34,7 +34,7 @@ nothing #hide
 # ![Workgroups in data order and in tile order, and the voxels their rays read](launch_order.png)
 
 # Tiles only apply to detector geometries. The rays of a [`RayList`](@ref) are always traced in data
-# order, since neighbouring entries of a list need not be neighbouring rays.
+# order, since neighboring entries of a list need not be neighboring rays.
 #
 # ## Effect
 #
@@ -72,8 +72,8 @@ nothing #hide
 #
 # `workgroupsize=nothing` lets KernelAbstractions.jl choose the workgroup size; `tile=nothing` keeps
 # data order. Tile size and workgroup size are independent: the threads take the cells tile by tile,
-# so with `workgroupsize` equal to the number of cells of a tile each workgroup traces one tile, with
-# a smaller one several workgroups share a tile.
+# so with `workgroupsize` equal to the number of cells of a tile each workgroup traces one tile,
+# with a smaller one several workgroups share a tile.
 #
 # The best settings depend on the device and the problem. To find them, time a few combinations on a
 # problem of the size you need (`image`, `geometry` and an image `x` on the device as in

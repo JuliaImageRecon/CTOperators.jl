@@ -8,7 +8,7 @@ using CTOperators, CairoMakie
 function topview_figure(; beta=pi / 6, dso=3.0, dsd=5.0, nu=8, du=0.5, n=2.0)
   g = circular_cone_beam(; angles=[beta], dso, dsd, nu, nv=1, du)
   s = g.source[1:2, 1]
-  c = g.centre[1:2, 1]
+  c = g.center[1:2, 1]
   u = g.u[1:2, 1]
   first_cell = c - (nu - 1) / 2 * u
   last_cell = c + (nu - 1) / 2 * u
