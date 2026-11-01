@@ -45,7 +45,7 @@ AbstractCTOperator
 
 ```@autodocs
 Modules = [CTOperators]
-Pages = ["operators/operators.jl"]
+Pages = ["operators/operators.jl", "operators/launch.jl"]
 Private = false
 ```
 

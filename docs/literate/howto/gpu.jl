@@ -62,6 +62,10 @@
 #
 # - Forward projections run one thread per ray and need no atomic operations. Back projections add
 #   into the image from many rays at once with atomic additions.
+# - The workgroup size and the order in which threads take the rays can be tuned for a device with
+#   the keyword `launch`, a [`LaunchConfig`](@ref); the defaults (workgroups of 64, tiles of 8 × 8
+#   detector cells) were chosen on an AMD Radeon RX 7900 XT. See
+#   [Workgroups and ray order on GPUs](@ref).
 # - The projector holds no large workspace: its memory is the geometry (a few numbers per view for
 #   detector geometries, two points per ray for ray lists).
 # - Creating a projector is cheap; for ordered subsets, create the projectors of all subsets once

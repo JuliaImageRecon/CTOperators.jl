@@ -48,6 +48,7 @@ makedocs(;
       "Coordinates and Conventions" => "generated/explanation/conventions.md",
       "Siddon's Method" => "generated/explanation/siddon.md",
       "Joseph's Method" => "generated/explanation/joseph.md",
+      "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
     ],
     "Reference" => [
       "API" => "api.md",

@@ -103,6 +103,8 @@ nothing #hide
 #   volume counted as zero.
 # - The forward projection runs one work-item per ray; the back projection adds the four weighted
 #   values of every sample with atomic additions.
+# - How the rays are distributed over the threads of a GPU is not part of the method; see
+#   [Workgroups and ray order on GPUs](@ref).
 #
 # ## Reference
 #
