@@ -23,3 +23,4 @@ CTOperators = {path = ".."}
 Documenter = "1"
 LinearOperatorCollection = "2.4"
 Literate = "2"
+RegularizedLeastSquares = "0.16.12"
