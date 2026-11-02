@@ -17,7 +17,10 @@ GPU libraries (`*-rocm`: AMD GPUs through AMDGPU.jl; `*-cuda`: NVIDIA GPUs throu
 `parallelproj-cuda`, the CUDA build of parallelproj with CuPy arrays in its own environment
 `envs/parallelproj-cuda`) run only when named with `--libs`. Before a first CUDA run,
 `julia --project=benchmark/envs/parallelproj-cuda benchmark/check_parallelproj_cuda.jl` checks that
-parallelproj computes on CuPy arrays directly (otherwise its timings would include transfers).
+parallelproj computes on CuPy arrays directly (otherwise its timings would include transfers). To choose
+a `LaunchConfig` for a GPU, `julia --project=benchmark/envs/ctoperators benchmark/tune_launch.jl
+<cuda|rocm> [device] [problem] [projector]` times workgroup sizes and tiles of detector cells on one
+problem.
 
 Options: `--libs` (comma separated), `--threads` (comma separated, default all cores), `--device`
 (the GPU of GPU libraries, counted from 1, default 1; e.g. a free one on a shared machine), `--budget`
