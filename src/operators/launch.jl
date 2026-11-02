@@ -1,9 +1,8 @@
 # How the projection kernels are launched: the workgroup size and the order in which the threads
 # take the rays. Thread j (1-based) traces ray `ray_index(order, j)`, or none if that is 0
-# (padding). Measured on an RX 7900 XT (benchmark/README.md): workgroups of 64 instead of the
-# backend's default and tiles of 8 × 8 detector cells make forward projections at 256^3 up to
-# 2.2 times faster; on the CPU neither changes much. The best values depend on the device, hence
-# the configuration.
+# (padding). Both affect the speed on GPUs (rays of neighboring detector cells read neighboring
+# voxels), and the best values depend on the device, hence the configuration; the defaults are in
+# `default_launch`.
 
 """
     LaunchConfig(; workgroupsize=nothing, tile=nothing)

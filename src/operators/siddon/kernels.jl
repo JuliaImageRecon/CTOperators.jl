@@ -9,12 +9,12 @@
 # length, step that axis's voxel index (and the linear index) by +-1. Leaving the volume on the
 # stepped axis ends the ray. The planes are derived from the voxel, never computed independently
 # of it: in Float32 an entry point within rounding of a plane could otherwise put voxel and plane
-# counter one apart, shifting all later voxels of that axis (found by comparing with Float64).
+# counter one apart, shifting all later voxels of that axis.
 # Plane crossings are computed from the plane index rather than accumulated, so rounding errors do
 # not add up along the ray. Simultaneous crossings give zero-length segments.
 #
 # No closures in this code: a closure capturing a variable that is reassigned (the loop state) is
-# boxed and the kernel no longer compiles for GPUs (docs/memory/ka-lessons.md of the project).
+# boxed and the kernel no longer compiles for GPUs.
 
 @kernel inbounds = true function siddon_forward_kernel!(y, @Const(image), grid, geometry, order)
   i = ray_index(order, @index(Global, Linear))
@@ -63,7 +63,7 @@ end
   offset = map(crossing_offset, p, d)
   alpha = map(crossing, plane, invd, offset, d)
   # The loop state in scalars, one branch per axis: indexing the small vectors with a run-time axis
-  # would keep them in memory instead of registers (measured: 9.0 ns per step with SVectors).
+  # would keep them in memory instead of registers, several times slower per step.
   nx, ny, nz = dims
   ix, iy, iz = vox[1], vox[2], vox[3]
   sx, sy, sz = step[1], step[2], step[3]
