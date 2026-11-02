@@ -22,6 +22,19 @@
 # For AMD GPUs use `ROCArray` (AMDGPU.jl), for Apple GPUs `MtlArray` (Metal.jl); Metal has no
 # `Float64`. The test suite runs on CPUs and on NVIDIA and AMD GPUs.
 #
+# ## Choose the GPU
+#
+# On a machine with several GPUs, select one with `device!` of KernelAbstractions.jl (counted from 1)
+# *before* creating the projector: the projector stores its geometry on the GPU that is active when
+# it is created, and all data passed to it must live there.
+#
+# ```julia
+# using KernelAbstractions: device!, ndevices
+# ndevices(CUDABackend())              # number of GPUs
+# device!(CUDABackend(), 2)            # the second GPU, for this task
+# op = JosephProjector(image, geometry; storage=CuArray)
+# ```
+
 # ## Apply it to data on the device
 #
 # Image and projection data must live on the same device as the projector:

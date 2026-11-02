@@ -39,13 +39,26 @@ x_true = Float32.(phantom(axis(image, 1), axis(image, 2), axis(image, 3), object
 # and detector rotate about the object, and in our scan the object also moves along the rotation
 # axis.
 #
-# The geometry describes this: per view the position of the source and of the detector. The source
-# is 128 mm from the rotation axis and 256 mm from the detector, so the object is magnified by 2 on
-# the detector. The detector has 192 × 96 cells of 1 mm; at the rotation axis a cell covers 0.5 mm,
-# so two rays pass through each voxel per direction. (With one ray per voxel, the rays of a view
-# cover the voxels unevenly; see [Siddon's Method](@ref).) The object moves by 32 mm, half the
-# volume height, per turn. In the object's frame, source and detector therefore move on a helix: two
-# turns, 240 views.
+# The geometry describes this: per view the position of the source and of the detector. The
+# functions that build the common scans take these parameters:
+#
+# - `angles`: the angle β of the source in every view, counterclockwise from the `y` axis (radians);
+# - `dso`: the distance from the source to the rotation axis, the `z` axis;
+# - `dsd`: the distance from the source to the detector;
+# - `nu`, `nv`: the number of detector cells along `u` (a detector row) and along `v` (a column,
+#   parallel to the rotation axis), `du`, `dv` their sizes;
+# - for helical scans, `pitch`: how far source and detector move along `z` per turn, and `z0`: the
+#   height of the first view.
+#
+# All lengths are in the unit of the image (mm here). [The Parameters of a Scan](@ref) introduces
+# them step by step, with figures.
+
+# In our scan the source is 128 mm from the rotation axis and 256 mm from the detector, so the
+# object is magnified by 2 on the detector. The detector has 192 × 96 cells of 1 mm; at the rotation
+# axis a cell covers 0.5 mm, so two rays pass through each voxel per direction. (With one ray per
+# voxel, the rays of a view cover the voxels unevenly; see [Siddon's Method](@ref).) The object moves
+# by 32 mm, half the volume height, per turn. In the object's frame, source and detector therefore
+# move on a helix: two turns, 240 views, starting 32 mm below the center.
 
 geometry = helical_cone_beam(; angles=range(0, 4pi, 240), pitch=n / 2, z0=-n / 2, dso=2n, dsd=4n,
                              nu=192, nv=96, du=1.0, dv=1.0);

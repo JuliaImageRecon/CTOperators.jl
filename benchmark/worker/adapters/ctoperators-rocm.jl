@@ -4,6 +4,9 @@
 using AMDGPU
 using LinearAlgebra: mul!
 
+# the GPU to run on, before any array is created on it
+CTOperators.KA.device!(ROCBackend(), DEVICE)
+
 library_version() = string(pkgversion(CTOperators))
 method_name() = string(nameof(PROJECTOR))[1:end-length("Projector")]
 device_name() = AMDGPU.HIP.name(AMDGPU.device())

@@ -38,7 +38,7 @@ function instantiate(lib)
   run(`$(Base.julia_cmd()) --project=$env -e "using Pkg; Pkg.instantiate()"`)
 end
 
-function run_suite(suite, libs, threads, budget)
+function run_suite(suite, libs, threads, budget, device)
   haskey(SUITES, suite) || error("unknown suite $suite; see `julia benchmark/bench.jl list`")
   mkpath(joinpath(ROOT, "out"))
   out = joinpath(ROOT, "out", Dates.format(now(), "yyyymmdd-HHMMSS") * "-$suite.csv")
@@ -48,7 +48,8 @@ function run_suite(suite, libs, threads, budget)
     for nt in threads
       env = environment(lib)
       cmd = `$(Base.julia_cmd()) --project=$env --threads=$nt $worker $lib $out $budget $(SUITES[suite])`
-      run(addenv(cmd, "OMP_NUM_THREADS" => string(nt)))   # OpenMP libraries (parallelproj)
+      # OpenMP libraries (parallelproj); the GPU of the GPU libraries
+      run(addenv(cmd, "OMP_NUM_THREADS" => string(nt), "BENCH_DEVICE" => device))
     end
   end
   println("results: ", out)
@@ -63,7 +64,7 @@ function main(args)
   elseif args[1] == "run"
     libs = split(option(args, "libs", join(LIBS, ",")), ",")
     threads = parse.(Int, split(option(args, "threads", string(Sys.CPU_THREADS)), ","))
-    run_suite(args[2], libs, threads, option(args, "budget", "2"))
+    run_suite(args[2], libs, threads, option(args, "budget", "2"), option(args, "device", "1"))
   else
     error("unknown command $(args[1])")
   end

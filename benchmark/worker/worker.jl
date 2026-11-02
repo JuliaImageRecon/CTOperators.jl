@@ -7,6 +7,8 @@
 using BenchmarkTools, Printf
 
 const LIB, OUT, BUDGET = ARGS[1], ARGS[2], parse(Float64, ARGS[3])
+# the GPU of GPU libraries, counted from 1 (bench.jl --device)
+const DEVICE = parse(Int, get(ENV, "BENCH_DEVICE", "1"))
 const PROBLEM_NAMES = ARGS[4:end]
 
 # Defaults for CPU libraries; adapters for devices override them: the device in the results, moving

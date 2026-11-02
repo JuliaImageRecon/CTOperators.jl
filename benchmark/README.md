@@ -17,9 +17,13 @@ GPU libraries (`*-rocm`: AMD GPUs through AMDGPU.jl; `*-cuda`: NVIDIA GPUs throu
 `parallelproj-cuda`, the CUDA build of parallelproj with CuPy arrays in its own environment
 `envs/parallelproj-cuda`) run only when named with `--libs`. Before a first CUDA run,
 `julia --project=benchmark/envs/parallelproj-cuda benchmark/check_parallelproj_cuda.jl` checks that
-parallelproj computes on CuPy arrays directly (otherwise its timings would include transfers).
+parallelproj computes on CuPy arrays directly (otherwise its timings would include transfers). To choose
+a `LaunchConfig` for a GPU, `julia --project=benchmark/envs/ctoperators benchmark/tune_launch.jl
+<cuda|rocm> [device] [problem] [projector]` times workgroup sizes and tiles of detector cells on one
+problem.
 
-Options: `--libs` (comma separated), `--threads` (comma separated, default all cores), `--budget`
+Options: `--libs` (comma separated), `--threads` (comma separated, default all cores), `--device`
+(the GPU of GPU libraries, counted from 1, default 1; e.g. a free one on a shared machine), `--budget`
 (seconds of repeated calls per measurement, default 2). Measure on a quiet machine.
 
 ## How it works
@@ -133,3 +137,23 @@ Observations:
   against 102 ms), slower at 128³ (20 ms against 4.9 ms).
 - Joseph's back projection takes 4–5× its forward projection (four atomic additions per sample),
   Siddon's about 2.3× (one per voxel): the next target.
+
+### Masks (GPU)
+
+AMD Radeon RX 7900 XT, Float32, cone256 (256³ volume, 256² detector, 360 views), minimum time,
+2026-11-02, branch `nh/masks` (the GPU was also the desktop GPU in use: approximate). Image masks:
+the circular field of view (`MaskCircle`) and a box of 64³ voxels in the center; ray mask: 20 % of
+the rays masked at random.
+
+| image mask | ray mask | Siddon forward / back | Joseph forward / back |
+|---|---|---|---|
+| none | none | 111 / 264 ms | 113 / 537 ms |
+| none | 20 % masked | 96 / 212 ms | 108 / 438 ms |
+| circle | none | 111 / 257 ms | 115 / 542 ms |
+| box 64³ | none | 2.6 / 6.7 ms | 3.1 / 18.0 ms |
+| box 64³ | 20 % masked | 2.2 / 5.5 ms | 2.9 / 15.0 ms |
+
+Rays are clipped to the bounding box of the image mask: a small region of interest makes the
+projections 30 to 40× faster; the circle fills its box and gains nothing.
+Masked rays are not traced: the back projection gets faster by about the masked fraction.
+

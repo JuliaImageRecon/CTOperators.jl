@@ -11,10 +11,11 @@ using LinearAlgebra: normalize
 const np = pyimport("numpy")
 const cp = pyimport("cupy")
 const ppc = pyimport("parallelproj_core")
+cp.cuda.Device(DEVICE - 1).use()   # the GPU to run on (CuPy counts from 0)
 
 library_version() = pyconvert(String, ppc.__version__)
 method_name() = "Joseph"
-device_name() = pyconvert(String, cp.cuda.runtime.getDeviceProperties(0)["name"].decode())
+device_name() = pyconvert(String, cp.cuda.runtime.getDeviceProperties(DEVICE - 1)["name"].decode())
 supports(p) = true
 measures_error(p) = true
 

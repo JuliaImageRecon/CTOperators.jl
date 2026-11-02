@@ -18,16 +18,16 @@
 #
 # No closures in this code (see siddon/kernels.jl).
 
-@kernel inbounds = true function joseph_forward_kernel!(y, @Const(image), grid, geometry, order)
+@kernel inbounds = true function joseph_forward_kernel!(y, @Const(image), grid, geometry, order, raymask)
   i = ray_index(order, @index(Global, Linear))
   if i > 0
-    y[i] = joseph_ray(Gather(image), grid, geometry, i)
+    y[i] = is_masked(raymask, i) ? zero(eltype(y)) : joseph_ray(Gather(image), grid, geometry, i)
   end
 end
 
-@kernel inbounds = true function joseph_backward_kernel!(image, @Const(y), grid, geometry, order)
+@kernel inbounds = true function joseph_backward_kernel!(image, @Const(y), grid, geometry, order, raymask)
   i = ray_index(order, @index(Global, Linear))
-  if i > 0
+  if i > 0 && !is_masked(raymask, i)
     v = y[i]
     if !iszero(v)
       joseph_ray(Scatter(image, v), grid, geometry, i)
@@ -64,10 +64,12 @@ end
 end
 
 # the region where the image can be nonzero for rays with principal axis k: the slabs of the
-# layers along k, and up to the next voxel center outside the volume across k
-@inline function joseph_support(dims, k, ::Type{T}) where {T}
-  lo = SVector(ntuple(m -> m == k ? T(1 // 2) : zero(T), 3))
-  hi = SVector(ntuple(m -> m == k ? T(dims[m]) + T(1 // 2) : T(dims[m] + 1), 3))
+# layers along k within the box of the image mask (the volume without a mask), and across k up to
+# the next voxel center outside the box
+@inline function joseph_support(grid::VoxelGrid{T}, k) where {T}
+  half = T(1 // 2)
+  lo = SVector(ntuple(m -> m == k ? grid.lo[m] : grid.lo[m] - half, 3))
+  hi = SVector(ntuple(m -> m == k ? grid.hi[m] : grid.hi[m] + half, 3))
   lo, hi
 end
 
@@ -78,7 +80,7 @@ end
   d = (b - a) ./ grid.deltas
   k = principal_axis(d)
   iszero(pick(d, k)) && return zero(T)   # a point, not a ray
-  lo, hi = joseph_support(grid.dims, k, T)
+  lo, hi = joseph_support(grid, k)
   amin, amax = clip(p, d, lo, hi, raytype(geometry))
   amin < amax || return zero(T)
   smin, smax = segment_range(raytype(geometry), T)

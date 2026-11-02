@@ -8,7 +8,8 @@ Interface:
 
 * `geometry(op)::G`, `image_geometry(op)::ImageGeom`
 * `similar_projector(op, geometry)`: the same kind of projector, with the same image geometry and
-  options, for another geometry (used by `subset` and `adapt`)
+  options, for another geometry (used by `subset` and `adapt`); a projector that stores a ray mask
+  also accepts the keyword `raymask` (default `ray_mask(op)`)
 * the methods of [`AbstractCTOperator`](@ref)
 """
 abstract type AbstractProjector{T,G<:AbstractProjectionGeometry} <: AbstractCTOperator{T} end
@@ -28,9 +29,10 @@ The `ImageGeom` the operator was built for.
 function image_geometry end
 
 """
-    similar_projector(op::AbstractProjector, geometry)
+    similar_projector(op::AbstractProjector, geometry; raymask=ray_mask(op))
 
 A projector of the same kind and with the same image geometry and options as `op`, for `geometry`.
+The keyword `raymask` exists only for projectors that store a ray mask.
 """
 function similar_projector end
 
@@ -85,11 +87,12 @@ KA.get_backend(a::AdjointCTOperator) = KA.get_backend(a.parent)
 forward!(x, a::AdjointCTOperator, y) = backward!(x, a.parent, y)
 backward!(y, a::AdjointCTOperator, x) = forward!(y, a.parent, x)
 
-# Shaped arrays and flat vectors (RegularizedLeastSquares works on vectors) both work.
+# Shaped arrays and flat vectors (RegularizedLeastSquares works on vectors) both work. `apply!`
+# (masks.jl) applies the operator with its masks.
 function LinearAlgebra.mul!(y::AbstractArray, op::AbstractCTOperator, x::AbstractArray)
   check_length(x, imagesize(op), "input")
   check_length(y, datasize(op), "output")
-  forward!(reshape(y, datasize(op)), op, reshape(x, imagesize(op)))
+  apply!(reshape(y, datasize(op)), op, reshape(x, imagesize(op)))
   y
 end
 
@@ -141,10 +144,14 @@ KA.get_backend(op::AbstractProjector) = KA.get_backend(storage_array(geometry(op
     subset(op::AbstractProjector, views)
 
 The projector of the views `views` of `op` (detector geometries; a vector or range of view
-indices), for ordered-subset methods. It shares the image geometry and options with `op`.
+indices), for ordered-subset methods. It shares the image geometry and options with `op`, and the
+views of its ray mask.
 """
-subset(op::AbstractProjector{T,<:AbstractDetectorGeometry}, views) where {T} =
-  similar_projector(op, subset(geometry(op), views))
+function subset(op::AbstractProjector{T,<:AbstractDetectorGeometry}, views) where {T}
+  g = subset(geometry(op), views)
+  rays = ray_mask(op)
+  isnothing(rays) ? similar_projector(op, g) : similar_projector(op, g; raymask=Array(rays)[:, :, views])
+end
 
 Adapt.adapt_structure(to, op::AbstractProjector) = similar_projector(op, adapt(to, geometry(op)))
 
@@ -158,6 +165,7 @@ with their keywords `eltype` and `storage`.
 device_geometry(geometry, ::Type{T}, storage) where {T} =
   adapt(storage isa UnionAll ? storage{T} : storage, geometry)
 
+include("masks.jl")
 include("launch.jl")
 include("siddon/siddon.jl")
 include("joseph/joseph.jl")

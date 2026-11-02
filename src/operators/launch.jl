@@ -1,9 +1,8 @@
 # How the projection kernels are launched: the workgroup size and the order in which the threads
 # take the rays. Thread j (1-based) traces ray `ray_index(order, j)`, or none if that is 0
-# (padding). Measured on an RX 7900 XT (benchmark/README.md): workgroups of 64 instead of the
-# backend's default and tiles of 8 × 8 detector cells make forward projections at 256^3 up to
-# 2.2 times faster; on the CPU neither changes much. The best values depend on the device, hence
-# the configuration.
+# (padding). Both affect the speed on GPUs (rays of neighboring detector cells read neighboring
+# voxels), and the best values depend on the device, hence the configuration; the defaults are in
+# `default_launch`.
 
 """
     LaunchConfig(; workgroupsize=nothing, tile=nothing)
@@ -88,7 +87,8 @@ nthreads(o::TileOrder, geometry) = cld(o.nu, o.tu) * o.tu * cld(o.nv, o.tv) * o.
   ifelse(iu < o.nu && iv < o.nv, 1 + iu + o.nu * (iv + o.nv * k), 0)
 end
 
-# Launches `kernel(out, in, grid, geometry, order)` of the projector `op` over its rays.
+# Launches `kernel(out, in, grid, geometry, order, raymask)` of the projector `op` over its rays;
+# `raymask` is `nothing` or the ray mask on the device (the kernels skip masked rays).
 function launch_rays!(kernel, op, out, in)
   g = geometry(op)
   nrays(g) == 0 && return out
@@ -97,6 +97,6 @@ function launch_rays!(kernel, op, out, in)
   order = ray_order(config, g)
   wg = config.workgroupsize
   k = isnothing(wg) ? kernel(backend) : kernel(backend, wg)
-  k(out, in, op.grid, g, order; ndrange=nthreads(order, g))
+  k(out, in, op.grid, g, order, ray_mask(op); ndrange=nthreads(order, g))
   out
 end
