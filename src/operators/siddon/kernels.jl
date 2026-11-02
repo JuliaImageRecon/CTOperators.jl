@@ -16,16 +16,16 @@
 # No closures in this code: a closure capturing a variable that is reassigned (the loop state) is
 # boxed and the kernel no longer compiles for GPUs.
 
-@kernel inbounds = true function siddon_forward_kernel!(y, @Const(image), grid, geometry, order)
+@kernel inbounds = true function siddon_forward_kernel!(y, @Const(image), grid, geometry, order, raymask)
   i = ray_index(order, @index(Global, Linear))
   if i > 0
-    y[i] = siddon_ray(Gather(image), grid, geometry, i)
+    y[i] = is_masked(raymask, i) ? zero(eltype(y)) : siddon_ray(Gather(image), grid, geometry, i)
   end
 end
 
-@kernel inbounds = true function siddon_backward_kernel!(image, @Const(y), grid, geometry, order)
+@kernel inbounds = true function siddon_backward_kernel!(image, @Const(y), grid, geometry, order, raymask)
   i = ray_index(order, @index(Global, Linear))
-  if i > 0
+  if i > 0 && !is_masked(raymask, i)
     v = y[i]
     if !iszero(v)
       siddon_ray(Scatter(image, v), grid, geometry, i)
@@ -38,7 +38,7 @@ end
   a, b = ray(geometry, i)
   p = to_index(grid, a)
   d = (b - a) ./ grid.deltas
-  amin, amax = clip(p, d, grid.dims, raytype(geometry))
+  amin, amax = clip(p, d, grid.lo, grid.hi, raytype(geometry))   # the box of the image mask
   amin < amax || return zero(T)
   siddon_traverse(action, grid.dims, p, d, norm(b - a), amin, amax)
 end

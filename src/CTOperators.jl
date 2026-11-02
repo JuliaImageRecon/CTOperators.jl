@@ -5,11 +5,11 @@ using StaticArrays
 using Adapt
 using KernelAbstractions
 using Atomix
-using ImageGeoms: ImageGeom, axis
+using ImageGeoms: ImageGeom, axis, MaskCircle, MaskEllipse, MaskAllButEdge
 const KA = KernelAbstractions
 
 export AbstractCTOperator
-export ImageGeom
+export ImageGeom, MaskCircle, MaskEllipse, MaskAllButEdge
 export AbstractProjectionGeometry, AbstractDetectorGeometry, RaySegment, RayLine
 export RayList, ConeBeam, ArcConeBeam, ParallelBeam
 export circular_cone_beam, helical_cone_beam, parallel_beam

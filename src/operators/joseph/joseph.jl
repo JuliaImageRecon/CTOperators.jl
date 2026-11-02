@@ -1,5 +1,5 @@
 """
-    JosephProjector(image::ImageGeom, geometry; eltype=Float32, storage=Array, launch=nothing)
+    JosephProjector(image::ImageGeom, geometry; eltype=Float32, storage=Array, launch=nothing, raymask=nothing)
 
 Projector with Joseph's method (Joseph 1982): the image is interpolated bilinearly within each
 layer of voxels perpendicular to the axis the ray runs most along (its principal axis), and the
@@ -25,6 +25,14 @@ Keywords:
   and projection data passed to the operator must live on that device.
 * `launch` is a [`LaunchConfig`](@ref) to tune the kernel launches for a device, `nothing` for the
   defaults of the device.
+* `raymask` is `nothing` or an array with one entry per ray, of the data size
+  (`raymask[u, v, view]`) or a vector, on any device: the rays that are used (`true`). It is stored
+  as `Bool` on the device of the operator. Masked rays give 0 in the forward projection and
+  contribute nothing to the back projection.
+
+The mask of `image` (e.g. `ImageGeom(MaskCircle(); dims, deltas)`, the circular field of view)
+selects the voxels: voxels outside count as 0 in the forward projection and get 0 in the back
+projection, and the rays only traverse the bounding box of the mask. See [Use Masks](@ref).
 
 # Example
 
@@ -42,31 +50,35 @@ Reference:
 * P. M. Joseph, "An improved algorithm for reprojecting rays through pixel images", IEEE Trans.
   Med. Imaging 1(3), 192–196, 1982.
 """
-struct JosephProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig}} <: AbstractProjector{T,G}
+struct JosephProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks} <: AbstractProjector{T,G}
   image::I
   grid::VoxelGrid{T}
   geometry::G
   backend::B
   launch::L
+  masks::M
 end
 
 function JosephProjector(image::ImageGeom, geometry::AbstractProjectionGeometry; eltype::Type{T}=Float32,
-                         storage=Array, launch::Union{Nothing,LaunchConfig}=nothing) where {T<:AbstractFloat}
-  joseph_projector(image, device_geometry(geometry, T, storage), launch)
+                         storage=Array, launch::Union{Nothing,LaunchConfig}=nothing, raymask=nothing) where {T<:AbstractFloat}
+  joseph_projector(image, device_geometry(geometry, T, storage), launch, raymask)
 end
 
 JosephProjector(image::ImageGeom, geometry; kwargs...) =
   JosephProjector(image, projection_geometry(geometry); kwargs...)
 
 # from a geometry already in the operator's element type and on its device
-function joseph_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}, launch) where {T}
+function joseph_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}, launch, raymask) where {T}
   backend = KA.get_backend(storage_array(geometry))
-  JosephProjector(image, VoxelGrid{T}(image), geometry, backend, launch)
+  JosephProjector(image, VoxelGrid{T}(image), geometry, backend, launch, ProjectorMasks(image, geometry, raymask))
 end
 
 geometry(op::JosephProjector) = op.geometry
 image_geometry(op::JosephProjector) = op.image
-similar_projector(op::JosephProjector, geometry::AbstractProjectionGeometry) = joseph_projector(op.image, geometry, op.launch)
+similar_projector(op::JosephProjector, geometry::AbstractProjectionGeometry; raymask=ray_mask(op)) =
+  joseph_projector(op.image, geometry, op.launch, raymask)
+projector_masks(op::JosephProjector) = op.masks
+handles_raymask(::JosephProjector) = true
 KA.get_backend(op::JosephProjector) = op.backend
 
 forward!(y, op::JosephProjector, x) = launch_rays!(joseph_forward_kernel!, op, y, vec(x))
