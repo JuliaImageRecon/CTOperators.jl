@@ -19,7 +19,8 @@ GPU libraries (`*-rocm`: AMD GPUs through AMDGPU.jl; `*-cuda`: NVIDIA GPUs throu
 `julia --project=benchmark/envs/parallelproj-cuda benchmark/check_parallelproj_cuda.jl` checks that
 parallelproj computes on CuPy arrays directly (otherwise its timings would include transfers).
 
-Options: `--libs` (comma separated), `--threads` (comma separated, default all cores), `--budget`
+Options: `--libs` (comma separated), `--threads` (comma separated, default all cores), `--device`
+(the GPU of GPU libraries, counted from 1, default 1; e.g. a free one on a shared machine), `--budget`
 (seconds of repeated calls per measurement, default 2). Measure on a quiet machine.
 
 ## How it works
