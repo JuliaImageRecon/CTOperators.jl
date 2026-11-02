@@ -54,7 +54,8 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   [differentiate through a projector](@ref "Differentiate through a Projector"), how to
   [use geometries of Sinograms.jl](@ref "Use Geometries of Sinograms.jl") and how to
   [implement a CT operator](@ref "Implement a CT Operator").
-- The explanation pages describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
+- The explanation pages introduce [the parameters of a scan](@ref "The Parameters of a Scan") step by step,
+  describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
   the projection methods, [Siddon's Method](@ref) and [Joseph's Method](@ref), and
   [workgroups and ray order on GPUs](@ref "Workgroups and Ray Order on GPUs").
 - The [API](@ref) lists all types and functions.

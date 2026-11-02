@@ -45,6 +45,7 @@ makedocs(;
       "Implement a CT Operator" => "generated/howto/implement_operator.md",
     ],
     "Explanation" => [
+      "The Parameters of a Scan" => "generated/explanation/scan_parameters.md",
       "Coordinates and Conventions" => "generated/explanation/conventions.md",
       "Siddon's Method" => "generated/explanation/siddon.md",
       "Joseph's Method" => "generated/explanation/joseph.md",
