@@ -51,6 +51,7 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
 - The how-to guides show how to [set up a geometry](@ref "Set Up a Geometry"), including an object
   that moves during the scan, how to [run on a GPU](@ref "Run on a GPU"), how to build
   [ordered-subset methods](@ref "Ordered Subsets and Normalization"), how to
+  [use masks](@ref "Use Masks") for the image and the rays, how to
   [differentiate through a projector](@ref "Differentiate through a Projector"), how to
   [use geometries of Sinograms.jl](@ref "Use Geometries of Sinograms.jl") and how to
   [implement a CT operator](@ref "Implement a CT Operator").

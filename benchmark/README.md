@@ -137,3 +137,23 @@ Observations:
   against 102 ms), slower at 128³ (20 ms against 4.9 ms).
 - Joseph's back projection takes 4–5× its forward projection (four atomic additions per sample),
   Siddon's about 2.3× (one per voxel): the next target.
+
+### Masks (GPU)
+
+AMD Radeon RX 7900 XT, Float32, cone256 (256³ volume, 256² detector, 360 views), minimum time,
+2026-11-02, branch `nh/masks` (the GPU was also the desktop GPU in use: approximate). Image masks:
+the circular field of view (`MaskCircle`) and a box of 64³ voxels in the center; ray mask: 20 % of
+the rays masked at random.
+
+| image mask | ray mask | Siddon forward / back | Joseph forward / back |
+|---|---|---|---|
+| none | none | 111 / 264 ms | 113 / 537 ms |
+| none | 20 % masked | 96 / 212 ms | 108 / 438 ms |
+| circle | none | 111 / 257 ms | 115 / 542 ms |
+| box 64³ | none | 2.6 / 6.7 ms | 3.1 / 18.0 ms |
+| box 64³ | 20 % masked | 2.2 / 5.5 ms | 2.9 / 15.0 ms |
+
+Rays are clipped to the bounding box of the image mask: a small region of interest makes the
+projections 30 to 40× faster; the circle fills its box and gains nothing.
+Masked rays are not traced: the back projection gets faster by about the masked fraction.
+

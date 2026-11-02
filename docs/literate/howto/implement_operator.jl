@@ -217,6 +217,20 @@ y_joseph = JosephProjector(image, geometry) * x_true
 # Further tests check what the method promises, for example exact line integrals for images the
 # method represents exactly, compared with the analytic projections of ImagePhantoms.jl.
 #
+# ## Support for masks
+#
+# The generic layer applies the masks of an operator (see [Masks](@ref)). The sampling projector
+# above gets the image mask of its `ImageGeom` this way, applied by multiplication, and has no ray
+# mask. A projector can do more in two independent steps:
+#
+# * **Clip the rays to the bounding box of the image mask:** clip with `grid.lo` and `grid.hi` of the
+#   `VoxelGrid` instead of the volume.
+# * **Store a ray mask and skip masked rays:** store a `CTOperators.ProjectorMasks` built from the
+#   keyword `raymask`, return it from `CTOperators.projector_masks`, pass `CTOperators.ray_mask(op)`
+#   to the kernels (`CTOperators.is_masked(raymask, i)`), define
+#   `CTOperators.handles_raymask(::MyProjector) = true`, and accept the keyword
+#   `raymask=CTOperators.ray_mask(op)` in `similar_projector`, which `subset` and `adapt` call.
+#
 # ## Wrapping another package
 #
 # A projector of another package, with its own geometry, becomes an `AbstractCTOperator` with five

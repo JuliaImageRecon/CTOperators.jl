@@ -22,6 +22,7 @@ makedocs(;
     prettyurls=get(ENV, "CI", "false") == "true",   # also in utils/bonito_page.jl
     canonical="https://JuliaImageRecon.github.io/CTOperators.jl",
     edit_link="main",
+    collapselevel=1,   # the navigation shows the sections, collapsed
   ),
   # Diátaxis: tutorials to learn, how-to guides for tasks, explanation for understanding,
   # reference for looking things up
@@ -40,6 +41,7 @@ makedocs(;
       "Set Up a Geometry" => "generated/howto/geometries.md",
       "Run on a GPU" => "generated/howto/gpu.md",
       "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
+      "Use Masks" => "generated/howto/masks.md",
       "Differentiate through a Projector" => "generated/howto/differentiation.md",
       "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
       "Implement a CT Operator" => "generated/howto/implement_operator.md",
@@ -49,6 +51,7 @@ makedocs(;
       "Coordinates and Conventions" => "generated/explanation/conventions.md",
       "Siddon's Method" => "generated/explanation/siddon.md",
       "Joseph's Method" => "generated/explanation/joseph.md",
+      "Masks" => "generated/explanation/masks.md",
       "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
     ],
     "Reference" => [
