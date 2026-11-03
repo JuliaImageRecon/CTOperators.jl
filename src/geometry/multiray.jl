@@ -150,6 +150,15 @@ weights_eltype(w::GaussianWeights, ::Type{T}) where {T} = GaussianWeights{T}(w.s
 @inline subray_weight(::UniformWeights, du, dv) = one(du)
 @inline subray_weight(w::GaussianWeights, du, dv) = exp(-((du / w.sigma_u)^2 + (dv / w.sigma_v)^2) / 2)
 
+# Whether the subrays of a cell move along both detector axes or only along u. For 2D images (one
+# voxel layer along z) the rays must stay in the image plane, which the projectors ensure with
+# `in_plane`.
+struct FullCell end
+struct InPlane end
+
+@inline restrict(::FullCell, du, dv) = (du, dv)
+@inline restrict(::InPlane, du, dv) = (du, zero(dv))
+
 """
     MultiRay(geometry, points; weights=UniformWeights())
 
@@ -179,15 +188,6 @@ g = MultiRay(circular_cone_beam(; angles, dso, dsd, nu, nv, du), JitteredPoints(
 op = JosephProjector(image, g)
 ```
 """
-# Whether the subrays of a cell move along both detector axes or only along u. For 2D images (one
-# voxel layer along z) the rays must stay in the image plane, which the projectors ensure with
-# `in_plane`.
-struct FullCell end
-struct InPlane end
-
-@inline restrict(::FullCell, du, dv) = (du, dv)
-@inline restrict(::InPlane, du, dv) = (du, zero(dv))
-
 struct MultiRay{T,G<:AbstractDetectorGeometry{T},P,W,V,S} <: AbstractProjectionGeometry{T}
   geometry::G
   points::P
