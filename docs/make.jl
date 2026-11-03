@@ -42,6 +42,7 @@ makedocs(;
       "Run on a GPU" => "generated/howto/gpu.md",
       "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
       "Use Masks" => "generated/howto/masks.md",
+      "Use Several Rays per Cell" => "generated/howto/multiray.md",
       "Differentiate through a Projector" => "generated/howto/differentiation.md",
       "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
       "Implement a CT Operator" => "generated/howto/implement_operator.md",
@@ -52,6 +53,7 @@ makedocs(;
       "Siddon's Method" => "generated/explanation/siddon.md",
       "Joseph's Method" => "generated/explanation/joseph.md",
       "Masks" => "generated/explanation/masks.md",
+      "Several Rays per Cell" => "generated/explanation/multiray.md",
       "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
     ],
     "Reference" => [

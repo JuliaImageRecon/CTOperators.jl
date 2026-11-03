@@ -74,7 +74,8 @@ nothing #hide
 # ![Coverage of the pixels by the rays of one view](coverage.png)
 
 # In an iterative reconstruction this pattern can appear as a checkerboard in the image (De Man &
-# Basu 2004 describe the effect). Remedies are more rays than voxels (finer detector sampling),
+# Basu 2004 describe the effect). Remedies are more rays than voxels (finer detector sampling, or
+# several rays per cell, see [Use Several Rays per Cell](@ref)),
 # [Joseph's Method](@ref), whose interpolation evens out the coverage at most angles, or projectors
 # that integrate over the detector cells, such as distance-driven or separable-footprint projectors.
 #

@@ -52,12 +52,14 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   that moves during the scan, how to [run on a GPU](@ref "Run on a GPU"), how to build
   [ordered-subset methods](@ref "Ordered Subsets and Normalization"), how to
   [use masks](@ref "Use Masks") for the image and the rays, how to
+  [use several rays per detector cell](@ref "Use Several Rays per Cell"), how to
   [differentiate through a projector](@ref "Differentiate through a Projector"), how to
   [use geometries of Sinograms.jl](@ref "Use Geometries of Sinograms.jl") and how to
   [implement a CT operator](@ref "Implement a CT Operator").
 - The explanation pages introduce [the parameters of a scan](@ref "The Parameters of a Scan") step by step,
   describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
-  the projection methods, [Siddon's Method](@ref) and [Joseph's Method](@ref), and
+  the projection methods, [Siddon's Method](@ref) and [Joseph's Method](@ref),
+  [several rays per cell](@ref "Several Rays per Cell"), and
   [workgroups and ray order on GPUs](@ref "Workgroups and Ray Order on GPUs").
 - The reference lists all types and functions by domain: [Images](api/images.md), [Projection Geometries](api/geometries.md), [Operators](api/operators.md), [Projectors](api/projectors.md) and, for implementers, [Internals](api/internals.md).
 
