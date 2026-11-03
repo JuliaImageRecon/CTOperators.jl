@@ -113,11 +113,20 @@ datasize(g::AbstractDetectorGeometry) = (detectorsize(g)..., nviews(g))
   ju + 1, jv + 1, k + 1
 end
 
-# the position of pixel (iu, iv) on a detector with center c and cell vectors u, v
-@inline function pixel_position(c, u, v, iu, iv, nu, nv)
+# the point at position (cu, cv) on a flat detector with center c and cell vectors u, v; positions
+# are in cell units: integers are cell centers, half-integers cell edges
+@inline function cell_position(c, u, v, cu, cv, nu, nv)
   T = eltype(c)
-  c + (T(iu) - T(nu + 1) / 2) * u + (T(iv) - T(nv + 1) / 2) * v
+  c + (cu - T(nu + 1) / 2) * u + (cv - T(nv + 1) / 2) * v
 end
+
+# cell_ray(g, cu, cv, k) -> (a, b): the ray of view k of the detector geometry g that ends at
+# position (cu, cv) on the detector, as two points like `ray` (cone beams: source and detector
+# point; parallel beams: detector point and that point plus the direction). Positions are in cell
+# units: integers are cell centers, so `cell_ray(g, iu, iv, k)` is the ray of cell (iu, iv), equal to
+# `ray`; half-integers are cell edges, e.g. `cell_ray(g, iu + 1/2, iv, k)` runs through the midpoint
+# of the edge between cells iu and iu + 1. Callable inside kernels.
+function cell_ray end
 
 function check_views(name, ms...)
   for m in ms

@@ -106,6 +106,38 @@ end
   end
 end
 
+# cell_ray gives rays at continuous cell coordinates (centers at integers, edges at half-integers):
+# at the cell centers it equals ray; on flat detectors the end point is linear in the coordinates,
+# on arc detectors the angle about the source is
+@testitem "cell_ray" tags = [:geometry] setup = [Rays] begin
+  using CTOperators: cell_ray
+  using LinearAlgebra: norm, dot
+  angles = range(0, 2pi, 5)[1:4]
+  nu, nv = 6, 4
+  flat = (circular_cone_beam(; angles, dso=500, dsd=900, nu, nv, du=1.5, dv=2.0, offset_u=0.25),
+          parallel_beam(; angles, nu, nv, du=0.8, dv=1.2))
+  arc = circular_cone_beam(; angles, dso=500, dsd=900, nu, nv, du=1.5, dv=2.0, detector=:arc)
+  for g in (flat..., arc)
+    li = LinearIndices(datasize(g))
+    for k in 1:4, iv in 1:nv, iu in 1:nu
+      @test all(cell_ray(g, Float64(iu), Float64(iv), k) .≈ ray(g, li[iu, iv, k]))
+    end
+  end
+  for g in flat, k in 1:4, (p, q, r) in (((2.0, 3.0), (3.0, 3.0), (2.25, 3.0)), ((2.0, 3.0), (2.0, 4.0), (2.0, 3.75)))
+    (a1, b1), (a2, b2), (a, b) = cell_ray(g, p..., k), cell_ray(g, q..., k), cell_ray(g, r..., k)
+    w = norm(collect(r .- p))
+    @test isapprox(a, (1 - w) * a1 + w * a2) && isapprox(b, (1 - w) * b1 + w * b2)
+  end
+  for k in 1:4
+    s, b1 = cell_ray(arc, 2.0, 3.0, k)
+    _, b2 = cell_ray(arc, 3.0, 3.0, k)
+    _, b = cell_ray(arc, 2.5, 3.0, k)
+    # same distance from the source in the plane of the arc, half the angle
+    @test norm(b - s) ≈ norm(b1 - s) ≈ norm(b2 - s)
+    @test dot(b - s, b1 - s) ≈ dot(b - s, b2 - s)
+  end
+end
+
 @testitem "subset" tags = [:geometry] setup = [Rays] begin
   views = [2, 5, 6]
   for g in (helical_cone_beam(; angles=range(0, 2pi, 8), pitch=10, dso=500, dsd=900, nu=4, nv=3, du=1.0),

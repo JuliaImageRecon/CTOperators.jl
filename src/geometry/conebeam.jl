@@ -44,8 +44,12 @@ storage_array(g::ConeBeam) = g.source
 
 @inline function ray(g::ConeBeam, i)
   iu, iv, k = pixel_index(i, g.nu, g.nv)
-  column(g.source, k), pixel_position(column(g.center, k), column(g.u, k), column(g.v, k), iu, iv, g.nu, g.nv)
+  T = eltype(g)
+  cell_ray(g, T(iu), T(iv), k)
 end
+
+@inline cell_ray(g::ConeBeam, cu, cv, k) =
+  column(g.source, k), cell_position(column(g.center, k), column(g.u, k), column(g.v, k), cu, cv, g.nu, g.nv)
 
 Adapt.adapt_structure(to, g::ConeBeam) =
   ConeBeam(adapt(to, g.source), adapt(to, g.center), adapt(to, g.u), adapt(to, g.v); nu=g.nu, nv=g.nv)

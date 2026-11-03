@@ -64,6 +64,11 @@ storage_array(g::ArcConeBeam) = g.source
 
 @inline function ray(g::ArcConeBeam, i)
   iu, iv, k = pixel_index(i, g.nu, g.nv)
+  T = eltype(g)
+  cell_ray(g, T(iu), T(iv), k)
+end
+
+@inline function cell_ray(g::ArcConeBeam, cu, cv, k)
   s = column(g.source, k)
   w = column(g.center, k) - s
   u = column(g.u, k)
@@ -74,8 +79,8 @@ storage_array(g::ArcConeBeam) = g.source
   radial = w - h
   r = norm(radial)
   du = norm(u)
-  sg, cg = sincos((T(iu) - T(g.nu + 1) / 2) * du / r)
-  b = s + h + cg * radial + (sg * r / du) * u + (T(iv) - T(g.nv + 1) / 2) * v
+  sg, cg = sincos((cu - T(g.nu + 1) / 2) * du / r)
+  b = s + h + cg * radial + (sg * r / du) * u + (cv - T(g.nv + 1) / 2) * v
   s, b
 end
 
