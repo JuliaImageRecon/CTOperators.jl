@@ -59,7 +59,7 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
   the projection methods, [Siddon's Method](@ref) and [Joseph's Method](@ref), and
   [workgroups and ray order on GPUs](@ref "Workgroups and Ray Order on GPUs").
-- The [API](@ref) lists all types and functions.
+- The reference lists all types and functions by domain: [Images](api/images.md), [Projection Geometries](api/geometries.md), [Operators](api/operators.md), [Projectors](api/projectors.md) and, for implementers, [Internals](api/internals.md).
 
 ## Related packages
 

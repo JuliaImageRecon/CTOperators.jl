@@ -55,7 +55,11 @@ makedocs(;
       "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
     ],
     "Reference" => [
-      "API" => "api.md",
+      "Images" => "api/images.md",
+      "Projection Geometries" => "api/geometries.md",
+      "Operators" => "api/operators.md",
+      "Projectors" => "api/projectors.md",
+      "Internals" => "api/internals.md",
     ],
   ],
 )
