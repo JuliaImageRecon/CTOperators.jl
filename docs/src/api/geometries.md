@@ -20,6 +20,17 @@ Pages = ["geometry/raylist.jl", "geometry/conebeam.jl", "geometry/arcconebeam.jl
 Private = false
 ```
 
+## Several rays per cell
+
+A detector geometry wrapped with a point strategy (where in each cell the rays end) and a
+weighting strategy.
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["geometry/multiray.jl"]
+Private = false
+```
+
 ## Trajectories
 
 Constructors for the common scans.

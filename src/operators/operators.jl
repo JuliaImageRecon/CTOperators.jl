@@ -143,11 +143,11 @@ KA.get_backend(op::AbstractProjector) = KA.get_backend(storage_array(geometry(op
 """
     subset(op::AbstractProjector, views)
 
-The projector of the views `views` of `op` (detector geometries; a vector or range of view
-indices), for ordered-subset methods. It shares the image geometry and options with `op`, and the
+The projector of the views `views` of `op` (detector geometries, also with several rays per cell;
+a vector or range of view indices), for ordered-subset methods. It shares the image geometry and options with `op`, and the
 views of its ray mask.
 """
-function subset(op::AbstractProjector{T,<:AbstractDetectorGeometry}, views) where {T}
+function subset(op::AbstractProjector{T,<:Union{AbstractDetectorGeometry,MultiRay}}, views) where {T}
   g = subset(geometry(op), views)
   rays = ray_mask(op)
   isnothing(rays) ? similar_projector(op, g) : similar_projector(op, g; raymask=Array(rays)[:, :, views])

@@ -12,6 +12,7 @@ export AbstractCTOperator
 export ImageGeom, MaskCircle, MaskEllipse, MaskAllButEdge
 export AbstractProjectionGeometry, AbstractDetectorGeometry, RaySegment, RayLine
 export RayList, ConeBeam, ArcConeBeam, ParallelBeam
+export MultiRay, RegularPoints, JitteredPoints, RandomPoints, Points, UniformWeights, GaussianWeights
 export circular_cone_beam, helical_cone_beam, parallel_beam
 export datasize, nrays, ray, raytype, nviews, detectorsize, subset, projection_geometry
 export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, LaunchConfig

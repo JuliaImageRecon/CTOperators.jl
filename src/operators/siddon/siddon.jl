@@ -57,10 +57,12 @@ end
 SiddonProjector(image::ImageGeom, geometry; kwargs...) =
   SiddonProjector(image, projection_geometry(geometry); kwargs...)
 
-# from a geometry already in the operator's element type and on its device
+# from a geometry already in the operator's element type and on its device; for 2D images the
+# subrays of a MultiRay stay in the image plane
 function siddon_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}, launch, raymask) where {T}
-  backend = KA.get_backend(storage_array(geometry))
-  SiddonProjector(image, VoxelGrid{T}(image), geometry, backend, launch, ProjectorMasks(image, geometry, raymask))
+  g = length(image.dims) == 2 ? in_plane(geometry) : geometry
+  backend = KA.get_backend(storage_array(g))
+  SiddonProjector(image, VoxelGrid{T}(image), g, backend, launch, ProjectorMasks(image, g, raymask))
 end
 
 geometry(op::SiddonProjector) = op.geometry

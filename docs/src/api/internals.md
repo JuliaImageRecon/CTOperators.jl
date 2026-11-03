@@ -24,7 +24,7 @@ CTOperators.projector_masks
 ```@autodocs
 Modules = [CTOperators]
 Pages = ["geometry/geometry.jl", "geometry/raylist.jl", "geometry/conebeam.jl", "geometry/arcconebeam.jl",
-         "geometry/parallelbeam.jl", "geometry/trajectories.jl"]
+         "geometry/parallelbeam.jl", "geometry/trajectories.jl", "geometry/multiray.jl"]
 Public = false
 ```
 

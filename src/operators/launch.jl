@@ -52,7 +52,7 @@ launch_config(::Nothing, geometry, backend) = default_launch(geometry, backend)
 # (KA.GPU is no help: since KernelAbstractions 0.10 it is the same as KA.Backend, the CPU included)
 function default_launch(geometry, backend)
   backend isa KA.CPU && return LaunchConfig()
-  LaunchConfig(; workgroupsize=64, tile=geometry isa AbstractDetectorGeometry ? (8, 8) : nothing)
+  LaunchConfig(; workgroupsize=64, tile=geometry isa Union{AbstractDetectorGeometry,MultiRay} ? (8, 8) : nothing)
 end
 
 # the rays in data order
@@ -67,9 +67,9 @@ struct TileOrder
   tv::Int
 end
 
-# tiles only for detector geometries; ray lists keep their order
+# tiles only for detector geometries (also with several rays per cell); ray lists keep their order
 ray_order(launch::LaunchConfig, geometry) = DataOrder()
-ray_order(launch::LaunchConfig, geometry::AbstractDetectorGeometry) =
+ray_order(launch::LaunchConfig, geometry::Union{AbstractDetectorGeometry,MultiRay}) =
   isnothing(launch.tile) ? DataOrder() : TileOrder(detectorsize(geometry)..., launch.tile...)
 
 nthreads(::DataOrder, geometry) = nrays(geometry)
