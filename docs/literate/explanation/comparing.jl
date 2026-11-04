@@ -1,7 +1,7 @@
 # # Comparing Projectors
 #
-# How evenly a projector covers the image depends mainly on the ratio of detector cell size to voxel
-# size and on the number of rays per cell, less on the projector. This page compares
+# How evenly a ray-driven projector covers the image depends on the ratio of detector cell size to
+# voxel size (Miao 2013). This page compares
 # [Siddon's Method](@ref) and [Joseph's Method](@ref) with one and with several rays per cell (see
 # [Use Several Rays per Cell](@ref)) for cells smaller than, equal to and larger than the pixels of a
 # 2D image, with two checks from Miao (2013): the back projection of one view and of all views of
@@ -51,10 +51,10 @@ save("comparison_support.png", fig) #hide
 nothing #hide
 # ![Back projection of all views](comparison_support.png)
 
-# The pattern of the single views does not average out. With cells of 2 pixels, the coverage varies
-# by about 10 %, in a cross and a checker pattern around the center; four rays per cell reduce that
-# to a fraction of a percent. An iterative reconstruction sees this pattern as part of the model, and
-# it shows up as artifacts in the images, see [Use Several Rays per Cell](@ref).
+# With cells of 2 pixels, the coverage varies
+# by 11 % for Siddon's method and 8.5 % for Joseph's, in a cross and a checker pattern around the center; four rays per cell reduce that
+# to a fraction of a percent. [Use Several Rays per Cell](@ref) shows a reconstruction with this kind
+# of pattern.
 #
 # ## How many rays
 #
@@ -64,20 +64,19 @@ coverage(P, k) = 2 .* colsums(P(comparison_image(64), MultiRay(comparison_scan(6
 [(rays=k, Siddon=round(variation(coverage(SiddonProjector, k), 24); digits=2),
   Joseph=round(variation(coverage(JosephProjector, k), 24); digits=2)) for k in (1, 2, 3, 4, 8)]
 
-# More rays help, but not steadily: the number matters relative to the pixels, and an odd number of
-# rays can be worse than a smaller even one. A spacing of the rays at the object of at most half a
-# voxel covers the image well.
+# On this example the variation does not fall steadily with the number of rays: for Siddon's method, 3
+# rays give more than 2.
 #
-# ## What to take from it
+# ## Summary of the example
 #
-# * **The ratio matters most.** With cells no larger than the voxels, both methods cover the image
-#   well with one ray per cell, and Joseph's method is the more even of the two.
-# * **For cells larger than the voxels,** one ray per cell is not enough for either method; several
-#   rays per cell are, at the cost of about that many times the computing time (see the
+# * With cells no larger than the pixels, the variation with one ray per cell is about 1 % or less
+#   for both methods.
+# * With cells of 2 pixels, it is 11 % (Siddon) and 8.5 % (Joseph) with one ray per cell and below
+#   0.25 % with four, at
+#   about four times the computing time (see the
 #   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md)).
-#   Voxels no smaller than the cells avoid the problem as well, at the price of a coarser image.
-# * **In a cone beam,** the size to compare with the voxels is the cell size at the object: the cell
-#   size divided by the magnification.
+# * In a cone beam, the size to compare with the voxels is the cell size at the object: the cell size
+#   divided by the magnification.
 #
 # ## References
 #

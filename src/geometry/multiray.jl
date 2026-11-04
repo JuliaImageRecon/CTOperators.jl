@@ -328,8 +328,9 @@ end
 """
     one_layer(image::ImageGeom)
 
-Whether `image` has one layer of voxels along `z`: a 2D image, or a 3D image with `nz = 1`. Rays that
-leave the center of the layer see too little of it, so the rays of a cell stay in its plane.
+Whether `image` has one layer of voxels along `z`: a 2D image, or a 3D image with `nz = 1`. The rays
+of a cell stay in its plane: Joseph's method weights rays away from the center of the layer down, and
+a tilted ray may leave the layer.
 """
 one_layer(image::ImageGeom) = length(image.dims) == 2 || image.dims[3] == 1
 

@@ -1,10 +1,9 @@
 # # Use Several Rays per Cell
 #
 # A detector cell measures the radiation that falls onto its whole area. The projectors trace one
-# ray per cell, through its center. When the cells are large compared to the voxels, these rays
-# miss voxels between them, and the reconstruction shows patterns that come from the sampling, not
-# from the object. This guide shows the problem on a small example and how `MultiRay` traces several
-# rays per cell instead. [Several Rays per Cell](@ref) explains how the rays are placed and weighted,
+# ray per cell, through its center. When the cells are large compared to the voxels, the back
+# projection of such rays has gaps (Miao 2013, p. 29). This guide shows the effect on a small example
+# and how `MultiRay` traces several rays per cell instead. [Several Rays per Cell](@ref) explains how the rays are placed and weighted,
 # and [Comparing Projectors](@ref) when it matters.
 
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
@@ -92,10 +91,10 @@ save("multiray_reconstructions.png", fig) #hide
 nothing #hide
 # ![Reconstructions with one and with four rays per cell](multiray_reconstructions.png)
 
-# The model with several rays per cell is closer to what the cells measure: the grainy pattern inside
-# the head and between the ellipses goes away, and the error drops from 0.33 to 0.27. The streaks
-# outside the head remain, and more rays do not lower the error further (16 rays give 0.27): what
-# remains comes from the width of the cells and the number of iterations.
+# With 4 rays per cell the grainy pattern inside the head and between the ellipses goes away, and the
+# error drops from 0.33 to 0.27. The streaks outside the head remain. On this example, 16 rays give
+# 0.27 as well, and the gap depends on when the iterations stop: with 10 iterations the errors are
+# 0.35 and 0.28, with 200 they are 0.33 and 0.32.
 #
 # `JosephProjector` takes a `MultiRay` the same way. The rays of a 2D image stay in the image plane,
 # so the points are spread along `u` only (`RegularPoints(4, 1)`; `RegularPoints(4)` would be an
@@ -127,10 +126,9 @@ save("multiray_jittered.png", fig) #hide
 nothing #hide
 # ![Regular, jittered and random rays](multiray_jittered.png)
 
-# Regular points fit best here: for data that average over the cell, they sample it at equal
-# distances. Random offsets add noise to the model, visible as grain: 4 jittered rays lose most of the
-# gain, and 4 random rays are worse than one ray per cell. Random strategies need many more rays per
-# cell, so use `RegularPoints` unless the detector calls for something else.
+# On these data, whose cells average evenly over their width, regular points give the smallest error
+# of the three, 4 jittered rays lie close to one ray per cell, and 4 random rays above it. This is one
+# example; other detectors and data can behave differently.
 #
 # ## Weights
 #
@@ -139,8 +137,7 @@ nothing #hide
 
 op_weighted = SiddonProjector(image, MultiRay(geometry, RegularPoints(4, 1); weights=GaussianWeights(0.4)));
 
-# On the data above this changes little (error 0.27), since these data give all parts of a cell the
-# same weight.
+# On the data above the error is 0.27, as with uniform weights.
 #
 # ## Cost and devices
 #
@@ -152,3 +149,8 @@ op_weighted = SiddonProjector(image, MultiRay(geometry, RegularPoints(4, 1); wei
 #   on all of them, in the forward and the back projection, and for `subset(op, views)`.
 # * Masks work as on plain geometries: a masked data element skips all its rays.
 # * Only detector geometries have cells: a `RayList` cannot be wrapped.
+#
+# ## References
+#
+# - C. Miao, "Comparative studies of different system models for iterative CT image
+#   reconstruction", master's thesis, Wake Forest University, 2013.

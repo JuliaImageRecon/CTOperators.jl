@@ -80,10 +80,9 @@ nothing #hide
 # ![Three pitches](helical_pitch.png)
 
 # A voxel near the axis stays in the cone while the source rises by the detector height: for one
-# turn at a pitch of 96 mm, for half a turn at 192 mm. Half a turn is less than the half turn plus
-# fan angle that [Fan Beam with a Curved Detector](@ref) found necessary, and the reconstruction
-# shows shading. Clinical scanners quote the pitch relative to the detector height and use values
-# between about 0.5 and 1.5.
+# turn at a pitch of 96 mm, for half a turn at 192 mm. At 192 mm the error is 0.064, against 0.026 at
+# 48 mm and 0.033 at 96 mm, and the axial slice shows shading. Clinical scanners quote the pitch
+# relative to the detector height.
 #
 # An object moving along the rotation axis during a circular scan, on a table or a conveyor belt,
 # sees the same helix: only the relative motion counts. [Getting Started](@ref) reconstructs such a

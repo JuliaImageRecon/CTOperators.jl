@@ -10,9 +10,9 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # ## What is computed
 #
 # A ray-driven projector such as [Siddon's Method](@ref) or [Joseph's Method](@ref) treats a
-# detector cell as a point: one line from the source to the center of the cell. When the cells are
-# large compared to the voxels, the lines miss voxels between them, and the back projection covers
-# the voxels unevenly (De Man & Basu 2004). A real cell integrates over its area. `MultiRay(geometry, points; weights)` replaces the one line by `K` rays
+# detector cell as a point: one ray from the source to the center of the cell. When the cells are
+# large compared to the voxels, the back projection of such rays has gaps (Miao 2013, p. 29). A real
+# cell integrates over its area. `MultiRay(geometry, points; weights)` replaces the one ray by `K` rays
 # per cell, ending at the offsets given by `points`, and averages their line integrals:
 #
 # ```math
@@ -20,8 +20,8 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # ```
 #
 # The back projection is the exact adjoint: every ray adds its share ``w_{ik} / \sum_l w_{il}`` of
-# ``y_i``. The rays of a cell approximate the integral over the cell, in the classification of
-# system models by Miao (2013) the "area integral" model, by sampling.
+# ``y_i``. Miao (2013) calls the integral over the area of a ray path the "area integral" model; the
+# rays of a cell sample such an integral.
 #
 # The weights average **line integrals**, which keeps the operator linear. A detector averages
 # intensities, ``\exp(-\int x)``, which for a cell that sees an edge of the object is not the same
@@ -51,15 +51,12 @@ nothing #hide
 # ![Point strategies in one cell](multiray_points.png)
 
 # * **Regular points** sit at the centers of `su × sv` subcells: the midpoint rule for the integral
-#   over the cell, a sum at equal distances. For data that average over the cell they are the most
-#   accurate with few points.
+#   over the cell, a sum at equal distances.
 # * **Jittered points** move each regular point to a random position within its subcell ("jittered
-#   sampling", Cook 1986, also called stratified sampling). They keep the even spread, but neighboring
-#   cells do not share the same pattern, so the rays do not line up with the voxel grid in a regular
-#   way. The price is noise in the model.
-# * **Random points** are spread anywhere in the cell. With few points their mean can differ noticeably
-#   from the cell average: with 4 rays per cell the example of [Use Several Rays per Cell](@ref) is
-#   worse than with one.
+#   sampling", Cook 1986, also called stratified sampling). They keep the even spread, and neighboring
+#   cells do not share the same pattern.
+# * **Random points** are spread anywhere in the cell, so their mean differs from the average over the
+#   cell by a random amount. [Use Several Rays per Cell](@ref) shows an example with 4 rays per cell.
 # * **Gaussian points** are normally distributed around the cell center, and all rays count equally:
 #   the distribution of the positions is the weighting. Points may land outside the cell, which
 #   models blur across neighboring cells.
@@ -69,7 +66,8 @@ nothing #hide
 #
 # For images with one layer of voxels along `z` (2D images, or 3D images with `nz = 1`) the projectors
 # keep all rays in the image plane: the offsets along `v` are set to 0, and strategies with several
-# subcells along `v` are rejected. A ray away from the center of the layer would see too little of it.
+# subcells along `v` are rejected. Joseph's method interpolates across the layer, so a ray away from
+# its center is weighted down, and a tilted ray may leave the layer.
 #
 # ## Random positions without a random number generator
 #
@@ -91,8 +89,8 @@ nothing #hide
 # ## Implementation
 #
 # * The number of rays per cell `K` is a type parameter of the point strategy. The loop over the
-#   rays of a cell has a length known to the compiler, and with `K = 1` the projector is as fast as
-#   on the plain geometry.
+#   rays of a cell has a length known to the compiler. With `K = 1` the projector was as fast as on
+#   the plain geometry in our benchmark (128³ on a GPU, see below).
 # * The kernels are those of the plain projectors: each thread handles one data element. For a
 #   `MultiRay` it traces the `K` rays one after the other and adds them up (forward), or first sums
 #   the weights and then lets every ray add its share (back). No memory per ray is needed.
@@ -112,5 +110,3 @@ nothing #hide
 #   Techniques 9(3), 21–38, 2020.
 # - C. Miao, "Comparative studies of different system models for iterative CT image
 #   reconstruction", master's thesis, Wake Forest University, 2013.
-# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
-#   Med. Biol. 49(11), 2463–2475, 2004.

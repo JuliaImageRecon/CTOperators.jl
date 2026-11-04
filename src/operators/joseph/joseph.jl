@@ -7,8 +7,8 @@ line integral is the sum over the layers of the interpolated value times the len
 the layer. Compared with [`SiddonProjector`](@ref):
 
 * the image model is smooth, so the projection changes continuously when a ray moves;
-* the rays of a view cover the voxels more evenly, except near 45°, where the two methods give
-  similar weights;
+* for one parallel view with one ray per voxel, the rays cover the voxels more evenly, except near
+  45°, where the two methods give similar weights;
 * the projection is exact for images that are linear functions of the position rather than for
   voxel images.
 

@@ -84,9 +84,9 @@ cone128: 128³ volume, cone beam with a 128² detector and 180 views (2.95 M ray
 volume, parallel beam with a 128² detector and 180 views. Phantom error: relative error of the
 projected voxelized phantom against its analytic line integrals.
 
-CTOperators' Joseph gives the same phantom error as parallelproj's (the same method) and runs at the
-same speed; Siddon is about twice as fast as Joseph on the CPU (one memory read per visited voxel
-against four per sample).
+CTOperators' Joseph gives the same phantom error as parallelproj's (the same method). It runs at the
+same speed for cone128 and 1.2 to 1.4× faster for parallel128. On the CPU, Siddon is 1.4 to 1.7×
+faster than Joseph forward and 2.0 to 2.5× back.
 
 ### GPU
 
@@ -122,21 +122,17 @@ Observations:
   for maximal occupancy) make the forward projection 1.2–1.9× faster even in data order; tiles of
   8 × 8 detector cells per workgroup instead of consecutive cells of a row give Joseph another
   1.4–1.8×, Siddon little. Together at 256³: Joseph about 2×, Siddon 1.2–1.6× faster, at 128³ up
-  to 1.25×. The back projection, dominated by its atomic additions, gains nothing (1–6 % slower,
-  close to the noise); it runs with the same configuration to keep one code path. On the CPU tiles
+  to 1.25×. The back projection gains nothing (1–6 % slower, close to the noise); it runs with the same configuration to keep one code path. On the CPU tiles
   change the forward projection by less than 4 % (8², 16², 32², 24 threads), so the CPU keeps data
   order and the backend's workgroups. A count of the cache lines per load instruction of a
-  wavefront (32 lanes) gives about 17 in both orders: the gain of tiles is not better coalescing
-  within one load; finding the cause needs hardware counters.
+  wavefront (32 lanes) gives about 17 in both orders. The cause of the gain was not measured.
 - Ray setup is negligible: computing and clipping all rays of cone256 takes 0.8 ms, and a
   precomputed ray list (540 MB) gives the same times.
 - From 128³ to 256³ the work grows 16× (8× the rays, each twice as long), our GPU times 17–21×
-  forward (26–32× before) and 17–22× back. A 128³ Float32 image (8 MB) fits into the
-  GPU's 80 MB last-level cache, a 256³ image (64 MB) hardly.
+  forward (26–32× before) and 17–22× back.
 - RadonKA, slice by slice, is faster than our parallel-beam forward projection at 256³ (91 ms
   against 102 ms), slower at 128³ (20 ms against 4.9 ms).
-- Joseph's back projection takes 4–5× its forward projection (four atomic additions per sample),
-  Siddon's about 2.3× (one per voxel): the next target.
+- Joseph's back projection takes 4–5× its forward projection, Siddon's about 2.3×.
 
 ### Masks (GPU)
 

@@ -50,9 +50,10 @@ size(y)
 
 # Stacked view by view, the detector rows form the sinogram. Every point of the object traces a sine
 # curve in it: the position on the detector at which the point appears moves back and forth as the
-# scanner turns; the farther the point is from the center, the larger the swing. The brightest
-# parts, at the outer edges of the sinogram, come from rays that graze the skull of the phantom and
-# run a long way inside it.
+# scanner turns; the farther the point is from the center, the larger the swing. The bright lines
+# at the outer edges of the sinogram come from rays that graze the skull of the phantom and run a
+# long way inside it. The largest values, in the middle of the first and last views, come from rays
+# along the long axis of the head.
 
 fig = sinogram_figure(y; angles) #hide
 save("parallel_sinogram.png", fig) #hide

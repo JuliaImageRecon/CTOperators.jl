@@ -80,9 +80,9 @@ solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations=20)
 x_cg = reshape(solve!(solver, vec(y)), size(x_true))
 x_fdk = Float32.(fdk(plan_fbp(rg_helix, image), y));
 
-# Axial (top) and sagittal (bottom, `z` from bottom to top) slices: CGNR recovers the whole volume
-# (with some ringing at the skull, where the voxel model cannot match the finer data); FDK sees only
-# a band of slices, smeared by the motion of the source.
+# Axial (top) and sagittal (bottom, `z` from bottom to top) slices: CGNR recovers the whole volume,
+# with ringing visible in the figure; FDK sees only a band of slices, smeared by the motion of the
+# source.
 
 fig = Figure(size=(900, 600))
 for (j, (name, img)) in enumerate((("phantom", x_true), ("CGNR, helix", x_cg), ("FDK, circle assumed", x_fdk)))

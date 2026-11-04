@@ -73,7 +73,7 @@
 #
 # ## Precision
 #
-# `Float32` is the default and the right choice on GPUs; `Float64` (`eltype=Float64`) on the CPU or
+# `Float32` is the default; `Float64` (`eltype=Float64`) on the CPU or
 # on GPUs with fast double precision gives reference results. The element types of the data must
 # match the projector's.
 #
@@ -86,6 +86,6 @@
 #   detector cells) were chosen on an AMD Radeon RX 7900 XT. See
 #   [Workgroups and Ray Order on GPUs](@ref).
 # - The projector holds no workspace: its memory is the geometry (a few numbers per view for
-#   detector geometries, two points per ray for ray lists).
+#   detector geometries, two points per ray for ray lists) and the masks.
 # - Creating a projector is cheap; for ordered subsets, create the projectors of all subsets once
 #   (see [Ordered Subsets and Normalization](@ref)).
