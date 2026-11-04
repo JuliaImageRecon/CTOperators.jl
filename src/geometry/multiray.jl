@@ -40,6 +40,21 @@ struct RandomPoints{K}
 end
 
 """
+    GaussianPoints(n, sigma_u, sigma_v=sigma_u; seed=0)
+
+`n` random points per detector cell, normally distributed around the cell center with standard
+deviations `sigma_u`, `sigma_v` in cell units: a detector response set by where the rays land, with
+all rays counting equally. Points can land outside the cell, which models blur across neighboring
+cells. The positions are fixed like those of [`JitteredPoints`](@ref). Point strategy of
+[`MultiRay`](@ref).
+"""
+struct GaussianPoints{K,T}
+  sigma_u::T
+  sigma_v::T
+  seed::UInt32
+end
+
+"""
     Points(offsets)
 
 Given points, the same in every detector cell: column `k` of the `2 × K` matrix `offsets` is the
@@ -69,6 +84,13 @@ function RandomPoints(n::Integer; seed::Integer=0)
   RandomPoints{Int(n)}(UInt32(seed))
 end
 
+function GaussianPoints(n::Integer, sigma_u::Real, sigma_v::Real=sigma_u; seed::Integer=0)
+  n > 0 || throw(ArgumentError("number of points must be positive, got $n"))
+  sigma_u > 0 && sigma_v > 0 || throw(ArgumentError("standard deviations must be positive, got ($sigma_u, $sigma_v)"))
+  T = float(promote_type(typeof(sigma_u), typeof(sigma_v)))
+  GaussianPoints{Int(n),T}(sigma_u, sigma_v, UInt32(seed))
+end
+
 function Points(offsets::AbstractMatrix{<:Real})
   size(offsets, 1) == 2 && size(offsets, 2) > 0 ||
     throw(DimensionMismatch("offsets must be 2 × K with K > 0, got $(size(offsets))"))
@@ -77,10 +99,11 @@ function Points(offsets::AbstractMatrix{<:Real})
   Points{K,T}(SVector{K}(ntuple(k -> SVector{2,T}(offsets[1, k], offsets[2, k]), K)))
 end
 
-npoints(::Union{RegularPoints{K},JitteredPoints{K},RandomPoints{K},Points{K}}) where {K} = K
+npoints(::Union{RegularPoints{K},JitteredPoints{K},RandomPoints{K},GaussianPoints{K},Points{K}}) where {K} = K
 
-# the points in element type T (only given points store numbers)
+# the points in element type T (given and Gaussian points store numbers)
 points_eltype(p, ::Type{T}) where {T} = p
+points_eltype(p::GaussianPoints{K}, ::Type{T}) where {K,T} = GaussianPoints{K,T}(p.sigma_u, p.sigma_v, p.seed)
 points_eltype(p::Points{K}, ::Type{T}) where {K,T} = Points{K,T}(map(o -> SVector{2,T}(o), p.offsets))
 
 # The offset (du, dv) of subray k in the cell (iu, iv) of view `view` (numbered as in the full
@@ -102,6 +125,14 @@ end
   ru, rv = random_pair(T, p.seed, iu, iv, view, k)
   half = T(1 // 2)
   ru - half, rv - half
+end
+
+# normally distributed from two uniform numbers (Box-Muller); 1 - ru lies in (0, 1]
+@inline function point_offset(p::GaussianPoints, ::Type{T}, iu, iv, view, k) where {T}
+  ru, rv = random_pair(T, p.seed, iu, iv, view, k)
+  r = sqrt(-2 * log(1 - ru))
+  s, c = sincos(2 * T(pi) * rv)
+  T(p.sigma_u) * r * c, T(p.sigma_v) * r * s
 end
 
 @inline function point_offset(p::Points, ::Type{T}, iu, iv, view, k) where {T}
@@ -164,7 +195,8 @@ struct InPlane end
 
 The detector geometry `geometry` (`ConeBeam`, `ArcConeBeam`, `ParallelBeam`) with several rays per
 detector cell. The rays of a cell end at the positions given by the point strategy `points`
-([`RegularPoints`](@ref), [`JitteredPoints`](@ref), [`RandomPoints`](@ref), [`Points`](@ref)) and
+([`RegularPoints`](@ref), [`JitteredPoints`](@ref), [`RandomPoints`](@ref),
+[`GaussianPoints`](@ref), [`Points`](@ref)) and
 are averaged with the weights of `weights` ([`UniformWeights`](@ref),
 [`GaussianWeights`](@ref)), normalized to sum 1 per cell. A ray-driven projector built on it
 computes
@@ -248,16 +280,38 @@ end
 @inline full_view(::Nothing, view) = view
 @inline full_view(views, view) = @inbounds unsafe_trunc(Int, views[view])
 
+# the cell of data element i, once per element: its detector indices, the view and the view number
+# in the full geometry
+@inline function element_cell(g::MultiRay, i)
+  nu, nv = detectorsize(g.geometry)
+  iu, iv, view = pixel_index(i, nu, nv)
+  iu, iv, view, full_view(g.views, view)
+end
+
+# the offset of subray k in the cell
+@inline function subray_offset(g::MultiRay{T}, cell, k) where {T}
+  iu, iv, _, number = cell
+  restrict(g.span, point_offset(g.points, T, iu, iv, number, k)...)
+end
+
+# the weight (not normalized) of subray k in the cell
+@inline function subray_weight(g::MultiRay, cell, k)
+  du, dv = subray_offset(g, cell, k)
+  subray_weight(g.weights, du, dv)
+end
+
+# subray k in the cell
+@inline function cell_subray(g::MultiRay{T}, cell, k) where {T}
+  iu, iv, view, _ = cell
+  du, dv = subray_offset(g, cell, k)
+  a, b = cell_ray(g.geometry, T(iu) + du, T(iv) + dv, view)
+  a, b, subray_weight(g.weights, du, dv)
+end
+
 """
     subray(g::MultiRay, i, k) -> (a, b, w)
 
 Subray `k` of data element `i` as two points like [`ray`](@ref), and its weight (not normalized).
 Callable inside kernels.
 """
-@inline function subray(g::MultiRay{T}, i, k) where {T}
-  nu, nv = detectorsize(g.geometry)
-  iu, iv, view = pixel_index(i, nu, nv)
-  du, dv = restrict(g.span, point_offset(g.points, T, iu, iv, full_view(g.views, view), k)...)
-  a, b = cell_ray(g.geometry, T(iu) + du, T(iv) + dv, view)
-  a, b, subray_weight(g.weights, du, dv)
-end
+@inline subray(g::MultiRay, i, k) = cell_subray(g, element_cell(g, i), k)

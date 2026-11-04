@@ -43,10 +43,10 @@ end
 
 # The points of several strategies in one cell (-1/2 to 1/2 in u and v), the marker area
 # proportional to the weight. `strategies` holds (title, points, weights) tuples.
-function points_figure(strategies; size=(250 * length(strategies), 290))
+function points_figure(strategies; size=(220 * length(strategies), 270))
   fig = Figure(; size)
   for (col, (title, points, weights)) in enumerate(strategies)
-    ax = Axis(fig[1, col]; aspect=DataAspect(), title, limits=(-0.6, 0.6, -0.6, 0.6))
+    ax = Axis(fig[1, col]; aspect=DataAspect(), title, limits=(-0.9, 0.9, -0.9, 0.9))
     hidedecorations!(ax)
     poly!(ax, Rect2f(-0.5, -0.5, 1, 1); color=(:steelblue, 0.12), strokecolor=:steelblue, strokewidth=1.5)
     K = typeof(points).parameters[1]

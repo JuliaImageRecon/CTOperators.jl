@@ -41,7 +41,8 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 
 fig = points_figure([("RegularPoints(3, 3)", RegularPoints(3, 3), UniformWeights()), #hide
                      ("JitteredPoints(3, 3)", JitteredPoints(3, 3; seed=1), UniformWeights()), #hide
-                     ("RandomPoints(9)", RandomPoints(9; seed=1), UniformWeights()), #hide
+                     ("RandomPoints(9)", RandomPoints(9; seed=3), UniformWeights()), #hide
+                     ("GaussianPoints(9, 0.3)", GaussianPoints(9, 0.3; seed=1), UniformWeights()), #hide
                      ("RegularPoints(3, 3),\nGaussianWeights(0.3)", RegularPoints(3, 3), GaussianWeights(0.3))]) #hide
 save("multiray_points.png", fig) #hide
 nothing #hide
@@ -55,8 +56,12 @@ nothing #hide
 #   the voxel grid.
 # * **Random points** are spread anywhere in the cell. With few points their mean can differ
 #   noticeably from the cell average.
+# * **Gaussian points** are normally distributed around the cell center, and all rays count equally:
+#   the distribution of the positions is the weighting. Points may land outside the cell, which
+#   models blur across neighboring cells.
 # * **Given points** (`Points`) are the same in every cell, also outside it.
-# * **Gaussian weights** model a detector response that falls off towards the edges of a cell.
+# * **Gaussian weights** describe a similar response with fixed positions: the points stay where
+#   they are, and the rays near the edges count less.
 #
 # For 2D images, which have one layer of voxels along `z`, the projectors keep all rays in the image
 # plane: the offsets along `v` are set to 0, and strategies with several subcells along `v` are

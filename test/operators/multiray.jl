@@ -51,7 +51,7 @@ end
 @testitem "MultiRay: adjoint and devices" tags = [:operators, :multiray, :gpu] setup = [Backends, MultiRayProblem] begin
   using Adapt
   for P in (SiddonProjector, JosephProjector),
-      (g, pts) in ((cone(), JitteredPoints(2, 3; seed=1)), (arc(), RegularPoints(2)), (parallel(), RandomPoints(5; seed=2))),
+      (g, pts) in ((cone(), JitteredPoints(2, 3; seed=1)), (arc(), RegularPoints(2)), (parallel(), RandomPoints(5; seed=2)), (cone(), GaussianPoints(4, 0.3; seed=6))),
       arrayType in arrayTypes, T in floatTypes
     @testset "$P, $(nameof(typeof(pts))), $arrayType{$T}" begin
       m = MultiRay(g, pts; weights=GaussianWeights(0.4))

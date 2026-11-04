@@ -31,6 +31,32 @@
   @test subray(m, 1, 1)[3] == 1 && isapprox(subray(m, 1, 2)[3], exp(-0.125))
 end
 
+# Gaussian points: normally distributed around the cell center with the given widths, identical
+# rays counting equally; the seed fixes them
+@testitem "MultiRay: Gaussian points" tags = [:geometry, :multiray] begin
+  using Adapt
+  using CTOperators: point_offset
+  mean(x) = sum(x) / length(x)
+  std(x) = sqrt(mean((x .- mean(x)) .^ 2))
+  sigma_u, sigma_v = 0.3, 0.6
+  p = GaussianPoints(16, sigma_u, sigma_v; seed=4)
+  offsets = [point_offset(p, Float64, iu, iv, 1, k) for iu in 1:200, iv in 1:200, k in 1:16]
+  du, dv = vec(first.(offsets)), vec(last.(offsets))
+  N = length(du)   # 640000 samples: tolerances of 5 standard errors
+  @test abs(mean(du)) < 5 * sigma_u / sqrt(N) && abs(mean(dv)) < 5 * sigma_v / sqrt(N)
+  @test isapprox(std(du), sigma_u; rtol=5 / sqrt(2N)) && isapprox(std(dv), sigma_v; rtol=5 / sqrt(2N))
+  # fraction of a normal distribution within one standard deviation
+  @test isapprox(count(abs.(du) .< sigma_u) / N, 0.6827; atol=0.002)
+  @test abs(mean(du .* dv)) < 5 * sigma_u * sigma_v / sqrt(N)   # the two axes are independent
+  @test all(isfinite, du) && all(isfinite, dv)
+  @test point_offset(p, Float64, 3, 2, 1, 5) == point_offset(GaussianPoints(16, sigma_u, sigma_v; seed=4), Float64, 3, 2, 1, 5)
+  @test point_offset(p, Float64, 3, 2, 1, 5) != point_offset(GaussianPoints(16, sigma_u, sigma_v; seed=5), Float64, 3, 2, 1, 5)
+  g = circular_cone_beam(; angles=range(0, 2pi, 5)[1:4], dso=50, dsd=100, nu=5, nv=3, du=1.5)
+  @test adapt(Array{Float32}, MultiRay(g, GaussianPoints(4, 0.3))).points isa GaussianPoints{4,Float32}
+  @test_throws ArgumentError GaussianPoints(4, -0.1)
+  @test_throws ArgumentError GaussianPoints(0, 0.1)
+end
+
 @testitem "MultiRay: subset, adapt, errors" tags = [:geometry, :multiray] begin
   using Adapt
   using CTOperators: subray

@@ -96,6 +96,8 @@ nothing #hide
 # * `JitteredPoints(4, 1; seed=1)`: each of the regular points moved to a random position within its
 #   subcell;
 # * `RandomPoints(4; seed=1)`: 4 random points anywhere in the cell;
+# * `GaussianPoints(4, 0.3; seed=1)`: 4 random points, normally distributed around the cell center,
+#   which can also land in neighboring cells (blur);
 # * `Points(offsets)`: given positions, the same in every cell;
 #
 # and the rays can be weighted, e.g. by a detector response that falls off towards the cell edges:

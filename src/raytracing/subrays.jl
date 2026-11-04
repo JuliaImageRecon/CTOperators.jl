@@ -7,25 +7,26 @@
 
 # forward: the weighted mean of the subrays' line integrals
 @inline function trace_element(segment::F, action::Gather, grid::VoxelGrid{T}, g::MultiRay, i) where {F,T}
+  cell = element_cell(g, i)
   acc, wsum = zero(T), zero(T)
   for k in 1:nsubrays(g)
-    a, b, w = subray(g, i, k)
+    a, b, w = cell_subray(g, cell, k)
     acc = muladd(w, segment(action, grid, a, b, raytype(g)), acc)
     wsum += w
   end
   acc / wsum
 end
 
-# back: every subray adds its share w / sum(w) of the value; the weights are summed first (cheap
-# next to tracing), so that the shares are known before any subray is traced
+# back: every subray adds its share w / sum(w) of the value; the weights are summed first, so that
+# the shares are known before any subray is traced
 @inline function trace_element(segment::F, action::Scatter, grid::VoxelGrid{T}, g::MultiRay, i) where {F,T}
+  cell = element_cell(g, i)
   wsum = zero(T)
   for k in 1:nsubrays(g)
-    _, _, w = subray(g, i, k)
-    wsum += w
+    wsum += subray_weight(g, cell, k)
   end
   for k in 1:nsubrays(g)
-    a, b, w = subray(g, i, k)
+    a, b, w = cell_subray(g, cell, k)
     segment(Scatter(action.image, action.value * (w / wsum)), grid, a, b, raytype(g))
   end
   zero(T)
