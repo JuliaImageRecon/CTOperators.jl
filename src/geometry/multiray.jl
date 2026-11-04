@@ -1,7 +1,7 @@
 # Several rays per detector cell: a detector geometry wrapped with a point strategy (where in the
-# cell the subrays end) and a weighting strategy. Offsets are in cell units: (0, 0) is the cell
-# center, +-1/2 the cell edges. The number of subrays K is a type parameter of the point strategy,
-# so the loop over the subrays has a length known to the compiler.
+# cell the rays end) and a weighting strategy. Offsets are in cell units: (0, 0) is the cell
+# center, +-1/2 the cell edges. The number of rays K is a type parameter of the point strategy,
+# so the loop over the rays has a length known to the compiler.
 
 """
     AbstractPoints{K}
@@ -25,8 +25,8 @@ abstract type AbstractWeights end
 """
     RegularPoints(su, sv=su)
 
-The centers of `su × sv` subcells of each detector cell: `su` along `u`, `sv` along `v`. Point
-strategy of [`MultiRay`](@ref).
+The centers of `su × sv` subcells of each detector cell, `su` along `u` and `sv` along `v`:
+`su * sv` rays per cell. Point strategy of [`MultiRay`](@ref).
 """
 struct RegularPoints{K} <: AbstractPoints{K}
   su::Int
@@ -38,8 +38,8 @@ end
 
 The points of [`RegularPoints`](@ref), each moved to a random position within its subcell
 ("jittered sampling", R. L. Cook, "Stochastic sampling in computer graphics", ACM Transactions on
-Graphics 5(1), 51-72, 1986). The positions are fixed by `seed`, the detector cell, the view and the
-subray, so they are the same in the forward and the back projection, on every device and in
+Graphics 5(1), 51-72, 1986). The offsets are fixed by `seed` (default 0), the detector cell, the view
+and the ray, so they are the same in the forward and the back projection, on every device and in
 `subset`. Point strategy of [`MultiRay`](@ref).
 """
 struct JitteredPoints{K} <: AbstractPoints{K}
@@ -51,8 +51,8 @@ end
 """
     RandomPoints(n; seed=0)
 
-`n` random points in each detector cell, fixed like those of [`JitteredPoints`](@ref). Point
-strategy of [`MultiRay`](@ref).
+`n` random points, uniformly distributed in each detector cell, fixed like those of
+[`JitteredPoints`](@ref). Point strategy of [`MultiRay`](@ref).
 """
 struct RandomPoints{K} <: AbstractPoints{K}
   seed::UInt32
@@ -64,7 +64,7 @@ end
 `n` random points per detector cell, normally distributed around the cell center with standard
 deviations `sigma_u`, `sigma_v` in cell units: a detector response set by where the rays land, with
 all rays counting equally. Points can land outside the cell, which models blur across neighboring
-cells. The positions are fixed like those of [`JitteredPoints`](@ref). Point strategy of
+cells. The offsets are fixed like those of [`JitteredPoints`](@ref). Point strategy of
 [`MultiRay`](@ref).
 """
 struct GaussianPoints{K,T} <: AbstractPoints{K}
@@ -77,7 +77,7 @@ end
     Points(offsets)
 
 Given points, the same in every detector cell: column `k` of the `2 × K` matrix `offsets` is the
-position of subray `k` in cell units, `(0, 0)` the cell center and `±1/2` the cell edges. Points
+offset of ray `k` in cell units, `(0, 0)` the cell center and `±1/2` the cell edges. Points
 outside the cell are allowed. Point strategy of [`MultiRay`](@ref).
 """
 struct Points{K,T} <: AbstractPoints{K}
@@ -133,9 +133,11 @@ points_eltype(p::Points{K}, ::Type{T}) where {K,T} = Points{K,T}(map(o -> SVecto
 """
     point_offset(points, T, iu, iv, view, k) -> (du, dv)
 
-The offset of ray `k` from the center of the detector cell `(iu, iv)` in view `view`, in element type
-`T` and in cell units (`±1/2` are the cell edges). `view` is numbered as in the full geometry, so
-that subsets draw the same random positions. Called in kernels: no allocations.
+The offset of ray `k` (from `1` to `K`) from the center of the detector cell `(iu, iv)` in view
+`view`, in element type `T` and in cell units (`±1/2` are the cell edges). `view` is numbered as in
+the full geometry, so that subsets draw the same random offsets. Called in kernels: no allocations.
+Fields of a strategy must be plain values: they reach the kernels unchanged, so an array field would
+stay on the CPU.
 """
 function point_offset end
 
@@ -175,7 +177,8 @@ end
     random_pair(T, seed, iu, iv, view, k) -> (ru, rv)
 
 Two uniform random numbers in `[0, 1)`, fixed by the arguments: the same on every device and in
-every call, and independent for different cells, views, rays and seeds. For random point strategies.
+every call, and independent for different arguments. `seed` is a `UInt32`, `(iu, iv)` the detector
+cell, `view` the view; `k` is any number, usually the ray of the cell. For random point strategies.
 """
 @inline function random_pair(::Type{T}, seed, iu, iv, view, k) where {T}
   # the cell as one number keeps the four inputs distinct for up to 65536 cells per row
@@ -187,7 +190,7 @@ end
 """
     UniformWeights()
 
-All subrays of a detector cell count equally. Weighting strategy of [`MultiRay`](@ref).
+All rays of a detector cell count equally. Weighting strategy of [`MultiRay`](@ref).
 """
 struct UniformWeights <: AbstractWeights end
 
@@ -222,16 +225,16 @@ weights_eltype(w::GaussianWeights, ::Type{T}) where {T} = GaussianWeights{T}(w.s
 """
     subray_weight(weights, du, dv)
 
-The weight of a ray at offset `(du, dv)` from the cell center, positive and not normalized (the
-weights of a cell are normalized in the kernel). Called in kernels: no allocations.
+The weight of a ray at offset `(du, dv)` from the cell center, not normalized: the kernel divides by
+the sum of the weights of the cell, which must not be zero. Called in kernels: no allocations.
 """
 function subray_weight end
 
 @inline subray_weight(::UniformWeights, du, dv) = one(du)
 @inline subray_weight(w::GaussianWeights, du, dv) = exp(-((du / w.sigma_u)^2 + (dv / w.sigma_v)^2) / 2)
 
-# Whether the subrays of a cell move along both detector axes or only along u. For 2D images (one
-# voxel layer along z) the rays must stay in the image plane, which the projectors ensure with
+# Whether the rays of a cell move along both detector axes or only along u. For images with one
+# voxel layer along z the rays must stay in the image plane, which the projectors ensure with
 # `in_plane`.
 struct FullCell end
 struct InPlane end
@@ -243,24 +246,25 @@ struct InPlane end
     MultiRay(geometry, points; weights=UniformWeights())
 
 The detector geometry `geometry` (`ConeBeam`, `ArcConeBeam`, `ParallelBeam`) with several rays per
-detector cell. The rays of a cell end at the positions given by the point strategy `points`
+detector cell. The rays of a cell end at the offsets given by the point strategy `points`
 ([`RegularPoints`](@ref), [`JitteredPoints`](@ref), [`RandomPoints`](@ref),
-[`GaussianPoints`](@ref), [`Points`](@ref), or an own [`AbstractPoints`](@ref)) and
+[`GaussianPoints`](@ref), [`Points`](@ref), or a custom [`AbstractPoints`](@ref)) and
 are averaged with the weights of `weights` ([`UniformWeights`](@ref),
-[`GaussianWeights`](@ref), or an own [`AbstractWeights`](@ref)), normalized to sum 1 per cell. A ray-driven projector built on it
+[`GaussianWeights`](@ref), or a custom [`AbstractWeights`](@ref)), normalized to sum 1 per cell. A ray-driven projector built on it
 computes
 
-    y[i] = sum_k w_k * (line integral along subray k of data element i)
+    y[i] = sum_k w_k * (line integral along ray k of data element i)
 
 and the exact adjoint. This averages the line integrals over the cell (closer to what a detector
-cell measures than one line through its center) and removes the gaps between rays that occur when
-detector cells are large against the voxels. The data has the size of `geometry`.
+cell measures than one line through its center) and reduces the gaps between rays that occur when
+detector cells are large compared to the voxels. The data have the size of `geometry`.
 
-For 2D images (one voxel layer along `z`) the projectors keep the subrays in the image plane: they
-are spread along `u` only, and point strategies with several subcells along `v` are rejected.
+For images with one layer of voxels along `z` (2D images, or 3D images with `nz = 1`) the projectors
+keep the rays in the image plane: they are spread along `u` only, and point strategies with several
+subcells along `v` are rejected.
 
-A `MultiRay` has no single ray per data element (no [`ray`](@ref)); projectors that trace only one
-ray per cell reject it. `subset` and `adapt` keep the points and weights; random positions stay the
+A `MultiRay` has no single ray per data element (no [`ray`](@ref)): a projector that traces only one
+ray per cell fails with a `MethodError` when applied, instead of ignoring the other rays. `subset` and `adapt` keep the points and weights; random offsets stay the
 same for the views of a subset.
 
 # Example
@@ -311,8 +315,8 @@ Adapt.adapt_structure(to, g::MultiRay) =
     in_plane(geometry)
 
 `geometry` with the rays of a [`MultiRay`](@ref) in the image plane (offsets along `u` only); other
-geometries unchanged. The constructor of a projector calls it for 2D images, which have one layer
-of voxels along `z`.
+geometries unchanged. The constructor of a projector calls it for images with one layer of voxels
+along `z`, see [`CTOperators.one_layer`](@ref).
 """
 in_plane(g) = g
 function in_plane(g::MultiRay)
@@ -321,8 +325,16 @@ function in_plane(g::MultiRay)
 end
 
 # subcells along v would all fall onto v = 0 and trace the same rays several times
+"""
+    one_layer(image::ImageGeom)
+
+Whether `image` has one layer of voxels along `z`: a 2D image, or a 3D image with `nz = 1`. Rays that
+leave the center of the layer see too little of it, so the rays of a cell stay in its plane.
+"""
+one_layer(image::ImageGeom) = length(image.dims) == 2 || image.dims[3] == 1
+
 check_in_plane(p::Union{RegularPoints,JitteredPoints}) =
-  p.sv == 1 || throw(ArgumentError("a 2D image has one row of rays per view: use $(nameof(typeof(p)))(su, 1)"))
+  p.sv == 1 || throw(ArgumentError("an image with one layer of voxels needs one row of rays: use $(nameof(typeof(p)))(su, 1)"))
 check_in_plane(p) = nothing
 
 function Base.show(io::IO, ::MIME"text/plain", g::MultiRay)
@@ -343,19 +355,19 @@ end
   iu, iv, view, full_view(g.views, view)
 end
 
-# the offset of subray k in the cell
+# the offset of ray k in the cell
 @inline function subray_offset(g::MultiRay{T}, cell, k) where {T}
   iu, iv, _, number = cell
   restrict(g.span, point_offset(g.points, T, iu, iv, number, k)...)
 end
 
-# the weight (not normalized) of subray k in the cell
+# the weight (not normalized) of ray k in the cell
 @inline function cell_weight(g::MultiRay, cell, k)
   du, dv = subray_offset(g, cell, k)
   subray_weight(g.weights, du, dv)
 end
 
-# subray k in the cell
+# ray k in the cell
 @inline function cell_subray(g::MultiRay{T}, cell, k) where {T}
   iu, iv, view, _ = cell
   du, dv = subray_offset(g, cell, k)
@@ -366,7 +378,7 @@ end
 """
     subray(g::MultiRay, i, k) -> (a, b, w)
 
-Subray `k` of data element `i` as two points like [`ray`](@ref), and its weight (not normalized).
+Ray `k` of data element `i` as two points like [`ray`](@ref), and its weight (not normalized).
 Callable inside kernels.
 """
 @inline subray(g::MultiRay, i, k) = cell_subray(g, element_cell(g, i), k)

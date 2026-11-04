@@ -116,6 +116,11 @@ end
   end
   # subcells along v would collapse onto the plane
   @test_throws ArgumentError SiddonProjector(image2, MultiRay(fan(:flat), RegularPoints(2, 2)))
+  # a 3D image of one layer is treated like a 2D image
+  layer = ImageGeom(; dims=(24, 20, 1), deltas=(1.0, 1.0, 1.0))
+  @test geometry(SiddonProjector(layer, MultiRay(fan(:flat), pts))).span isa InPlane
+  @test isapprox(JosephProjector(layer, MultiRay(fan(:flat), pts); eltype=Float64) * reshape(x, 24, 20, 1),
+                 JosephProjector(image2, MultiRay(fan(:flat), pts); eltype=Float64) * x)
 end
 
 # Strategies are open: types of other packages only subtype AbstractPoints and AbstractWeights and

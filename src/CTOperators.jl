@@ -19,10 +19,10 @@ export datasize, nrays, ray, raytype, nviews, detectorsize, subset, projection_g
 export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, LaunchConfig
 export geometry, image_geometry, imagesize, rowsums, colsums
 
-# not exported, but stable: the interface for types of other packages
+# not exported, but part of the interface: for projectors, geometries and strategies of other packages
 public forward!, backward!, similar_projector, storage_array, device_geometry
 public point_offset, random_pair, points_eltype, subray_weight, weights_eltype
-public trace_element, in_plane, visit, Gather, Scatter, to_index, clip, VoxelGrid
+public trace_element, in_plane, one_layer, cell_ray, is_masked, visit, Gather, Scatter, to_index, clip, VoxelGrid
 public image_mask, ray_mask, handles_raymask, projector_masks, ProjectorMasks
 
 """

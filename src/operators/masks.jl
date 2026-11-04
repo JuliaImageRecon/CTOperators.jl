@@ -85,6 +85,11 @@ function masked_backward!(x, op, y)
   x
 end
 
-# is ray i masked out? Inside kernels; without a mask the check compiles away
+"""
+    is_masked(raymask, i)
+
+Whether ray `i` is masked, with `raymask` from [`CTOperators.ray_mask`](@ref). Called in kernels;
+without a mask (`nothing`) the check compiles away.
+"""
 @inline is_masked(::Nothing, i) = false
 @inline is_masked(mask, i) = @inbounds !mask[i]

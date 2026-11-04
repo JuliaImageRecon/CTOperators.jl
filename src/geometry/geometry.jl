@@ -28,6 +28,7 @@ Interface (in addition to that of `AbstractProjectionGeometry`):
 
 * `nviews(g)`, `detectorsize(g) = (nu, nv)`
 * `subset(g, views)`: the geometry of a subset of the views
+* [`cell_ray`](@ref CTOperators.cell_ray)`(g, cu, cv, k)`, for several rays per cell
 """
 abstract type AbstractDetectorGeometry{T} <: AbstractProjectionGeometry{T} end
 
@@ -120,12 +121,16 @@ end
   c + (cu - T(nu + 1) / 2) * u + (cv - T(nv + 1) / 2) * v
 end
 
-# cell_ray(g, cu, cv, k) -> (a, b): the ray of view k of the detector geometry g that ends at
-# position (cu, cv) on the detector, as two points like `ray` (cone beams: source and detector
-# point; parallel beams: detector point and that point plus the direction). Positions are in cell
-# units: integers are cell centers, so `cell_ray(g, iu, iv, k)` is the ray of cell (iu, iv), equal to
-# `ray`; half-integers are cell edges, e.g. `cell_ray(g, iu + 1/2, iv, k)` runs through the midpoint
-# of the edge between cells iu and iu + 1. Callable inside kernels.
+"""
+    cell_ray(g::AbstractDetectorGeometry, cu, cv, k) -> (a, b)
+
+The ray of view `k` that ends at position `(cu, cv)` on the detector, as two points like
+[`ray`](@ref): for cone beams the source and the detector point, for parallel beams the detector
+point and that point plus the direction. Positions are in cell units: integers are cell centers, so
+`cell_ray(g, iu, iv, k)` is the ray of cell `(iu, iv)`; half-integers are cell edges, e.g.
+`cell_ray(g, iu + 1/2, iv, k)` runs through the middle of the edge between cells `iu` and `iu + 1`.
+Callable inside kernels. A [`MultiRay`](@ref) needs it from its geometry.
+"""
 function cell_ray end
 
 function check_views(name, ms...)

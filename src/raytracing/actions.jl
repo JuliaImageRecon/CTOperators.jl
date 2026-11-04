@@ -2,6 +2,7 @@
     Gather(image)
 
 What a ray does in the forward projection: it sums the weighted values of the voxels it visits.
+`image` is indexed linearly.
 """
 struct Gather{A}
   image::A
@@ -11,6 +12,7 @@ end
     Scatter(image, value)
 
 What a ray does in the back projection: it adds its weighted `value` to the voxels it visits.
+`image` is indexed linearly.
 """
 struct Scatter{A,T}
   image::A
