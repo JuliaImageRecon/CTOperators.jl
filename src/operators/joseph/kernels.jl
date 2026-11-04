@@ -90,10 +90,12 @@ end
   joseph_traverse(action, grid.dims, p, d, k, norm(b - a), amin, amax, smin, smax)
 end
 
-@inline function joseph_traverse(action, dims, p::SVector{3,T}, d::SVector{3,T}, k, len, amin, amax, smin, smax) where {T}
+@inline function joseph_traverse(action, dims::NTuple{3,I}, p::SVector{3,T}, d::SVector{3,T}, k, len, amin, amax, smin, smax) where {I,T}
   # the principal axis a = k and the transverse axes b < c, with their strides in the image
+  # all integer arithmetic in I: a literal 1 would promote it to Int64
+  unit = one(I)
   nx, ny, nz = dims
-  strides = (1, nx, nx * ny)
+  strides = (unit, nx, nx * ny)
   kb = ifelse(k == 1, 2, 1)
   kc = ifelse(k == 3, 2, 3)
   na, nb, nc = pick(dims, k), pick(dims, kb), pick(dims, kc)
@@ -104,12 +106,12 @@ end
   # the layers the clipped ray crosses, in the direction of the ray
   first = voxel_index(muladd(amin, da, pa), na)
   last = voxel_index(muladd(amax, da, pa), na)
-  step = ifelse(da > 0, 1, -1)
+  step = ifelse(da > 0, unit, -unit)
   invd = inv(da)
   half = abs(invd) / 2        # half the parameter length of a slab
   one_t = one(T)
   acc = zero(T)
-  for t in 0:abs(last - first)
+  for t in zero(I):abs(last - first)
     i = first + t * step
     center = (i - pa) * invd    # the parameter of the center plane of layer i
     lo = max(center - half, smin)
@@ -119,18 +121,18 @@ end
       mid = (lo + hi) / 2
       qb = muladd(mid, db, pb)
       qc = muladd(mid, dc, pc)
-      jb = unsafe_trunc(Int, floor(qb))
-      jc = unsafe_trunc(Int, floor(qc))
+      jb = unsafe_trunc(I, floor(qb))
+      jc = unsafe_trunc(I, floor(qc))
       fb = qb - jb
       fc = qc - jc
-      lin = 1 + (i - 1) * sa + (jb - 1) * sb + (jc - 1) * sc
+      lin = unit + (i - unit) * sa + (jb - unit) * sb + (jc - unit) * sc
       wb0, wb1 = w * (one_t - fb), w * fb
-      if 1 <= jb < nb && 1 <= jc < nc
+      if unit <= jb < nb && unit <= jc < nc
         # all four neighbors inside the volume: no bounds checks (most samples)
         acc = visit_bilinear(action, acc, lin, sb, sc, wb0, wb1, fc)
       else
-        inb0, inb1 = 1 <= jb <= nb, 0 <= jb <= nb - 1
-        inc0, inc1 = 1 <= jc <= nc, 0 <= jc <= nc - 1
+        inb0, inb1 = unit <= jb <= nb, zero(I) <= jb <= nb - unit
+        inc0, inc1 = unit <= jc <= nc, zero(I) <= jc <= nc - unit
         if inb0 && inc0
           acc = visit(action, acc, lin, wb0 * (one_t - fc))
         end

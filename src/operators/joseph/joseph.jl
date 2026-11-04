@@ -50,9 +50,9 @@ Reference:
 * P. M. Joseph, "An improved algorithm for reprojecting rays through pixel images", IEEE Trans.
   Med. Imaging 1(3), 192–196, 1982.
 """
-struct JosephProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks} <: AbstractProjector{T,G}
+struct JosephProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T}} <: AbstractProjector{T,G}
   image::I
-  grid::VoxelGrid{T}
+  grid::V
   geometry::G
   backend::B
   launch::L
