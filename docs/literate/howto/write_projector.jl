@@ -59,9 +59,9 @@ nothing #hide
 # `samples`, the number of samples per voxel length. The type parameters keep the fields concrete,
 # so that applying the operator is type-stable.
 
-struct SamplingProjector{T,G<:AbstractProjectionGeometry{T},B,I<:ImageGeom} <: AbstractProjector{T,G}
+struct SamplingProjector{T,G<:AbstractProjectionGeometry{T},B,I<:ImageGeom,V<:VoxelGrid{T}} <: AbstractProjector{T,G}
   image::I
-  grid::VoxelGrid{T}
+  grid::V
   geometry::G
   backend::B
   samples::T

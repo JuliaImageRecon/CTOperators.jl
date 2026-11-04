@@ -170,3 +170,14 @@ approximate).
 
 One ray per cell costs the same as the plain geometry; 4 rays per cell take about 4 times as long.
 Random positions (a hash per ray) and Gaussian weights are not measurable.
+
+### Voxel indices in Int32 (GPU)
+
+AMD Radeon RX 7900 XT, Float32, 128³ volume, 128² detector, 180 views (circular cone beam), one ray
+per cell, minimum of 15 runs, two runs per version, 2026-11-04 (the GPU was also the desktop GPU in
+use: approximate).
+
+| voxel indices | Siddon forward / back | Joseph forward / back |
+|---|---|---|
+| Int64 | 5.9–6.4 / 13.4–13.6 ms | 6.6–6.8 / 30.6 ms |
+| Int32 | 6.0–6.1 / 13.3–13.4 ms | 5.7–6.0 / 30.5 ms |

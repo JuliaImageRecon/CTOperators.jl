@@ -55,11 +55,10 @@ end
 @inline inverse(d) = iszero(d) ? zero(d) : inv(d)
 @inline crossing_offset(p, d) = iszero(d) ? zero(d) : (oftype(d, 0.5) - p) / d
 @inline crossing(w, invd, offset, d) = iszero(d) ? typemax(d) : muladd(w, invd, offset)
-@inline step_index(s) = unsafe_trunc(Int, s)
 
-@inline function siddon_traverse(action, dims, p::SVector{3,T}, d::SVector{3,T}, len, amin, amax) where {T}
+@inline function siddon_traverse(action, dims::NTuple{3,I}, p::SVector{3,T}, d::SVector{3,T}, len, amin, amax) where {I,T}
   s = sign.(d)
-  step = map(step_index, s)
+  step = SVector(unsafe_trunc(I, s[1]), unsafe_trunc(I, s[2]), unsafe_trunc(I, s[3]))
   vox = map(voxel_index, p + amin * d, SVector(dims))
   plane = map(first_plane, vox, s)
   invd = map(inverse, d)
@@ -74,27 +73,29 @@ end
   fx, fy, fz = s[1], s[2], s[3]
   ax, ay, az = alpha[1], alpha[2], alpha[3]
   lx, ly, lz = sx, sy * nx, sz * nx * ny
-  lin = ix + (iy - 1) * nx + (iz - 1) * nx * ny
+  # all integer arithmetic in I: a literal 1 would promote it to Int64
+  unit = one(I)
+  lin = ix + (iy - unit) * nx + (iz - unit) * nx * ny
   acc = zero(T)
   acur = amin
   # every iteration crosses one plane: at most sum(dims) + 3 crossings (bounds NaN rays too)
-  for _ in 1:nx+ny+nz+3
+  for _ in unit:nx+ny+nz+I(3)
     if ax <= ay && ax <= az
       anext = min(ax, amax)
       acc = visit(action, acc, lin, (anext - acur) * len)
-      (anext >= amax || !(1 <= ix + sx <= nx)) && break
+      (anext >= amax || !(unit <= ix + sx <= nx)) && break
       ix += sx; lin += lx; wx += fx
       ax = muladd(wx, invd[1], offset[1])
     elseif ay <= az
       anext = min(ay, amax)
       acc = visit(action, acc, lin, (anext - acur) * len)
-      (anext >= amax || !(1 <= iy + sy <= ny)) && break
+      (anext >= amax || !(unit <= iy + sy <= ny)) && break
       iy += sy; lin += ly; wy += fy
       ay = muladd(wy, invd[2], offset[2])
     else
       anext = min(az, amax)
       acc = visit(action, acc, lin, (anext - acur) * len)
-      (anext >= amax || !(1 <= iz + sz <= nz)) && break
+      (anext >= amax || !(unit <= iz + sz <= nz)) && break
       iz += sz; lin += lz; wz += fz
       az = muladd(wz, invd[3], offset[3])
     end

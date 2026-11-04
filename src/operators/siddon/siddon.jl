@@ -40,9 +40,9 @@ References:
   calculate the exact radiological path through a pixel or voxel space", J. Comput. Inf.
   Technol. 6(1), 89–94, 1998.
 """
-struct SiddonProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks} <: AbstractProjector{T,G}
+struct SiddonProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T}} <: AbstractProjector{T,G}
   image::I
-  grid::VoxelGrid{T}
+  grid::V
   geometry::G
   backend::B
   launch::L

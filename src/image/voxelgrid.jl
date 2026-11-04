@@ -1,5 +1,6 @@
 """
     VoxelGrid{T}(ig::ImageGeom)
+    VoxelGrid{T,I}(ig::ImageGeom)
 
 The voxel grid of an `ImageGeom` in the form the kernels use: three dimensions (a 2D `ImageGeom`
 becomes a volume with `nz = 1` and voxel size 1 along `z`, centered at `z = 0`), element type `T`,
@@ -13,29 +14,48 @@ containing its voxels), in voxel coordinates (see [`to_index`](@ref CTOperators.
 it by half a voxel across the ray, for the interpolation), so that they do not traverse voxels that
 the mask sets to zero.
 
+`I` is the integer type of the voxel indices in the kernels: `Int32` if the indices fit, `Int64` for
+larger images (see [`index_type`](@ref CTOperators.index_type)).
+
 Units of the `ImageGeom` are stripped; they must be the units of the projection geometry.
 """
-struct VoxelGrid{T}
-  dims::NTuple{3,Int}
+struct VoxelGrid{T,I<:Integer}
+  dims::NTuple{3,I}
   deltas::SVector{3,T}
   first::SVector{3,T}
   lo::SVector{3,T}
   hi::SVector{3,T}
 end
 
+"""
+    index_type(dims) -> Type
+
+The integer type for voxel indices of an image of size `dims`: `Int32` if the index arithmetic of the
+kernels fits, otherwise `Int64`. Linear indices that are used lie in `1:prod(dims)`, and the step
+counter of a ray stays below `sum(dims) + 3`.
+"""
+index_type(dims) = prod(Int128.(dims)) + sum(Int128.(dims)) + 3 <= typemax(Int32) ? Int32 : Int64
+
+VoxelGrid{T}(dims::NTuple{3,Integer}, deltas::SVector{3,T}, first::SVector{3,T}, lo, hi) where {T} =
+  VoxelGrid{T,index_type(dims)}(dims, deltas, first, lo, hi)
+
 # the whole volume as the box
-function VoxelGrid{T}(dims::NTuple{3,Int}, deltas::SVector{3,T}, first::SVector{3,T}) where {T}
+function VoxelGrid{T}(dims::NTuple{3,Integer}, deltas::SVector{3,T}, first::SVector{3,T}) where {T}
   half = T(1 // 2)
   VoxelGrid{T}(dims, deltas, first, SVector(half, half, half), SVector(map(n -> T(n) + half, dims)))
 end
 
-function VoxelGrid{T}(ig::ImageGeom{D}) where {T<:AbstractFloat,D}
+VoxelGrid{T}(ig::ImageGeom) where {T<:AbstractFloat} = VoxelGrid{T,index_type(grid_dims(ig))}(ig)
+
+grid_dims(ig::ImageGeom{D}) where {D} = ntuple(d -> d <= D ? ig.dims[d] : 1, 3)
+
+function VoxelGrid{T,I}(ig::ImageGeom{D}) where {T<:AbstractFloat,I,D}
   D in (2, 3) || throw(ArgumentError("only 2D and 3D image geometries are supported, got $(D)D"))
-  dims = ntuple(d -> d <= D ? ig.dims[d] : 1, 3)
+  dims = grid_dims(ig)
   deltas = SVector(ntuple(d -> d <= D ? T(strip_unit(ig.deltas[d])) : one(T), 3))
   first = SVector(ntuple(d -> d <= D ? T(strip_unit(axis(ig, d)[1])) : zero(T), 3))
   lo, hi = mask_box(ig.mask, T)
-  VoxelGrid{T}(dims, deltas, first, lo, hi)
+  VoxelGrid{T,I}(dims, deltas, first, lo, hi)
 end
 
 # The box around the true voxels of a mask, in voxel coordinates (3D; a 2D mask covers z in
@@ -56,7 +76,7 @@ end
 # a length without its unit (Unitful quantities), plain numbers unchanged
 strip_unit(x) = x / oneunit(x)
 
-Base.size(g::VoxelGrid) = g.dims
+Base.size(g::VoxelGrid) = Int.(g.dims)
 Base.eltype(::VoxelGrid{T}) where {T} = T
 
 """
@@ -79,5 +99,5 @@ the voxels are unit cubes with positive orientation, whatever the sign of `delta
 """
 @inline to_index(g::VoxelGrid, p) = (p .- g.first) ./ g.deltas .+ one(eltype(g))
 
-# the voxel containing the voxel coordinate q, clamped to 1:n
-@inline voxel_index(q, n) = clamp(unsafe_trunc(Int, floor(q + oftype(q, 0.5))), 1, n)
+# the voxel containing the voxel coordinate q, clamped to 1:n, in the integer type of n
+@inline voxel_index(q, n::I) where {I} = clamp(unsafe_trunc(I, floor(q + oftype(q, 0.5))), one(I), n)
