@@ -86,9 +86,9 @@ save("fan_reconstructions.png", fig) #hide
 nothing #hide
 # ![Reconstructions of the three scans](fan_reconstructions.png)
 
-# The short scan is as good as the full one: it measured every line, some twice. Half a turn misses
-# lines near the edges of the fan, and the reconstruction shows streaks and wrong values on the side
-# that was seen least.
+# The short scan measured every line, some twice; its error is 0.022, against 0.013 for the full
+# scan. Half a turn misses lines near the edges of the fan: its error is 0.139, and the reconstruction
+# shows streaks and wrong values on the side that was seen least.
 #
 # Filtered back projection (FBP, available in
 # [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl); this package provides the

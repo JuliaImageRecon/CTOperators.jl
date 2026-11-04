@@ -71,7 +71,7 @@ nothing #hide
 # ![Phantom and reconstruction of the circular scan](cone_circle.png)
 
 # The middle disc is reconstructed well. Away from the middle the discs lose their edges and blur
-# into each other along `z`, although every voxel was in every view. The reason is what a circular
+# into each other along `z`, although every disc was in every view. The reason is what a circular
 # orbit measures: the data determines the object only in the plane of the orbit. Above and below,
 # no ray runs parallel to the discs, and an iterative method cannot recover what no measurement
 # contains (Tuy's condition: every plane that cuts the object has to meet the path of the source;
@@ -97,5 +97,5 @@ nothing #hide
 # ![Large and small cone angle](cone_angles.png)
 
 # With nearly parallel rays every slice is measured almost as in a fan-beam scan, and the discs come
-# back. Scanners with a large cone instead move the source along `z` as well:
-# [Helical Cone-Beam CT](@ref) continues with the same phantom.
+# back. A helical scan moves the source along `z` as well: [Helical Cone-Beam CT](@ref) continues with
+# the same phantom.

@@ -16,6 +16,8 @@ DocMeta.setdocmeta!(CTOperators, :DocTestSetup, :(using CTOperators); recursive=
 makedocs(;
   modules=[CTOperators],
   sitename="CTOperators.jl",
+  pagesonly=true,
+  checkdocs=:exports,
   authors="Niklas Hackelberg and contributors",
   repo=Remotes.GitHub("JuliaImageRecon", "CTOperators.jl"),
   format=Documenter.HTML(;
@@ -38,24 +40,46 @@ makedocs(;
       "Tomosynthesis" => "generated/tutorials/tomosynthesis.md",
     ],
     "How to" => [
-      "Set Up a Geometry" => "generated/howto/geometries.md",
-      "Run on a GPU" => "generated/howto/gpu.md",
-      "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
-      "Use Masks" => "generated/howto/masks.md",
-      "Differentiate through a Projector" => "generated/howto/differentiation.md",
-      "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
-      "Implement a CT Operator" => "generated/howto/implement_operator.md",
+      "Geometries" => [
+        "Set Up a Geometry" => "generated/howto/geometries.md",
+        "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
+      ],
+      "Reconstruction" => [
+        "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
+        "Use Masks" => "generated/howto/masks.md",
+        "Use Several Rays per Cell" => "generated/howto/multiray.md",
+        "Differentiate through a Projector" => "generated/howto/differentiation.md",
+      ],
+      "Devices" => [
+        "Run on a GPU" => "generated/howto/gpu.md",
+      ],
+      "Custom Components" => [
+        "Write a Projector" => "generated/howto/write_projector.md",
+        "Write a Sampling Strategy" => "generated/howto/write_sampling.md",
+      ],
     ],
     "Explanation" => [
-      "The Parameters of a Scan" => "generated/explanation/scan_parameters.md",
-      "Coordinates and Conventions" => "generated/explanation/conventions.md",
-      "Siddon's Method" => "generated/explanation/siddon.md",
-      "Joseph's Method" => "generated/explanation/joseph.md",
-      "Masks" => "generated/explanation/masks.md",
-      "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
+      "Scans" => [
+        "The Parameters of a Scan" => "generated/explanation/scan_parameters.md",
+        "Coordinates and Conventions" => "generated/explanation/conventions.md",
+      ],
+      "Projection Methods" => [
+        "Siddon's Method" => "generated/explanation/siddon.md",
+        "Joseph's Method" => "generated/explanation/joseph.md",
+        "Several Rays per Cell" => "generated/explanation/multiray.md",
+        "Comparing Projectors" => "generated/explanation/comparing.md",
+      ],
+      "Operators" => [
+        "Masks" => "generated/explanation/masks.md",
+        "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
+      ],
     ],
     "Reference" => [
-      "API" => "api.md",
+      "Images" => "api/images.md",
+      "Projection Geometries" => "api/geometries.md",
+      "Operators" => "api/operators.md",
+      "Projectors" => "api/projectors.md",
+      "Internals" => "api/internals.md",
     ],
   ],
 )

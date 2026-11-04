@@ -3,8 +3,8 @@
 # Fewer views mean less dose and faster scans, and some scanners cannot turn all the way round. This
 # tutorial takes views away from a 2D parallel-beam scan like the one of [Parallel Beam in 2D](@ref)
 # (with a finer detector) in two ways, few views over the full half turn and many views over a
-# limited arc, and shows what a regularized reconstruction can recover: much in the first case,
-# little in the second.
+# limited arc, and shows what a regularized reconstruction recovers on this example: much in the
+# first case, little in the second.
 
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
 using ImageGeoms: axis
@@ -89,8 +89,8 @@ nothing #hide
 
 # With 20 views TV removes most of the streaks and comes close to the phantom, though small details
 # are blurred: the data and the prior together nearly determine it. Over the limited angle TV
-# sharpens the measured edges but cannot restore those the scan never saw. Missing directions are a
-# harder loss than missing views.
+# sharpens the measured edges but cannot restore those the scan never saw. On this example TV lowers
+# the error from 0.40 to 0.055 for 20 views and from 0.40 to 0.33 for the limited arc.
 #
-# The phantom suits TV unusually well: real anatomy has texture and smooth transitions, and the
+# The phantom is piecewise constant; this result does not carry over to images with texture. The
 # weight `λ` trades noise and streaks against loss of detail.

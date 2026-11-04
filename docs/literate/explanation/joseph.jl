@@ -60,9 +60,9 @@ round.(weights; digits=2)
 
 # ## Properties
 #
-# - **Smooth.** The projection changes continuously when a ray moves; Siddon's jumps when the ray
-#   crosses into the next voxel. Rays that lie exactly between two voxels, ambiguous for Siddon,
-#   take the mean of both.
+# - **Smooth.** The projection changes continuously when a ray moves. Siddon's does too, except for
+#   rays parallel to the voxel planes, where it jumps as the ray crosses a plane. Rays that lie exactly
+#   between two voxels, ambiguous for Siddon, take the mean of both.
 # - **Exact for linear images.** If the voxel values are samples of a linear function of the
 #   position, the interpolation reproduces it, and the sum per layer integrates it exactly, for rays
 #   that cross the volume from face to face and stay within the outermost voxel centers across the
@@ -92,9 +92,8 @@ save("coverage_comparison.png", fig) #hide
 nothing #hide
 # ![Coverage of the pixels by the rays of one view, Siddon and Joseph](coverage_comparison.png)
 
-# For reconstructions this means that Joseph's method is less prone to checkerboard patterns, but at
-# angles near 45° it needs as many rays per voxel as Siddon's. Projectors that integrate over the
-# detector cells (footprint methods) avoid the problem altogether.
+# De Man & Basu (2004) report that a distance-driven projector, which integrates over the detector
+# cells, removes the artifacts of ray-driven back projection in their examples.
 #
 # ## Implementation
 #
@@ -113,3 +112,5 @@ nothing #hide
 #
 # - P. M. Joseph, "An improved algorithm for reprojecting rays through pixel images", IEEE Trans.
 #   Med. Imaging 1(3), 192–196, 1982.
+# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
+#   Med. Biol. 49(11), 2463–2475, 2004.

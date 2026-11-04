@@ -32,7 +32,7 @@ bonito_page("siddon") #hide
 # al. (1998) avoid both: starting from the voxel where the ray enters, they take the nearest next
 # crossing of the three axes, which says which axis the ray crosses next, and step that axis's voxel
 # index by one. Every step costs a few additions and comparisons, and a ray through a volume of n³
-# voxels takes about 3n steps.
+# voxels takes at most about 3n steps.
 #
 # In the figure a ray crosses a 2D image. Orange circles mark where the ray crosses the lines `x =
 # const` between pixels, red diamonds the lines `y = const`; the pixels are colored by the length of
@@ -66,17 +66,17 @@ round.(weights; digits=2)
 # Whether a voxel is hit by many or by few rays then depends on how the rays fall onto the voxel
 # grid. The figure shows, for one parallel-beam view at 45°, the summed lengths of all rays in every
 # pixel (scaled by the cell size, so that even coverage is 1). With one ray per pixel the coverage
-# varies between about 0.83 and 1.34, in a regular pattern; more rays per pixel even it out.
+# varies between about 0.83 and 1.38, in a regular pattern; more rays per pixel even it out here.
 
 fig = coverage_figure(16) #hide
 save("coverage.png", fig) #hide
 nothing #hide
 # ![Coverage of the pixels by the rays of one view](coverage.png)
 
-# In an iterative reconstruction this pattern can appear as a checkerboard in the image (De Man &
-# Basu 2004 describe the effect). Remedies are more rays than voxels (finer detector sampling),
-# [Joseph's Method](@ref), whose interpolation evens out the coverage at most angles, or projectors
-# that integrate over the detector cells, such as distance-driven or separable-footprint projectors.
+# Ray-driven back projection tends to Moiré patterns, and an iterative reconstruction can show such
+# artifacts (De Man & Basu 2004). More rays than voxels reduce them (finer detector sampling, or several
+# rays per cell, see [Use Several Rays per Cell](@ref)), as do projectors that integrate over the
+# detector cells, such as distance-driven ones (De Man & Basu 2004; Miao 2013).
 #
 # ## Implementation
 #
@@ -100,3 +100,5 @@ nothing #hide
 #   6(1), 89–94, 1998.
 # - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
 #   Med. Biol. 49(11), 2463–2475, 2004.
+# - C. Miao, "Comparative studies of different system models for iterative CT image
+#   reconstruction", master's thesis, Wake Forest University, 2013.

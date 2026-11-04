@@ -1,4 +1,4 @@
-# Figure of the guide "Implement a CT operator" (CairoMakie): the sampling projector on a small 2D
+# Figure of the guide "Write a Projector" (CairoMakie): the sampling projector on a small 2D
 # grid. Included invisibly by the page.
 
 using CairoMakie

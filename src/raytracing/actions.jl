@@ -1,14 +1,30 @@
-# What a ray does with the voxels it visits, shared by the ray-driven methods: sum the weighted
-# image values (forward projection) or add its weighted value to them (back projection).
+"""
+    Gather(image)
+
+What a ray does in the forward projection: it sums the weighted values of the voxels it visits.
+`image` is indexed linearly.
+"""
 struct Gather{A}
   image::A
 end
 
+"""
+    Scatter(image, value)
+
+What a ray does in the back projection: it adds its weighted `value` to the voxels it visits.
+`image` is indexed linearly.
+"""
 struct Scatter{A,T}
   image::A
   value::T
 end
 
+"""
+    visit(action, acc, lin, w) -> acc
+
+A ray meets the voxel with linear index `lin`, with weight `w`: [`CTOperators.Gather`](@ref) adds to
+the accumulated value `acc`, [`CTOperators.Scatter`](@ref) writes to the image. Called in kernels.
+"""
 @inline visit(g::Gather, acc, lin, w) = @inbounds muladd(w, g.image[lin], acc)
 
 @inline function visit(s::Scatter, acc, lin, w)

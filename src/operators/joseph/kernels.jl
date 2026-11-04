@@ -73,17 +73,20 @@ end
   lo, hi
 end
 
-# The ray i of the geometry through the grid; returns the accumulated value of the action.
-@inline function joseph_ray(action, grid::VoxelGrid{T}, geometry, i) where {T}
-  a, b = ray(geometry, i)
+# The rays of data element i of the geometry through the grid (one, or the subrays of a MultiRay);
+# returns the accumulated value of the action.
+@inline joseph_ray(action, grid, geometry, i) = trace_element(joseph_segment, action, grid, geometry, i)
+
+# one ray from a to b of type rt
+@inline function joseph_segment(action, grid::VoxelGrid{T}, a, b, rt) where {T}
   p = to_index(grid, a)
   d = (b - a) ./ grid.deltas
   k = principal_axis(d)
   iszero(pick(d, k)) && return zero(T)   # a point, not a ray
   lo, hi = joseph_support(grid, k)
-  amin, amax = clip(p, d, lo, hi, raytype(geometry))
+  amin, amax = clip(p, d, lo, hi, rt)
   amin < amax || return zero(T)
-  smin, smax = segment_range(raytype(geometry), T)
+  smin, smax = segment_range(rt, T)
   joseph_traverse(action, grid.dims, p, d, k, norm(b - a), amin, amax, smin, smax)
 end
 

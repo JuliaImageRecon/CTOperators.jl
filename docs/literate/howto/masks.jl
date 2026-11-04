@@ -28,16 +28,16 @@ end;
 # ## The circular field of view
 #
 # A rotating scanner sees the full object only within the circle that all views cover. The image
-# mask `MaskCircle()` of ImageGeoms.jl restricts the image to this circle (a cylinder in 3D):
+# mask `MaskCircle()` of ImageGeoms.jl restricts the image to the circle inscribed in it (a cylinder in
+# 3D), which here lies inside the circle all views cover:
 
 image = ImageGeom(MaskCircle(); dims=(n, n), deltas=(1.0, 1.0))
 op = JosephProjector(image, geometry)
 x = reconstruct(op, op * x_true);
 
-# The reconstruction is zero outside the circle; inside, it is the reconstruction of the data
-# restricted to the circle. The phantom lies inside the circle, so its reconstruction is the same as
-# without the mask; the mask matters for objects that extend past the field of view, whose parts
-# outside the circle are seen only in some views:
+# The reconstruction is zero outside the circle. The phantom lies inside it, so the data are the same
+# as without the mask, but fewer voxels are unknown: after 30 iterations the error is 0.062 with the
+# mask and 0.075 without it.
 
 fig = images_figure([("image mask", Float32.(image.mask), (0, 1)), ("reconstruction", x)]; #hide
                     colorrange=(0, 0.4)) #hide
@@ -79,15 +79,16 @@ nothing #hide
 
 # The figure shows the reconstructions in the color window 0 to 0.4, where the soft tissue of the
 # phantom is visible, and the relative error ``\|x - x_\text{true}\| / \|x_\text{true}\|``. With the
-# ray mask the rings almost disappear: the other views measure the same lines with healthy cells.
+# ray mask the rings almost disappear (error 0.08; 1.15 without the ray mask, 0.075 with intact data):
+# the lines of the defective cells are not measured, but their wrong values no longer enter the fit.
 # The ray mask works the same way for any rays whose data cannot be used, e.g. truncated or
 # saturated ones.
 #
 # ## A region of interest
 #
 # If only part of the object matters, the image mask can be a box around it, here deliberately off
-# center. The rays then only traverse this box, which makes the projections much faster for a small
-# region: in a 256³ volume, a mask of 64³ voxels made the projections 30 to 40 times faster in our
+# center. The rays then only traverse this box: a centered mask of 64³ voxels in a 256³ volume, on an
+# AMD Radeon RX 7900 XT, made the projections 30 to 43 times faster in our
 # [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md).
 
 roi = falses(n, n)

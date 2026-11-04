@@ -33,12 +33,15 @@ end
   end
 end
 
-# The ray i of the geometry through the grid; returns the accumulated value of the action.
-@inline function siddon_ray(action, grid::VoxelGrid{T}, geometry, i) where {T}
-  a, b = ray(geometry, i)
+# The rays of data element i of the geometry through the grid (one, or the subrays of a MultiRay);
+# returns the accumulated value of the action.
+@inline siddon_ray(action, grid, geometry, i) = trace_element(siddon_segment, action, grid, geometry, i)
+
+# one ray from a to b of type rt
+@inline function siddon_segment(action, grid::VoxelGrid{T}, a, b, rt) where {T}
   p = to_index(grid, a)
   d = (b - a) ./ grid.deltas
-  amin, amax = clip(p, d, grid.lo, grid.hi, raytype(geometry))   # the box of the image mask
+  amin, amax = clip(p, d, grid.lo, grid.hi, rt)   # the box of the image mask
   amin < amax || return zero(T)
   siddon_traverse(action, grid.dims, p, d, norm(b - a), amin, amax)
 end

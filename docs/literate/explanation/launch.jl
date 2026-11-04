@@ -46,9 +46,8 @@ nothing #hide
 # [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md)
 # on an AMD Radeon RX 7900 XT with 256³ images, the forward projection became faster with workgroups
 # of 64 threads instead of the size KernelAbstractions.jl chooses, for both methods. Tile order made
-# it faster again for Joseph's method, but changed little for Siddon's. The back projection, whose
-# time goes mostly into the atomic additions, became neither faster nor slower. On the CPU, neither
-# choice made a noticeable difference.
+# it faster again for Joseph's method, but changed little for Siddon's. The back projection became
+# neither faster nor slower. On the CPU, tiles changed the forward projection by less than 4 %.
 #
 # ## Configuration
 #
@@ -58,8 +57,7 @@ nothing #hide
 # - on the CPU: the workgroup size that KernelAbstractions.jl chooses, and data order.
 #
 # A projector moved with `adapt` switches to the defaults of its new device. The GPU defaults were
-# chosen on the GPU above; on other GPUs they are a starting point. Tuning is worth it when
-# projections dominate the run time of your reconstruction.
+# chosen on the GPU above; on other GPUs they are a starting point.
 #
 # To choose the settings yourself, pass a [`LaunchConfig`](@ref) with the keyword `launch`. It
 # applies to the forward and the back projection, on any device, and projectors made from the

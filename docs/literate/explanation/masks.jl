@@ -21,8 +21,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "mask_figures.jl")) #hide
 # for the forward and the back projection. Since the masks are diagonal, the second is the transpose
 # of the first: the pair stays exactly adjoint, as iterative solvers and automatic differentiation
 # need. It is the same as removing the masked columns (voxels) and rows (rays) from the system
-# matrix, as the [ASTRA Toolbox](https://astra-toolbox.com) does, except that images and data keep
-# their full shape, with zeros at the masked entries.
+# matrix, except that images and data keep their full shape, with zeros at the masked entries.
 #
 # For a solver this means: masked voxels are not unknowns (they stay zero), and masked rays are not
 # measurements (their values do not matter). The row and column sums, the normalizations of SART and
@@ -35,7 +34,8 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "mask_figures.jl")) #hide
 #
 # * **Masked rays are not traced.** The kernel checks the ray mask before it sets up a ray: a masked
 #   ray writes 0 in the forward projection and returns at once in the back projection. With 20 % of
-#   the rays masked, the back projection, whose atomic additions dominate, gets about 20 % faster.
+#   the rays masked, the back projection got 17 to 20 % faster and the forward projection 4 to 14 %
+#   (256³ volume, AMD Radeon RX 7900 XT).
 # * **Rays are clipped to the bounding box of the image mask.** Every ray is clipped to a box before
 #   it is traced; without a mask the box is the volume, with a mask it is the smallest box that
 #   contains the mask (for Joseph widened by half a voxel across the ray, for the interpolation).
@@ -47,8 +47,8 @@ save("mask_box.png", fig) #hide
 nothing #hide
 # ![Rays traced only inside the bounding box of the mask](mask_box.png)
 
-# For a small region of interest this saves most of the work: a mask of 64³ voxels in a 256³ volume
-# made the projections 30 to 40 times faster in our
+# For a small region of interest this saves most of the work: a centered mask of 64³ voxels in a 256³
+# volume, on the same GPU, made the projections 30 to 43 times faster in our
 # [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md). The
 # circular field of view (`MaskCircle`) fills its bounding box, the whole square, and gains nothing.
 #
@@ -60,7 +60,7 @@ nothing #hide
 #
 # The masks are applied in the generic layer of the operators (`mul!`, which calls the operator's
 # `forward!` and `backward!`), so every operator gets the semantics above, also one implemented
-# outside this package (see [Implement a CT Operator](@ref)):
+# outside this package (see [Write a Projector](@ref)):
 #
 # * `CTOperators.image_mask(op)` and `CTOperators.ray_mask(op)` return the masks of `op` on its
 #   device, or `nothing`. A subtype of `AbstractProjector` from another package has the mask of its
@@ -71,4 +71,4 @@ nothing #hide
 #   data by the ray mask.
 #
 # A projector of another package that ignores masks is therefore still correct; it only computes the
-# masked parts. [Implement a CT Operator](@ref) shows how a projector uses the masks itself.
+# masked parts. [Write a Projector](@ref) shows how a projector uses the masks itself.

@@ -7,8 +7,8 @@ line integral is the sum over the layers of the interpolated value times the len
 the layer. Compared with [`SiddonProjector`](@ref):
 
 * the image model is smooth, so the projection changes continuously when a ray moves;
-* the rays of a view cover the voxels more evenly, except near 45°, where the two methods give
-  similar weights;
+* for one parallel view with one ray per voxel, the rays cover the voxels more evenly, except near
+  45°, where the two methods give similar weights;
 * the projection is exact for images that are linear functions of the position rather than for
   voxel images.
 
@@ -67,10 +67,12 @@ end
 JosephProjector(image::ImageGeom, geometry; kwargs...) =
   JosephProjector(image, projection_geometry(geometry); kwargs...)
 
-# from a geometry already in the operator's element type and on its device
+# from a geometry already in the operator's element type and on its device; for images of one layer
+# the rays of a MultiRay stay in the image plane
 function joseph_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}, launch, raymask) where {T}
-  backend = KA.get_backend(storage_array(geometry))
-  JosephProjector(image, VoxelGrid{T}(image), geometry, backend, launch, ProjectorMasks(image, geometry, raymask))
+  g = one_layer(image) ? in_plane(geometry) : geometry
+  backend = KA.get_backend(storage_array(g))
+  JosephProjector(image, VoxelGrid{T}(image), g, backend, launch, ProjectorMasks(image, g, raymask))
 end
 
 geometry(op::JosephProjector) = op.geometry

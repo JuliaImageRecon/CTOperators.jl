@@ -44,7 +44,12 @@ storage_array(g::ParallelBeam) = g.direction
 
 @inline function ray(g::ParallelBeam, i)
   iu, iv, k = pixel_index(i, g.nu, g.nv)
-  a = pixel_position(column(g.center, k), column(g.u, k), column(g.v, k), iu, iv, g.nu, g.nv)
+  T = eltype(g)
+  cell_ray(g, T(iu), T(iv), k)
+end
+
+@inline function cell_ray(g::ParallelBeam, cu, cv, k)
+  a = cell_position(column(g.center, k), column(g.u, k), column(g.v, k), cu, cv, g.nu, g.nv)
   a, a + column(g.direction, k)
 end
 
