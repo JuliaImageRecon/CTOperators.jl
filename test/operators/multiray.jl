@@ -117,3 +117,27 @@ end
   # subcells along v would collapse onto the plane
   @test_throws ArgumentError SiddonProjector(image2, MultiRay(fan(:flat), RegularPoints(2, 2)))
 end
+
+# Strategies are open: types of other packages only subtype AbstractPoints and AbstractWeights and
+# add a method each
+@testitem "MultiRay: own strategies" tags = [:operators, :multiray] setup = [MultiRayProblem] begin
+  struct Cross{K} <: AbstractPoints{K}
+    reach::Float64
+  end
+  CTOperators.point_offset(p::Cross, ::Type{T}, iu, iv, view, k) where {T} =
+    isodd(k) ? (T(p.reach) * (k - 2), zero(T)) : (zero(T), T(p.reach) * (k - 3))
+  struct Linear <: AbstractWeights end
+  CTOperators.subray_weight(::Linear, du, dv) = 1 - abs(du) - abs(dv)
+
+  g = cone()
+  m = MultiRay(g, Cross{4}(0.25); weights=Linear())
+  equal = MultiRay(g, Points([-0.25 0.0 0.25 0.0; 0.0 -0.25 0.0 0.25]))
+  x, y = rand(image.dims...), rand(datasize(g)...)
+  for P in (SiddonProjector, JosephProjector)
+    op = P(image, m; eltype=Float64)
+    # the weights are equal at equal distance from the center: the same as given points
+    @test isapprox(op * x, P(image, equal; eltype=Float64) * x)
+    @test isapprox(sum((op * x) .* y), sum(x .* (adjoint(op) * y)))
+  end
+  @test_throws MethodError MultiRay(g, [0.0; 0.0;;])
+end

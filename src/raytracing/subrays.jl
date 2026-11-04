@@ -1,7 +1,12 @@
-# The rays of data element i for the ray-driven methods: one ray for plain geometries, the weighted
-# subrays of a MultiRay. `segment(action, grid, a, b, raytype)` traces one ray from a to b and
-# returns the value of the action (Gather: the weighted sum of the image).
+"""
+    trace_element(segment, action, grid, geometry, i)
 
+Traces the rays of data element `i` for a ray-driven method: one ray for plain geometries, the
+weighted rays of a cell for a [`MultiRay`](@ref). `segment(action, grid, a, b, raytype)` traces one
+ray from `a` to `b`, calling [`CTOperators.visit`](@ref) for every voxel, and returns the value of
+the action. The result is the value of data element `i` for a [`CTOperators.Gather`](@ref). A
+projector that traces through this function works on every geometry. Called in kernels.
+"""
 @inline trace_element(segment::F, action, grid, geometry, i) where {F} =
   segment(action, grid, ray(geometry, i)..., raytype(geometry))
 
@@ -23,7 +28,7 @@ end
   cell = element_cell(g, i)
   wsum = zero(T)
   for k in 1:nsubrays(g)
-    wsum += subray_weight(g, cell, k)
+    wsum += cell_weight(g, cell, k)
   end
   for k in 1:nsubrays(g)
     a, b, w = cell_subray(g, cell, k)

@@ -12,12 +12,18 @@ export AbstractCTOperator
 export ImageGeom, MaskCircle, MaskEllipse, MaskAllButEdge
 export AbstractProjectionGeometry, AbstractDetectorGeometry, RaySegment, RayLine
 export RayList, ConeBeam, ArcConeBeam, ParallelBeam
-export MultiRay, RegularPoints, JitteredPoints, RandomPoints, GaussianPoints, Points
-export UniformWeights, GaussianWeights
+export MultiRay, AbstractPoints, RegularPoints, JitteredPoints, RandomPoints, GaussianPoints, Points
+export AbstractWeights, UniformWeights, GaussianWeights
 export circular_cone_beam, helical_cone_beam, parallel_beam
 export datasize, nrays, ray, raytype, nviews, detectorsize, subset, projection_geometry
 export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, LaunchConfig
 export geometry, image_geometry, imagesize, rowsums, colsums
+
+# not exported, but stable: the interface for types of other packages
+public forward!, backward!, similar_projector, storage_array, device_geometry
+public point_offset, random_pair, points_eltype, subray_weight, weights_eltype
+public trace_element, in_plane, visit, Gather, Scatter, to_index, clip, VoxelGrid
+public image_mask, ray_mask, handles_raymask, projector_masks, ProjectorMasks
 
 """
     AbstractCTOperator{T}
