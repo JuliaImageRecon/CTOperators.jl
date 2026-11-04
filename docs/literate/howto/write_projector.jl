@@ -3,7 +3,9 @@
 # This guide shows what a new projector has to provide and what it gets in return, by implementing a
 # simple one: it samples the image at equally spaced points along each ray, taking the value of the
 # nearest voxel. The method is too crude for practice, but its kernels are short, so the parts every
-# projector needs stand out.
+# projector needs stand out. A projector does not have to live in CTOperators.jl: it fits in through
+# multiple dispatch from a script or another package. [Write a Sampling Strategy](@ref) continues
+# with this projector.
 
 using CTOperators, KernelAbstractions, Atomix, LinearAlgebra, ImagePhantoms
 using ImageGeoms: axis
@@ -45,8 +47,9 @@ nothing #hide
 # LinearOperatorCollection.jl) and automatic differentiation (the ChainRulesCore rule); a projector
 # also with `subset` for ordered subsets and `adapt` to move it to another device.
 #
-# The sampling projector is an `AbstractProjector`. It works with every geometry, since it only asks
-# each ray for its end points.
+# The sampling projector is an `AbstractProjector`. It works with every geometry that has one ray per
+# data element, since it only asks each ray for its end points; [Write a Sampling Strategy](@ref)
+# extends it to several rays per cell.
 
 # ## The struct
 #
@@ -179,7 +182,7 @@ size(op), datasize(op)
 x, y = rand(Float32, imagesize(op)), rand(Float32, datasize(op))
 dot(op * x, y) / dot(x, adjoint(op) * y)
 
-# Subsets, normalizations and moving to another device come for free:
+# Subsets, normalizations and moving to another device follow from the interface:
 
 datasize(subset(op, 1:10)), size(colsums(op))
 

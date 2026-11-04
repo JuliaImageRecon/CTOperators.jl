@@ -13,7 +13,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # detector cell as a point: one line from the source to the center of the cell. When the cells are
 # large compared to the voxels, the lines miss voxels between them, and the back projection covers
 # the voxels unevenly (De Man & Basu 2004). A real cell integrates over its area. `MultiRay(geometry, points; weights)` replaces the one line by `K` rays
-# per cell, ending at the positions given by `points`, and averages their line integrals:
+# per cell, ending at the offsets given by `points`, and averages their line integrals:
 #
 # ```math
 # y_i = \sum_{k=1}^K \frac{w_{ik}}{\sum_l w_{il}} \int_{\text{ray } (i, k)} x
@@ -36,8 +36,10 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # detector a line through that point. So the rays of a cell sample its actual shape, also on curved
 # detectors.
 #
-# The point strategies give the offsets of the rays from the cell center, between -1/2 and 1/2;
-# the weighting strategies give a weight for every offset. Marker areas show the weights:
+# The point strategies give the offsets of the rays from the cell center, where ±1/2 are the cell
+# edges; some go beyond them. The weighting strategies give a weight for every offset. In the figure
+# the blue square is one cell, the dotted lines its subcells, and the orange points the rays, with
+# the marker area relative to the largest weight in the panel:
 
 fig = points_figure([("RegularPoints(3, 3)", RegularPoints(3, 3), UniformWeights()), #hide
                      ("JitteredPoints(3, 3)", JitteredPoints(3, 3; seed=1), UniformWeights()), #hide
@@ -49,23 +51,25 @@ nothing #hide
 # ![Point strategies in one cell](multiray_points.png)
 
 # * **Regular points** sit at the centers of `su × sv` subcells: the midpoint rule for the integral
-#   over the cell. For data that are cell averages they are the most accurate with few points.
+#   over the cell, a sum at equal distances. For data that average over the cell they are the most
+#   accurate with few points.
 # * **Jittered points** move each regular point to a random position within its subcell ("jittered
 #   sampling", Cook 1986, also called stratified sampling). They keep the even spread, but neighboring
-#   cells no longer share the same pattern, so regular structures of the rays do not line up with
-#   the voxel grid.
-# * **Random points** are spread anywhere in the cell. With few points their mean can differ
-#   noticeably from the cell average.
+#   cells do not share the same pattern, so the rays do not line up with the voxel grid in a regular
+#   way. The price is noise in the model.
+# * **Random points** are spread anywhere in the cell. With few points their mean can differ noticeably
+#   from the cell average: with 4 rays per cell the example of [Use Several Rays per Cell](@ref) is
+#   worse than with one.
 # * **Gaussian points** are normally distributed around the cell center, and all rays count equally:
 #   the distribution of the positions is the weighting. Points may land outside the cell, which
 #   models blur across neighboring cells.
-# * **Given points** (`Points`) are the same in every cell, also outside it.
+# * **Given points** (`Points`) are the same in every cell and may lie outside it.
 # * **Gaussian weights** describe a similar response with fixed positions: the points stay where
 #   they are, and the rays near the edges count less.
 #
-# For 2D images, which have one layer of voxels along `z`, the projectors keep all rays in the image
-# plane: the offsets along `v` are set to 0, and strategies with several subcells along `v` are
-# rejected.
+# For images with one layer of voxels along `z` (2D images, or 3D images with `nz = 1`) the projectors
+# keep all rays in the image plane: the offsets along `v` are set to 0, and strategies with several
+# subcells along `v` are rejected. A ray away from the center of the layer would see too little of it.
 #
 # ## Random positions without a random number generator
 #
@@ -79,9 +83,10 @@ nothing #hide
 # give the offsets.
 #
 # The view is numbered as in the full scan: `subset(op, views)` keeps these numbers, so the rays of
-# a subset are those of the same views of the full operator, as ordered-subset methods require. A
+# a subset are those of the same views of the full operator, as
+# [ordered-subset methods](@ref "Ordered Subsets and Normalization") require. A
 # different seed gives a different, again fixed, set of positions: `MultiRay(geometry,
-# JitteredPoints(4; seed=2))`.
+# JitteredPoints(4, 1; seed=2))`.
 #
 # ## Implementation
 #
@@ -91,12 +96,13 @@ nothing #hide
 # * The kernels are those of the plain projectors: each thread handles one data element. For a
 #   `MultiRay` it traces the `K` rays one after the other and adds them up (forward), or first sums
 #   the weights and then lets every ray add its share (back). No memory per ray is needed.
-# * The time is about `K` times that of one ray; computing the positions and weights is negligible
-#   (see the [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md)).
+# * The time is about `K` times that of one ray; jittered offsets and Gaussian weights added nothing
+#   measurable on a GPU (see the
+#   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#Several-rays-per-cell-(GPU))).
 # * The ray mask applies per data element (a masked element skips all its rays), the clipping to the
 #   bounding box of the image mask per ray.
 # * A `MultiRay` has no single ray per data element. A projector that traces only one ray per cell
-#   does not accept it, instead of silently ignoring the extra rays.
+#   fails with a `MethodError` for `ray` when applied, instead of silently ignoring the other rays.
 #
 # ## References
 #

@@ -16,6 +16,8 @@ DocMeta.setdocmeta!(CTOperators, :DocTestSetup, :(using CTOperators); recursive=
 makedocs(;
   modules=[CTOperators],
   sitename="CTOperators.jl",
+  pagesonly=true,
+  checkdocs=:exports,
   authors="Niklas Hackelberg and contributors",
   repo=Remotes.GitHub("JuliaImageRecon", "CTOperators.jl"),
   format=Documenter.HTML(;
@@ -65,6 +67,7 @@ makedocs(;
         "Siddon's Method" => "generated/explanation/siddon.md",
         "Joseph's Method" => "generated/explanation/joseph.md",
         "Several Rays per Cell" => "generated/explanation/multiray.md",
+        "Comparing Projectors" => "generated/explanation/comparing.md",
       ],
       "Operators" => [
         "Masks" => "generated/explanation/masks.md",

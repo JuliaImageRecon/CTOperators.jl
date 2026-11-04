@@ -20,8 +20,9 @@ function rays_figure(; n=8, du=2.0, k=4, size=(820, 470))
       lines!(ax, [w, w], [0, n]; color=:gray75, linewidth=0.8)
       lines!(ax, [0, n], [w, w]; color=:gray75, linewidth=0.8)
     end
-    # the detector: cells c = 1, ..., ncells with centers at x = (c - (ncells + 1)/2) du + n/2
-    x(c) = (c - (ncells + 1) / 2) * du + n / 2
+    # the detector: cells c = 1, ..., ncells; the rays through their centers run in the middle of
+    # pixels, so that they do not hide the lines of the grid
+    x(c) = (c - (ncells + 1) / 2) * du + n / 2 + 0.5
     for c in 1:ncells
       poly!(ax, Rect2f(x(c - 0.5), -1.2, du, 0.5); color=isodd(c) ? (:steelblue, 0.25) : (:steelblue, 0.45),
             strokecolor=:steelblue, strokewidth=0.8)

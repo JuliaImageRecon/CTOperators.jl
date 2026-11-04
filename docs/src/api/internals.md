@@ -1,8 +1,10 @@
 # Internals
 
-For developers of operators (see [Write a Projector](@ref)): the functions each operator
-implements, the masks a projector stores, the kernel form of the image grid and the clipping of
-rays. None of these is exported; those that custom components use are declared `public`.
+For developers of operators and strategies (see [Write a Projector](@ref) and
+[Write a Sampling Strategy](@ref)): the kernel form of the image grid, the clipping and tracing of
+rays, the masks a projector stores, and private functions. The public functions they implement are
+on [Operators](operators.md) and [Projection Geometries](geometries.md). None of these is exported;
+those that custom components use are declared `public`.
 
 ## Operator implementation
 
@@ -17,6 +19,7 @@ Public = false
 ```@docs
 CTOperators.ProjectorMasks
 CTOperators.projector_masks
+CTOperators.is_masked
 ```
 
 ## Geometries

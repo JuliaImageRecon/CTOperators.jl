@@ -59,7 +59,8 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
 - The explanation pages introduce [the parameters of a scan](@ref "The Parameters of a Scan") step by step,
   describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
   the projection methods, [Siddon's Method](@ref) and [Joseph's Method](@ref),
-  [several rays per cell](@ref "Several Rays per Cell"), and
+  [several rays per cell](@ref "Several Rays per Cell"), how they
+  [compare](@ref "Comparing Projectors"), and
   [workgroups and ray order on GPUs](@ref "Workgroups and Ray Order on GPUs").
 - The reference lists all types and functions by domain: [Images](api/images.md), [Projection Geometries](api/geometries.md), [Operators](api/operators.md), [Projectors](api/projectors.md) and, for implementers, [Internals](api/internals.md).
 

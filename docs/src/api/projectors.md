@@ -1,7 +1,7 @@
 # Projectors
 
-The projectors of the package. Both trace one ray per detector cell through the voxel grid and
-have an exact adjoint; [Siddon's Method](@ref) and [Joseph's Method](@ref) explain how they
+The projectors of the package. Both trace the rays of a geometry through the voxel grid, one per
+detector cell or several with [`MultiRay`](@ref), and have an exact adjoint; [Siddon's Method](@ref) and [Joseph's Method](@ref) explain how they
 weight the voxels.
 
 ## Siddon

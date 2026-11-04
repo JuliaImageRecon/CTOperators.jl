@@ -23,7 +23,8 @@ Private = false
 ## Several rays per cell
 
 A detector geometry wrapped with a point strategy (where in each cell the rays end) and a
-weighting strategy.
+weighting strategy, together with the functions that custom strategies implement (see
+[Write a Sampling Strategy](@ref)).
 
 ```@autodocs
 Modules = [CTOperators]
