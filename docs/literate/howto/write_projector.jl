@@ -1,4 +1,4 @@
-# # Implement a CT Operator
+# # Write a Projector
 #
 # This guide shows what a new projector has to provide and what it gets in return, by implementing a
 # simple one: it samples the image at equally spaced points along each ray, taking the value of the

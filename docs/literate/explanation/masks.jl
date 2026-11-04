@@ -60,7 +60,7 @@ nothing #hide
 #
 # The masks are applied in the generic layer of the operators (`mul!`, which calls the operator's
 # `forward!` and `backward!`), so every operator gets the semantics above, also one implemented
-# outside this package (see [Implement a CT Operator](@ref)):
+# outside this package (see [Write a Projector](@ref)):
 #
 # * `CTOperators.image_mask(op)` and `CTOperators.ray_mask(op)` return the masks of `op` on its
 #   device, or `nothing`. A subtype of `AbstractProjector` from another package has the mask of its
@@ -71,4 +71,4 @@ nothing #hide
 #   data by the ray mask.
 #
 # A projector of another package that ignores masks is therefore still correct; it only computes the
-# masked parts. [Implement a CT Operator](@ref) shows how a projector uses the masks itself.
+# masked parts. [Write a Projector](@ref) shows how a projector uses the masks itself.

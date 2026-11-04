@@ -1,8 +1,8 @@
 # Internals
 
-For developers of operators (see [Implement a CT Operator](@ref)): the functions each operator
+For developers of operators (see [Write a Projector](@ref)): the functions each operator
 implements, the masks a projector stores, the kernel form of the image grid and the clipping of
-rays. None of these is exported.
+rays. None of these is exported; those that custom components use are declared `public`.
 
 ## Operator implementation
 
@@ -33,15 +33,13 @@ Public = false
 ```@autodocs
 Modules = [CTOperators]
 Pages = ["image/image.jl", "image/voxelgrid.jl"]
-Public = false
 ```
 
 ## Ray tracing
 
 ```@autodocs
 Modules = [CTOperators]
-Pages = ["raytracing/raytracing.jl", "raytracing/clip.jl", "raytracing/actions.jl"]
-Public = false
+Pages = ["raytracing/raytracing.jl", "raytracing/clip.jl", "raytracing/actions.jl", "raytracing/subrays.jl"]
 ```
 
 ## Siddon and Joseph

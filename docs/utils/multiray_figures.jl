@@ -41,14 +41,23 @@ function rays_figure(; n=8, du=2.0, k=4, size=(820, 470))
   fig
 end
 
-# The points of several strategies in one cell (-1/2 to 1/2 in u and v), the marker area
-# proportional to the weight. `strategies` holds (title, points, weights) tuples.
+# The points of several strategies in one cell (-1/2 to 1/2 in u and v), with the subcells dotted
+# and the marker area proportional to the weight. `strategies` holds (title, points, weights) tuples.
 function points_figure(strategies; size=(220 * length(strategies), 270))
   fig = Figure(; size)
   for (col, (title, points, weights)) in enumerate(strategies)
     ax = Axis(fig[1, col]; aspect=DataAspect(), title, limits=(-0.9, 0.9, -0.9, 0.9))
     hidedecorations!(ax)
     poly!(ax, Rect2f(-0.5, -0.5, 1, 1); color=(:steelblue, 0.12), strokecolor=:steelblue, strokewidth=1.5)
+    # the subcells of the strategies that have them
+    if hasproperty(points, :su)
+      for j in 1:points.su-1
+        lines!(ax, fill(j / points.su - 0.5, 2), [-0.5, 0.5]; color=:steelblue, linestyle=:dot, linewidth=1)
+      end
+      for j in 1:points.sv-1
+        lines!(ax, [-0.5, 0.5], fill(j / points.sv - 0.5, 2); color=:steelblue, linestyle=:dot, linewidth=1)
+      end
+    end
     K = typeof(points).parameters[1]
     offs = [point_offset(points, Float64, 3, 2, 1, k) for k in 1:K]
     w = [subray_weight(weights, o...) for o in offs]
