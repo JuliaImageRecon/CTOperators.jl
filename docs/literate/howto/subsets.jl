@@ -2,11 +2,13 @@
 #
 # Algebraic methods such as SIRT and SART, and the ordered-subset variants of statistical methods,
 # normalize each update by the sums of the rows and columns of the system matrix, and many of them
-# cycle through subsets of the views. This guide shows the two building blocks, `rowsums`/`colsums`
-# and `subset`, with an OS-SART reconstruction of a 2D phantom.
+# cycle through subsets of the views. This guide shows the building blocks, `rowsums`/`colsums` and
+# `subset_blocks`, and an OS-SART reconstruction of a 2D phantom with the solver `OSSART` of
+# [RegularizedLeastSquares.jl](https://github.com/JuliaImageRecon/RegularizedLeastSquares.jl).
 
-using CTOperators, ImagePhantoms, CairoMakie, LinearAlgebra
+using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
 using ImageGeoms: axis
+using LinearAlgebra: norm
 
 # A 2D Shepp-Logan phantom of 128² pixels and 180 parallel-beam views:
 
@@ -33,48 +35,39 @@ size(r), size(c)
 #
 # `subset(op, views)` is the projector of some of the views, sharing the image geometry.
 # Ordered-subset methods interleave the views so that consecutive subsets see the object from
-# different directions. The data of a subset are its views, the last dimension of the `(nu, nv,
-# nviews)` data:
+# different directions. `subset_blocks(op, n)` returns the projectors of `n` interleaved subsets and,
+# for each, the indices of its data in `vec(y)`. A `RowBlockOp` of
+# [LinearOperatorCollection.jl](https://github.com/JuliaImageRecon/LinearOperatorCollection.jl) stacks
+# them into one operator that equals `op`, but knows its blocks; the solver below takes it as the
+# keyword `blocks`:
 
-nsubsets = 10
-views = [s:nsubsets:nviews(geometry) for s in 1:nsubsets]
-ops = [subset(op, v) for v in views]
-ys = [y[:, :, v] for v in views];
-
-# Create the subset projectors and their normalizations once; they are reused in every iteration.
-# Rays that miss the image and voxels that no ray hits have sums of zero; a small lower bound avoids
-# dividing by zero.
-
-rs = [max.(rowsums(o), 1.0f-6) for o in ops]
-cs = [max.(colsums(o), 1.0f-6) for o in ops];
+blocks = RowBlockOp(subset_blocks(op, 10)...)
+length(rowblocks(blocks)), size(blocks) == size(op)
 
 # ## OS-SART
 #
-# One SART update per subset: back project the normalized residual of the subset and divide by the
-# sensitivity of the subset; then clip negative values. With one subset this is SIRT.
+# `OSSART` makes one update per block: it back projects the residual of the block, normalized by the
+# row sums (the length of each ray in the image), and divides by the column sums (the sensitivity of
+# each pixel to the block). Rays that miss the image and pixels that no ray hits have sums of zero
+# and get no update. `PositiveRegularization` clips negative values after each block. Without
+# `blocks`, the projector is a single block, and this is SIRT. A callback records the error of the start image
+# and after each pass:
 
-function os_sart(ops, ys, rs, cs, iterations; relaxation=1.0f0)
-  x = zeros(Float32, imagesize(ops[1]))
-  errors = Float64[]
-  for _ in 1:iterations
-    for (o, yk, rk, ck) in zip(ops, ys, rs, cs)
-      x .+= relaxation .* (adjoint(o) * ((yk .- o * x) ./ rk)) ./ ck
-      x .= max.(x, 0)
-    end
-    push!(errors, norm(x - x_true) / norm(x_true))
-  end
-  x, errors
+function reconstruct(; iterations=10, kwargs...)
+  error = CompareSolutionCallback(vec(x_true), (ref, x) -> norm(x - ref) / norm(ref))
+  solver = createLinearSolver(OSSART, op; reg=PositiveRegularization(), iterations, kwargs...)
+  x = reshape(solve!(solver, vec(y); callbacks=error), n, n)
+  x, error.results
 end
-
-x_os, err_os = os_sart(ops, ys, rs, cs, 10)
-x_sirt, err_sirt = os_sart([op], [y], [max.(r, 1.0f-6)], [max.(c, 1.0f-6)], 10);
+x_os, err_os = reconstruct(; blocks)
+x_sirt, err_sirt = reconstruct();
 
 # Ten subsets reach in a few passes through the data what SIRT reaches only after many more:
 
 fig = Figure(size=(900, 300))
 ax = Axis(fig[1, 1]; xlabel="pass through all views", ylabel="relative error", title="convergence")
-lines!(ax, err_sirt; label="SIRT")
-lines!(ax, err_os; label="OS-SART, 10 subsets")
+lines!(ax, 0:length(err_sirt)-1, err_sirt; label="SIRT")
+lines!(ax, 0:length(err_os)-1, err_os; label="OS-SART, 10 subsets")
 axislegend(ax)
 for (j, (name, img)) in enumerate((("SIRT", x_sirt), ("OS-SART", x_os)))
   heatmap(fig[1, j+1], img; colormap=:grays, colorrange=(0, 0.4),
@@ -84,5 +77,7 @@ save("os_sart.png", fig) #hide
 nothing #hide
 # ![OS-SART and SIRT](os_sart.png)
 
-# The same pattern serves other ordered-subset methods, for example OS-EM for emission data, which
-# divides by `colsums` of the subset as well.
+# On a GPU, the blocks of interleaved views gather their data with index vectors on the device;
+# `subset_blocks(op, n; mode=:contiguous)` takes consecutive views instead, whose data needs no
+# copies. The same blocks serve other ordered-subset methods, for example OS-EM for emission data,
+# which divides by the column sums of the block as well.
