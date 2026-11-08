@@ -26,7 +26,7 @@ end
   using Random
   Random.seed!(3)
   circle, box, g, raymask = mask_problem()
-  for P in (SiddonProjector, JosephProjector), image in (circle, box), arrayType in arrayTypes, T in floatTypes
+  for P in (SiddonProjector, JosephProjector, DistanceDrivenProjector), image in (circle, box), arrayType in arrayTypes, T in floatTypes
     @testset "$P, mask of $(count(image.mask)) voxels, $arrayType{$T}" begin
       op = P(image, g; eltype=T, storage=arrayType, raymask)
       plain = P(ImageGeom(; dims=image.dims, deltas=image.deltas, offsets=image.offsets), g; eltype=Float64)

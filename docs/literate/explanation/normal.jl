@@ -28,10 +28,10 @@ using CTOperators, LinearOperatorCollection, LinearAlgebra
 # projection starts; the additions into the image are atomic, as in the back projection. The
 # projection data are never stored, and one kernel launch replaces two.
 #
-# With LinearOperatorCollection.jl loaded, `normalOperator` of a [`SiddonProjector`](@ref) or a
-# [`JosephProjector`](@ref) returns such a fused operator. It covers several rays per cell
-# ([`MultiRay`](@ref): all rays of a cell are summed, then traced back) and the masks, and takes the
-# weights as a vector or as a `WeightingOp`:
+# With LinearOperatorCollection.jl loaded, `normalOperator` of a [`SiddonProjector`](@ref), a
+# [`JosephProjector`](@ref) or a [`DistanceDrivenProjector`](@ref) returns such a fused operator.
+# It covers several rays per cell ([`MultiRay`](@ref): all rays of a cell are summed, then traced
+# back) and the masks, and takes the weights as a vector or as a `WeightingOp`:
 
 image = ImageGeom(; dims=(32, 32, 16))
 geometry = circular_cone_beam(; angles=range(0, 2pi, 61)[1:60], dso=80, dsd=160, nu=48, nv=24, du=1.5)
@@ -44,7 +44,7 @@ norm(N * x - vec(adjoint(op) * (w .* vec(op * x)))) / norm(N * x)
 # The result equals forward, weight and back up to rounding: the atomic additions on a GPU run in no
 # fixed order. A weighted projector `ProdOp(WeightingOp(w), op)` is fused as well: its normal
 # operator ``A^T W^2 A`` is that of `op` with the squared weights. Other weighting operators, and
-# operators other than these two projectors, use the generic normal operator. Each solver call stays
+# operators other than these projectors, use the generic normal operator. Each solver call stays
 # the same, e.g. `AHA=normalOperator(op)` for CGNR of RegularizedLeastSquares.jl.
 #
 # ## What it changes

@@ -10,7 +10,7 @@ using CTOperators: fused_normal!
 using LinearOperatorCollection: WeightingOp
 import LinearOperatorCollection: NormalOp
 
-const FusedProjector = Union{SiddonProjector,JosephProjector}
+const FusedProjector = Union{SiddonProjector,JosephProjector,DistanceDrivenProjector}
 
 # The fields of an operator of LinearOperators.jl (those of LinearOperatorCollection's NormalOpImpl),
 # plus the projector and the weights. With real weights Aᴴ W A is Hermitian, and symmetric as the

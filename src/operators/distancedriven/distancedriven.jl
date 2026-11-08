@@ -1,5 +1,5 @@
 """
-    DistanceDrivenProjector(image::ImageGeom, geometry; eltype=Float32, storage=Array, launch=nothing)
+    DistanceDrivenProjector(image::ImageGeom, geometry; eltype=Float32, storage=Array, launch=nothing, raymask=nothing)
 
 Projector with the distance-driven method (De Man & Basu 2004), which integrates over the detector
 cells instead of following single rays. Per view the image is cut into slices perpendicular to the
@@ -10,8 +10,9 @@ The footprints of neighboring cells share their edges and tile each slice, so th
 cover the voxels evenly. The back projection is the exact adjoint.
 
 Works with detector geometries ([`AbstractDetectorGeometry`](@ref): [`ConeBeam`](@ref),
-[`ArcConeBeam`](@ref), [`ParallelBeam`](@ref)), not with ray lists, which have no detector cells.
-For a 2D image the footprint extends only within the image plane.
+[`ArcConeBeam`](@ref), [`ParallelBeam`](@ref)), not with ray lists, which have no detector cells,
+nor with a [`MultiRay`](@ref): the footprint already covers the whole cell. For a 2D image the
+footprint extends only within the image plane.
 
 Keywords:
 
@@ -20,6 +21,14 @@ Keywords:
   and projection data passed to the operator must live on that device.
 * `launch` is a [`LaunchConfig`](@ref) to tune the kernel launches for a device, `nothing` for the
   defaults of the device.
+* `raymask` is `nothing` or an array with one entry per detector cell and view, of the data size
+  (`raymask[u, v, view]`) or a vector, on any device: the cells that are used (`true`). It is stored
+  as `Bool` on the device of the operator. Masked cells give 0 in the forward projection and
+  contribute nothing to the back projection.
+
+The mask of `image` (e.g. `ImageGeom(MaskCircle(); dims, deltas)`, the circular field of view)
+selects the voxels: voxels outside count as 0 in the forward projection and get 0 in the back
+projection, and the slices are limited to the bounding box of the mask. See [Use Masks](@ref).
 
 # Example
 
@@ -39,18 +48,23 @@ References:
 * R. Liu, L. Fu, B. De Man, H. Yu, "GPU-based branchless distance-driven projection and
   backprojection", IEEE Trans. Comput. Imaging 3(4), 617–632, 2017.
 """
-struct DistanceDrivenProjector{T,G<:AbstractDetectorGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig}} <: AbstractProjector{T,G}
+struct DistanceDrivenProjector{T,G<:AbstractDetectorGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T}} <: AbstractProjector{T,G}
   image::I
-  grid::VoxelGrid{T}
+  grid::V
   geometry::G
   backend::B
   launch::L
+  masks::M
 end
 
 function DistanceDrivenProjector(image::ImageGeom, geometry::AbstractDetectorGeometry; eltype::Type{T}=Float32,
-                                 storage=Array, launch::Union{Nothing,LaunchConfig}=nothing) where {T<:AbstractFloat}
-  distance_driven_projector(image, device_geometry(geometry, T, storage), launch)
+                                 storage=Array, launch::Union{Nothing,LaunchConfig}=nothing, raymask=nothing) where {T<:AbstractFloat}
+  distance_driven_projector(image, device_geometry(geometry, T, storage), launch, raymask)
 end
+
+DistanceDrivenProjector(image::ImageGeom, geometry::MultiRay; kwargs...) =
+  throw(ArgumentError("DistanceDrivenProjector integrates over the whole detector cell; it takes the " *
+                      "geometry of the MultiRay, not the MultiRay"))
 
 DistanceDrivenProjector(image::ImageGeom, geometry::AbstractProjectionGeometry; kwargs...) =
   throw(ArgumentError("DistanceDrivenProjector needs detector cells: a ConeBeam, ArcConeBeam or ParallelBeam, " *
@@ -60,15 +74,17 @@ DistanceDrivenProjector(image::ImageGeom, geometry; kwargs...) =
   DistanceDrivenProjector(image, projection_geometry(geometry); kwargs...)
 
 # from a geometry already in the operator's element type and on its device
-function distance_driven_projector(image::ImageGeom, geometry::AbstractDetectorGeometry{T}, launch) where {T}
+function distance_driven_projector(image::ImageGeom, geometry::AbstractDetectorGeometry{T}, launch, raymask) where {T}
   backend = KA.get_backend(storage_array(geometry))
-  DistanceDrivenProjector(image, VoxelGrid{T}(image), geometry, backend, launch)
+  DistanceDrivenProjector(image, VoxelGrid{T}(image), geometry, backend, launch, ProjectorMasks(image, geometry, raymask))
 end
 
 geometry(op::DistanceDrivenProjector) = op.geometry
 image_geometry(op::DistanceDrivenProjector) = op.image
-similar_projector(op::DistanceDrivenProjector, geometry::AbstractDetectorGeometry) =
-  distance_driven_projector(op.image, geometry, op.launch)
+similar_projector(op::DistanceDrivenProjector, geometry::AbstractDetectorGeometry; raymask=ray_mask(op)) =
+  distance_driven_projector(op.image, geometry, op.launch, raymask)
+projector_masks(op::DistanceDrivenProjector) = op.masks
+handles_raymask(::DistanceDrivenProjector) = true
 KA.get_backend(op::DistanceDrivenProjector) = op.backend
 
 forward!(y, op::DistanceDrivenProjector, x) = launch_rays!(distance_driven_forward_kernel!, op, y, vec(x))

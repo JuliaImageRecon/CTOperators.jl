@@ -9,7 +9,7 @@ element, or `nothing` for `W = I`), in one pass over the rays: every ray is trac
 multiplied by its weight, and traced again to add its value to the voxels, without an array for the
 projection data. `normalOperator(op)` of LinearOperatorCollection.jl uses it.
 """
-function fused_normal!(z, op::Union{SiddonProjector,JosephProjector}, x, weights)
+function fused_normal!(z, op::Union{SiddonProjector,JosephProjector,DistanceDrivenProjector}, x, weights)
   check_length(x, imagesize(op), "input")
   check_length(z, imagesize(op), "output")
   isnothing(weights) || check_length(weights, datasize(op), "weights")
@@ -18,22 +18,24 @@ function fused_normal!(z, op::Union{SiddonProjector,JosephProjector}, x, weights
   zi, xi = reshape(z, imagesize(op)), reshape(x, imagesize(op))
   fill!(zi, zero(eltype(zi)))
   launch_rays!(normal_kernel!, op, vec(zi), vec(isnothing(masks.image) ? xi : xi .* masks.image),
-               isnothing(weights) ? nothing : vec(weights), ray_segment(op))
+               isnothing(weights) ? nothing : vec(weights), element_trace(op))
   isnothing(masks.image) || (zi .*= masks.image)
   z
 end
-ray_segment(::SiddonProjector) = siddon_segment
-ray_segment(::JosephProjector) = joseph_segment
+# the function that traces the rays of data element i, trace(action, grid, geometry, i)
+element_trace(::SiddonProjector) = siddon_ray
+element_trace(::JosephProjector) = joseph_ray
+element_trace(::DistanceDrivenProjector) = distance_driven_ray
 
 # The normal operator splits into rays, Aᴴ W A = sum_i a_i w_i a_iᴴ, so one thread per ray needs no
 # synchronization with the others; the second trace adds into the image with atomics.
-@kernel inbounds = true function normal_kernel!(z, @Const(x), grid, geometry, order, raymask, weights, segment)
+@kernel inbounds = true function normal_kernel!(z, @Const(x), grid, geometry, order, raymask, weights, trace)
   i = ray_index(order, @index(Global, Linear))
   if i > 0 && !is_masked(raymask, i)
-    v = trace_element(segment, Gather(x), grid, geometry, i)
+    v = trace(Gather(x), grid, geometry, i)
     v = v * ray_weight(weights, v, i)
     if !iszero(v)
-      trace_element(segment, Scatter(z, v), grid, geometry, i)
+      trace(Scatter(z, v), grid, geometry, i)
     end
   end
 end
