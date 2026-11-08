@@ -39,10 +39,13 @@ end
 # across c. The forward projection interpolates first and weights once.
 @inline function visit_bilinear(g::Gather, acc, lin, sb, sc, wb0, wb1, fc)
   x = g.image
+  # values converted on reading: an image stored in lower precision is interpolated in that of fc
   @inbounds begin
-    c0 = muladd(fc, x[lin+sc] - x[lin], x[lin])
-    c1 = muladd(fc, x[lin+sb+sc] - x[lin+sb], x[lin+sb])
+    x00, x01 = oftype(fc, x[lin]), oftype(fc, x[lin+sc])
+    x10, x11 = oftype(fc, x[lin+sb]), oftype(fc, x[lin+sb+sc])
   end
+  c0 = muladd(fc, x01 - x00, x00)
+  c1 = muladd(fc, x11 - x10, x10)
   muladd(wb1, c1, muladd(wb0, c0, acc))
 end
 
