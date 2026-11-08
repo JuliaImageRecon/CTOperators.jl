@@ -6,8 +6,9 @@
 # perpendicular to the principal axis k of the ray (the axis along which d is largest in voxel
 # coordinates) and zero outside the volume. The ray crosses one slab [i - 1/2, i + 1/2) per layer i
 # along k; it contributes the length of the ray inside the slab times the interpolated image at the
-# middle of that part. A ray through the whole slab has the length len / |d_k| in it and its middle
-# lies in the center plane of the layer: Joseph's sum. Only the first and last slab of a segment
+# middle of that part. A ray through the whole slab has the length len / |d_k| in it (the "length
+# per layer" of the documentation, page System Matrix) and its middle lies in the center plane of
+# the layer: Joseph's sum. Only the first and last slab of a segment
 # that starts or ends inside the volume are partial, which is Joseph's treatment of the end points
 # proportional to the length of the ray in them.
 #
@@ -67,7 +68,7 @@ end
 end
 
 # the region where the image can be nonzero for rays with principal axis k: the slabs of the
-# layers along k within the box of the image mask (the volume without a mask), and across k up to
+# layers along k within the bounding box of the image mask (the volume without a mask), and across k up to
 # the next voxel center outside the box
 @inline function joseph_support(grid::VoxelGrid{T}, k) where {T}
   half = T(1 // 2)

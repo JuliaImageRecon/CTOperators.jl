@@ -3,8 +3,8 @@
 # How evenly a ray-driven projector covers the image depends on the ratio of detector cell size to
 # voxel size (Miao 2013). This page compares
 # [Siddon's Method](@ref) and [Joseph's Method](@ref) with one and with several rays per cell (see
-# [Use Several Rays per Cell](@ref)) for cells smaller than, equal to and larger than the pixels of a
-# 2D image, with two checks from Miao (2013): the back projection of one view and of all views of
+# [Use Several Rays per Cell](@ref)), and the [Distance-Driven Method](@ref), for cells smaller than,
+# equal to and larger than the pixels of a 2D image, with two checks from Miao (2013): the back projection of one view and of all views of
 # ones. It compares coverage, not accuracy on real data or speed.
 
 using CTOperators
@@ -12,7 +12,8 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "comparison_figures.jl"))
 
 models = [("Siddon", SiddonProjector, identity), ("Joseph", JosephProjector, identity),
           ("Siddon, 4 rays", SiddonProjector, g -> MultiRay(g, RegularPoints(4, 1))),
-          ("Joseph, 4 rays", JosephProjector, g -> MultiRay(g, RegularPoints(4, 1)))]
+          ("Joseph, 4 rays", JosephProjector, g -> MultiRay(g, RegularPoints(4, 1))),
+          ("distance-driven", DistanceDrivenProjector, identity)]
 ratios = (0.5, 1.0, 2.0);
 
 # ## One view
@@ -37,11 +38,14 @@ nothing #hide
 # With cells as large as the pixels or smaller, every method covers the pixels nearly evenly. With
 # cells of 2 pixels, one ray per cell misses pixels: Siddon's method leaves many pixels with little or
 # no weight, and Joseph's interpolation softens the pattern without removing it. Four rays per cell
-# fill the gaps: their spacing is then that of cells of 0.5 pixels.
+# fill the gaps: their spacing is then that of cells of 0.5 pixels. The distance-driven method gives
+# 1 for every cell size: in a parallel beam, its footprints cover each layer evenly (see
+# [Distance-Driven Method](@ref)).
 #
 # ## All views
 #
-# The back projection of all 180 views of ones (the "pixel support", `colsums`), scaled in the same
+# The back projection of all 180 views of ones (the column sums, `colsums`; Miao 2013 calls it pixel
+# support), scaled in the same
 # way and divided by the number of views, shows what remains after the views are added up. Below each
 # panel is the variation, the standard deviation relative to the mean, inside the circle of radius 24
 # pixels that is drawn; the color window is ±20 %:
@@ -53,7 +57,8 @@ nothing #hide
 
 # With cells of 2 pixels, the coverage varies
 # by 11 % for Siddon's method and 8.5 % for Joseph's, in a cross and a checker pattern around the center; four rays per cell reduce that
-# to a fraction of a percent. [Use Several Rays per Cell](@ref) shows a reconstruction with this kind
+# to a fraction of a percent, and for the distance-driven method it is below 0.05 % at all three cell
+# sizes. [Use Several Rays per Cell](@ref) shows a reconstruction with this kind
 # of pattern.
 #
 # ## How many rays
@@ -70,11 +75,13 @@ coverage(P, k) = 2 .* colsums(P(comparison_image(64), MultiRay(comparison_scan(6
 # ## Summary of the example
 #
 # * With cells no larger than the pixels, the variation with one ray per cell is about 1 % or less
-#   for both methods.
+#   for both ray-driven methods.
 # * With cells of 2 pixels, it is 11 % (Siddon) and 8.5 % (Joseph) with one ray per cell and below
 #   0.25 % with four, at
 #   about four times the computing time (see the
 #   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md)).
+# * The distance-driven method covers the pixels evenly in both checks and at all three cell sizes,
+#   with one footprint per cell. These checks use a parallel beam.
 # * In a cone beam, the size to compare with the voxels is the cell size at the object: the cell size
 #   divided by the magnification.
 #

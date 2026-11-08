@@ -8,7 +8,7 @@
   using LinearAlgebra, Adapt
   using CTOperators: KA, storage_array
 
-  const PROJECTORS = (SiddonProjector, JosephProjector)
+  const PROJECTORS = (SiddonProjector, JosephProjector, DistanceDrivenProjector)
 
   device_problem() = (ImageGeom(; dims=(8, 7, 6), deltas=(1.0, 1.25, 0.8), offsets=(0.37, 0.11, -0.23)),
                       helical_cone_beam(; angles=range(0, 3pi, 7), pitch=4, dso=30, dsd=60, nu=13, nv=9,
@@ -105,7 +105,7 @@ end
   end
   g = RayList(starts, ends)
   x = rand(64, 128, 128)
-  for P in PROJECTORS, arrayType in arrayTypes
+  for P in (SiddonProjector, JosephProjector), arrayType in arrayTypes   # ray-driven: ray lists
     @testset "$P, $arrayType{Float32}" begin
       y64 = P(image, g; eltype=Float64) * x
       y32 = Array(P(image, g; eltype=Float32, storage=arrayType) * adapt(arrayType{Float32}, x))

@@ -60,7 +60,7 @@ x_center = reconstruct(op);
 # ## Several rays per cell
 #
 # `MultiRay` wraps the geometry and traces several rays per cell, here at the centers of 4 equal
-# parts of the cell along `u` (right in the figure above). The value of a cell is the mean of the
+# subcells along `u` (right in the figure above). The value of a cell is the mean of the
 # line integrals of its rays; the data keep their size.
 
 op_multi = SiddonProjector(image, MultiRay(geometry, RegularPoints(4, 1)))
@@ -105,8 +105,8 @@ nothing #hide
 #
 # Besides `RegularPoints`, the rays of a cell can end at random offsets, fixed by a seed (default 0):
 #
-# * `JitteredPoints(4, 1; seed=1)`: each regular point moved to a random position within its part of
-#   the cell;
+# * `JitteredPoints(4, 1; seed=1)`: each regular point moved to a random position within its
+#   subcell;
 # * `RandomPoints(4; seed=1)`: 4 random points anywhere in the cell;
 # * `GaussianPoints(4, 0.3; seed=1)`: 4 random points, normally distributed around the cell center
 #   with a standard deviation of 0.3 cells, which can also land in neighboring cells (blur).
@@ -130,19 +130,19 @@ nothing #hide
 # of the three, 4 jittered rays lie close to one ray per cell, and 4 random rays above it. This is one
 # example; other detectors and data can behave differently.
 #
-# ## Weights
+# ## Ray weights
 #
 # The rays of a cell can also count differently, e.g. for a detector response that falls off towards
-# the cell edges. The weights are normalized per cell:
+# the cell edges. The ray weights are normalized per cell:
 
 op_weighted = SiddonProjector(image, MultiRay(geometry, RegularPoints(4, 1); weights=GaussianWeights(0.4)));
 
-# On the data above the error is 0.27, as with uniform weights.
+# On the data above the error is 0.27, as with uniform ray weights.
 #
 # ## Cost and devices
 #
 # * The time grows with the number of rays per cell: 4 rays take about 4 times as long. Jittered
-#   points and Gaussian weights added nothing measurable on a GPU (see the
+#   points and Gaussian ray weights added nothing measurable on a GPU (see the
 #   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#several-rays-per-cell-gpu)).
 #   No extra memory is needed.
 # * `MultiRay` works on every device (`storage=CuArray` etc.), and the random positions are the same

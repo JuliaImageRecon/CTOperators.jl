@@ -1,8 +1,9 @@
 # Projectors
 
-The projectors of the package. Both trace the rays of a geometry through the voxel grid, one per
-detector cell or several with [`MultiRay`](@ref), and have an exact adjoint; [Siddon's Method](@ref) and [Joseph's Method](@ref) explain how they
-weight the voxels.
+The projectors of the package, all with an exact adjoint. Siddon and Joseph trace the rays of a
+geometry through the voxel grid, one per detector cell or several with [`MultiRay`](@ref);
+[Siddon's Method](@ref) and [Joseph's Method](@ref) explain how they weight the voxels. The distance-driven method integrates over the area of each detector cell and needs a detector
+geometry. [System Matrix](@ref) describes what they have in common.
 
 ## Siddon
 
@@ -17,5 +18,13 @@ Private = false
 ```@autodocs
 Modules = [CTOperators]
 Pages = ["operators/joseph/joseph.jl", "operators/joseph/kernels.jl"]
+Private = false
+```
+
+## Distance-Driven
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["operators/distancedriven/distancedriven.jl", "operators/distancedriven/kernels.jl"]
 Private = false
 ```

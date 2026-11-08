@@ -7,7 +7,7 @@ line integral is the sum over the layers of the interpolated value times the len
 the layer. Compared with [`SiddonProjector`](@ref):
 
 * the image model is smooth, so the projection changes continuously when a ray moves;
-* for one parallel view with one ray per voxel, the rays cover the voxels more evenly, except near
+* for one parallel-beam view with cells as wide as the voxels, the rays cover the voxels more evenly, except near
   45°, where the two methods give similar weights;
 * the projection is exact for images that are linear functions of the position rather than for
   voxel images.
@@ -25,14 +25,14 @@ Keywords:
   and projection data passed to the operator must live on that device.
 * `launch` is a [`LaunchConfig`](@ref) to tune the kernel launches for a device, `nothing` for the
   defaults of the device.
-* `raymask` is `nothing` or an array with one entry per ray, of the data size
-  (`raymask[u, v, view]`) or a vector, on any device: the rays that are used (`true`). It is stored
-  as `Bool` on the device of the operator. Masked rays give 0 in the forward projection and
+* `raymask` is `nothing` or an array with one entry per data element, of the data size
+  (`raymask[u, v, view]`) or a vector, on any device: the data elements that are used (`true`). It is stored
+  as `Bool` on the device of the operator. Masked data elements give 0 in the forward projection and
   contribute nothing to the back projection.
 
 The mask of `image` (e.g. `ImageGeom(MaskCircle(); dims, deltas)`, the circular field of view)
 selects the voxels: voxels outside count as 0 in the forward projection and get 0 in the back
-projection, and the rays only traverse the bounding box of the mask. See [Use Masks](@ref).
+projection, and the rays are only traced through the bounding box of the image mask. See [Use Masks](@ref).
 
 # Example
 

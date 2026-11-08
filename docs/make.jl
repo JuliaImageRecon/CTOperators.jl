@@ -60,18 +60,20 @@ makedocs(;
     ],
     "Explanation" => [
       "Scans" => [
-        "The Parameters of a Scan" => "generated/explanation/scan_parameters.md",
+        "Parameters of a Scan" => "generated/explanation/scan_parameters.md",
         "Coordinates and Conventions" => "generated/explanation/conventions.md",
       ],
       "Projection Methods" => [
+        "System Matrix" => "generated/explanation/system_matrix.md",
         "Siddon's Method" => "generated/explanation/siddon.md",
         "Joseph's Method" => "generated/explanation/joseph.md",
         "Several Rays per Cell" => "generated/explanation/multiray.md",
+        "Distance-Driven Method" => "generated/explanation/distancedriven.md",
         "Comparing Projectors" => "generated/explanation/comparing.md",
       ],
       "Operators" => [
         "Masks" => "generated/explanation/masks.md",
-        "The Normal Operator" => "generated/explanation/normal.md",
+        "Normal Operator" => "generated/explanation/normal.md",
         "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
       ],
     ],

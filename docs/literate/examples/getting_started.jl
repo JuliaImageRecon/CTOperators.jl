@@ -50,7 +50,7 @@ x_true = Float32.(phantom(axis(image, 1), axis(image, 2), axis(image, 3), object
 # - for helical scans, `pitch`: how far source and detector move along `z` per turn, and `z0`: the
 #   height of the first view.
 #
-# All lengths are in the unit of the image (mm here). [The Parameters of a Scan](@ref) introduces
+# All lengths are in the unit of the image (mm here). [Parameters of a Scan](@ref) introduces
 # them step by step, with figures.
 
 # In our scan the source is 128 mm from the rotation axis and 256 mm from the detector, so the

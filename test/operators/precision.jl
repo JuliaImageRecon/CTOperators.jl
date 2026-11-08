@@ -8,8 +8,11 @@
   g = circular_cone_beam(; angles=range(0, 2pi, 7)[1:6], dso=40, dsd=70, nu=14, nv=8, du=1.6)
   x16 = Float16.(rand(image.dims...))
   y16 = Float16.(rand(datasize(g)...))
-  for P in (SiddonProjector, JosephProjector), geometry in (g, MultiRay(g, JitteredPoints(2; seed=1))),
-      arrayType in arrayTypes
+  # distance driven integrates over the cell itself: no MultiRay
+  multi = MultiRay(g, JitteredPoints(2; seed=1))
+  cases = ((SiddonProjector, g), (SiddonProjector, multi), (JosephProjector, g), (JosephProjector, multi),
+           (DistanceDrivenProjector, g))
+  for (P, geometry) in cases, arrayType in arrayTypes
     @testset "$P, $(nameof(typeof(geometry))), $arrayType" begin
       op = P(image, geometry; storage=arrayType)
       d16, d32 = adapt(arrayType, x16), adapt(arrayType, Float32.(x16))
@@ -34,7 +37,7 @@ end
   using Adapt
   image = ImageGeom(; dims=(8, 8))
   g = parallel_beam(; angles=range(0, pi, 5)[1:4], nu=10, nv=1, du=1.0)
-  for P in (SiddonProjector, JosephProjector)
+  for P in (SiddonProjector, JosephProjector, DistanceDrivenProjector)
     @test_throws ArgumentError P(image, g; eltype=Float16)
     @test_throws ArgumentError adapt(Array{Float16}, P(image, g))
     @test eltype(P(image, g; eltype=Float64)) == Float64

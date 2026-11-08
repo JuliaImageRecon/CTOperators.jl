@@ -1,6 +1,7 @@
 # # Workgroups and Ray Order on GPUs
 #
-# The projectors trace one ray per thread (a work-item in the terms of KernelAbstractions.jl).
+# The projectors run one thread (a work-item in the terms of KernelAbstractions.jl) per data element,
+# which traces its ray.
 # Threads are launched in workgroups, groups of threads that run together on the same part of the
 # device (thread blocks in CUDA; see the [terminology of
 # KernelAbstractions.jl](https://juliagpu.github.io/KernelAbstractions.jl/stable/quickstart/#Terminology)).
@@ -23,7 +24,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "launch_figures.jl")) #hi
 # voxels). Top: the detector cells, colored by the workgroup that traces them (the colors repeat);
 # one workgroup is black. In data order, a workgroup covers a whole detector row here because the
 # detector is 64 cells wide. Bottom: the rays of the black workgroup in the central layer of the
-# image, a slice of voxels perpendicular to the direction the rays mainly run in (Joseph's method
+# image, perpendicular to the principal axis of the rays (see [System Matrix](@ref); Joseph's method
 # steps through such layers). The dots are where the rays cross the layer, the shaded squares the
 # voxels Joseph's method interpolates from. In data order the rays read a long, thin strip of
 # voxels, in tile order a compact patch.

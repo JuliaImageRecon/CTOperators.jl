@@ -2,9 +2,9 @@
     trace_element(segment, action, grid, geometry, i)
 
 Traces the rays of data element `i` for a ray-driven method: one ray for plain geometries, the rays
-of a cell with normalized weights for a [`MultiRay`](@ref). `segment(action, grid, a, b, raytype)`
-traces one ray from `a` to `b`, calling [`CTOperators.visit`](@ref) for every voxel, and returns the
-accumulated value of the action. The result is the value of data element `i` for a
+of a cell with normalized ray weights for a [`MultiRay`](@ref). `segment(action, grid, a, b,
+raytype)`, the function that traces one ray, traces the ray from `a` to `b`, calling
+[`CTOperators.visit`](@ref) for every voxel, and returns the accumulated value of the action. The result is the value of data element `i` for a
 [`CTOperators.Gather`](@ref). A
 projector that traces through this function works on every geometry. Called in kernels.
 """

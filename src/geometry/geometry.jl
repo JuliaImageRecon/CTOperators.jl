@@ -36,7 +36,7 @@ abstract type AbstractDetectorGeometry{T} <: AbstractProjectionGeometry{T} end
     RaySegment()
 
 [`raytype`](@ref) of geometries whose ray `i` is the segment between the two points of
-`ray(g, i)`, e.g. from the source to a detector pixel.
+`ray(g, i)`, e.g. from the source to a detector cell.
 """
 struct RaySegment end
 
@@ -95,7 +95,7 @@ function subset end
 """
     nrays(g::AbstractProjectionGeometry)
 
-Number of rays, `prod(datasize(g))`.
+Number of data elements, `prod(datasize(g))`: one ray each, several for a [`MultiRay`](@ref).
 """
 nrays(g::AbstractProjectionGeometry) = prod(datasize(g))
 

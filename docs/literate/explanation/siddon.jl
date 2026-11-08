@@ -1,17 +1,15 @@
 # # Siddon's Method
 #
-# A projector computes line integrals of an image along rays. For an image of voxels, each with a
-# constant value, the line integral along a ray is a weighted sum: every voxel the ray passes
-# through contributes its value times the length of the ray inside it,
+# A projector applies the [System Matrix](@ref) ``A``, computing the weights ``a_{ij}`` whenever it
+# needs them. Siddon's method takes the image as voxels, each with a constant value, and a data
+# element as the line integral along one ray. The line integral is then a weighted sum: every voxel
+# the ray passes through contributes its value times the length of the ray inside it,
 #
 # ```math
 # y_i = \sum_j a_{ij} x_j, \qquad a_{ij} = \text{length of ray } i \text{ in voxel } j.
 # ```
 #
-# The weights ``a_{ij}`` form the system matrix. Although most of its entries are zero, it is too
-# large to store: with a 256³ volume and 10⁷ rays, each crossing a few hundred voxels, it has
-# billions of nonzero entries, tens of gigabytes. Projectors therefore compute the weights of a ray
-# on the fly, every time they need them. Siddon's method computes them exactly.
+# Siddon's method computes these lengths exactly.
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "siddon_figures.jl")) #hide
@@ -28,7 +26,7 @@ bonito_page("siddon") #hide
 # lengths are the distances between consecutive crossings, the voxels follow from the order of the
 # crossings.
 #
-# Siddon computed all crossings, sorted them and then found the voxel of every segment. Jacobs et
+# Siddon computed all crossings, sorted them and then found the voxel of every piece of the ray between two crossings. Jacobs et
 # al. (1998) avoid both: starting from the voxel where the ray enters, they take the nearest next
 # crossing of the three axes, which says which axis the ray crosses next, and step that axis's voxel
 # index by one. Every step costs a few additions and comparisons, and a ray through a volume of n³
@@ -65,8 +63,9 @@ round.(weights; digits=2)
 # Siddon's method is *ray-driven*: it follows individual rays, and the detector cells are points.
 # Whether a voxel is hit by many or by few rays then depends on how the rays fall onto the voxel
 # grid. The figure shows, for one parallel-beam view at 45°, the summed lengths of all rays in every
-# pixel (scaled by the cell size, so that even coverage is 1). With one ray per pixel the coverage
-# varies between about 0.83 and 1.38, in a regular pattern; more rays per pixel even it out here.
+# pixel, the coverage (see [System Matrix](@ref)). With cells of 1 pixel the coverage varies between
+# about 0.83 and 1.38, in a regular pattern; smaller cells, and so more rays per pixel width, even it
+# out here.
 
 fig = coverage_figure(16) #hide
 save("coverage.png", fig) #hide
@@ -80,9 +79,9 @@ nothing #hide
 #
 # ## Implementation
 #
-# - The ray is traversed in voxel coordinates (see [Coordinates and Conventions](@ref)), so voxels
+# - The ray is traced in voxel coordinates (see [Coordinates and Conventions](@ref)), so voxels
 #   of any size, also anisotropic or with flipped axes, need no special cases.
-# - The forward projection runs one thread per ray and sums the weighted voxel values. The back
+# - The forward projection runs one thread per data element and sums the weighted voxel values. The back
 #   projection follows the same rays and adds the weighted value of the ray to every voxel it visits
 #   with an atomic addition, because rays of different threads meet in the same voxels.
 # - A ray that lies exactly in a plane between two voxels is ambiguous: its line integral could be

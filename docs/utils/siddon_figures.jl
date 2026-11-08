@@ -61,8 +61,8 @@ function siddon_app(n; nsweep=60)
 end
 
 # How evenly the rays of one parallel-beam view at 45 degrees cover the pixels: Siddon's column sums
-# (summed lengths of all rays per pixel, times the cell size; ideally 1 everywhere), for one, two
-# and four rays per pixel.
+# (summed lengths of all rays per pixel, times the cell size; ideally 1 everywhere), for cells of 1,
+# 1/2 and 1/4 pixel.
 function coverage_figure(n)
   image = ImageGeom(; dims=(n, n), deltas=(1.0, 1.0))
   fig = Figure(size=(900, 330))
@@ -70,7 +70,7 @@ function coverage_figure(n)
     g = parallel_beam(; angles=[pi / 4], nu=round(Int, 2n / du), nv=1, du)
     c = du .* colsums(SiddonProjector(image, g; eltype=Float64))
     r = round(Int, 1 / du)
-    ax = Axis(fig[1, j]; aspect=DataAspect(), title=r == 1 ? "1 ray per pixel" : "$r rays per pixel")
+    ax = Axis(fig[1, j]; aspect=DataAspect(), title="cells of $du pixels")
     hidedecorations!(ax)
     hm = heatmap!(ax, c; colormap=:RdBu, colorrange=(0.6, 1.4))
     j == 3 && Colorbar(fig[1, 4], hm; label="coverage")

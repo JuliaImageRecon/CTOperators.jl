@@ -45,7 +45,9 @@ end
   x, y = rand(8, 7, 6), rand(13, 9, 5)
   configs = (LaunchConfig(; tile=(8, 8)), LaunchConfig(; workgroupsize=64, tile=(8, 8)),
              LaunchConfig(; workgroupsize=32, tile=(4, 2)), LaunchConfig(; workgroupsize=7))
-  for P in (SiddonProjector, JosephProjector), geom in (g, rays)
+  # distance driven needs detector cells: no ray lists
+  for (P, geom) in ((SiddonProjector, g), (SiddonProjector, rays), (JosephProjector, g), (JosephProjector, rays),
+                    (DistanceDrivenProjector, g))
     ref = P(image, geom; eltype=Float64)
     yr = reshape(y, datasize(ref))
     for launch in configs

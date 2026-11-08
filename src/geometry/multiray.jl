@@ -197,7 +197,7 @@ struct UniformWeights <: AbstractWeights end
 """
     GaussianWeights(sigma_u, sigma_v=sigma_u)
 
-Subrays weighted by a Gaussian of the offset from the cell center, with standard deviations
+Rays of a cell weighted by a Gaussian of the offset from the cell center, with standard deviations
 `sigma_u`, `sigma_v` in cell units: a detector response that falls off towards the cell edges.
 Weighting strategy of [`MultiRay`](@ref).
 """
@@ -225,8 +225,8 @@ weights_eltype(w::GaussianWeights, ::Type{T}) where {T} = GaussianWeights{T}(w.s
 """
     subray_weight(weights, du, dv)
 
-The weight of a ray at offset `(du, dv)` from the cell center, not normalized: the kernel divides by
-the sum of the weights of the cell, which must not be zero. Called in kernels: no allocations.
+The ray weight of a ray at offset `(du, dv)` from the cell center, not normalized: the kernel divides
+by the sum of the ray weights of the cell, which must not be zero. Called in kernels: no allocations.
 """
 function subray_weight end
 
@@ -249,7 +249,7 @@ The detector geometry `geometry` (`ConeBeam`, `ArcConeBeam`, `ParallelBeam`) wit
 detector cell. The rays of a cell end at the offsets given by the point strategy `points`
 ([`RegularPoints`](@ref), [`JitteredPoints`](@ref), [`RandomPoints`](@ref),
 [`GaussianPoints`](@ref), [`Points`](@ref), or a custom [`AbstractPoints`](@ref)) and
-are averaged with the weights of `weights` ([`UniformWeights`](@ref),
+are averaged with the ray weights of `weights` ([`UniformWeights`](@ref),
 [`GaussianWeights`](@ref), or a custom [`AbstractWeights`](@ref)), normalized to sum 1 per cell. A ray-driven projector built on it
 computes
 

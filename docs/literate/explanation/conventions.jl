@@ -32,7 +32,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "convention_figures.jl"))
 #
 # ## Cone beam and its trajectories
 #
-# [The Parameters of a Scan](@ref) introduces the parameters of the trajectory functions (`dso`,
+# [Parameters of a Scan](@ref) introduces the parameters of the trajectory functions (`dso`,
 # `dsd`, `nu`, `nv`, `du`, `dv`, `pitch`, `z0`) step by step; this section defines them exactly.
 #
 # A view is given by the position of the source, the center of the flat detector and two vectors
