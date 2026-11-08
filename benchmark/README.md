@@ -200,3 +200,21 @@ The forward projection with a Float16 image took about 14 % less time at 256³; 
 did not change. The 256³ forward times, measured again with values converted on reading
 (`nh/mixedprecision`), were 108.9 and 109.2 ms against 94.2 and 94.5 ms (Siddon) and 98.3 and
 101.0 ms against 83.1 and 83.7 ms (Joseph).
+
+### Fused normal operator
+
+`Aᵀ A x` with the fused normal operator (one pass over the rays) against forward projection into a
+preallocated buffer followed by the back projection, Float32, one ray per cell, random images,
+circular cone beam (`dso = 2n`, `dsd = 4n`), 2026-11-08, branch `nh/fusednormal`. CPU: 64³, 64²
+detector, 90 views, all threads, minimum of 5 runs. GPU: AMD Radeon RX 7900 XT, 128³, 128²
+detector, 180 views, minimum of 10 runs (also the desktop GPU in use: approximate). Two runs each.
+
+| | separate | fused | separate, weights | fused, weights |
+|---|---|---|---|---|
+| CPU, Siddon | 20.6, 21.0 ms | 20.3, 19.6 ms | 20.9 ms | 19.6 ms |
+| CPU, Joseph | 39.5, 37.3 ms | 37.7, 38.0 ms | 41.0 ms | 39.6 ms |
+| GPU, Siddon | 20.0, 19.4 ms | 19.8, 20.0 ms | 19.5 ms | 19.8 ms |
+| GPU, Joseph | 36.7, 36.6 ms | 35.0, 34.9 ms | 36.8 ms | 35.0 ms |
+
+The buffer of the separate version holds the projection data (1.4 MiB on the CPU, 11.2 MiB on the
+GPU here).

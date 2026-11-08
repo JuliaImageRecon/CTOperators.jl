@@ -8,8 +8,7 @@ multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code base
 [![codecov](https://codecov.io/gh/JuliaImageRecon/CTOperators.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/JuliaImageRecon/CTOperators.jl)
 
 > [!IMPORTANT]
-> CTOperators.jl is in an early stage of development and not registered yet. Its interface may
-> still change.
+> CTOperators.jl is in an early stage of development. Its interface may still change.
 
 ## Features
 
@@ -51,7 +50,7 @@ storage=CuArray)`, and pass data that lives on the GPU.
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/JuliaImageRecon/CTOperators.jl")
+Pkg.add("CTOperators")
 ```
 
 ## Benchmarks

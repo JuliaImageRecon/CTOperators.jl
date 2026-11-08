@@ -143,7 +143,7 @@ op_weighted = SiddonProjector(image, MultiRay(geometry, RegularPoints(4, 1); wei
 #
 # * The time grows with the number of rays per cell: 4 rays take about 4 times as long. Jittered
 #   points and Gaussian weights added nothing measurable on a GPU (see the
-#   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#Several-rays-per-cell-(GPU))).
+#   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#several-rays-per-cell-gpu)).
 #   No extra memory is needed.
 # * `MultiRay` works on every device (`storage=CuArray` etc.), and the random positions are the same
 #   on all of them, in the forward and the back projection, and for `subset(op, views)`.
