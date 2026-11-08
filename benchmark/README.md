@@ -181,3 +181,22 @@ use: approximate).
 |---|---|---|
 | Int64 | 5.9–6.4 / 13.4–13.6 ms | 6.6–6.8 / 30.6 ms |
 | Int32 | 6.0–6.1 / 13.3–13.4 ms | 5.7–6.0 / 30.5 ms |
+
+### Float16 images (GPU)
+
+AMD Radeon RX 7900 XT, projectors in Float32, one ray per cell, random images, circular cone beam
+(`n³` volume, `n²` detector, `dso = 2n`, `dsd = 4n`), minimum of 10 or 15 runs, 2026-11-05 to
+2026-11-08 (the GPU was also the desktop GPU in use: approximate). Two runs per case at 256³.
+
+| case | image | Siddon | Joseph |
+|---|---|---|---|
+| forward, 256³, 360 views | Float32 | 109.3, 109.3 ms | 98.5, 97.8 ms |
+| forward, 256³, 360 views | Float16 | 93.2, 94.4 ms | 84.1, 84.1 ms |
+| forward, 128³, 180 views | Float32 | 6.14 ms | 5.41 ms |
+| forward, 128³, 180 views | Float16 | 5.16 ms | 5.08 ms |
+| back, 128³, 180 views, from Float32 / Float16 data | Float32 | 13.69 / 13.36 ms | 30.53 / 30.51 ms |
+
+The forward projection with a Float16 image took about 14 % less time at 256³; the back projection
+did not change. The 256³ forward times, measured again with values converted on reading
+(`nh/mixedprecision`), were 108.9 and 109.2 ms against 94.2 and 94.5 ms (Siddon) and 98.3 and
+101.0 ms against 83.1 and 83.7 ms (Joseph).

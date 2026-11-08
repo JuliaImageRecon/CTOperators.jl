@@ -73,9 +73,25 @@
 #
 # ## Precision
 #
-# `Float32` is the default; `Float64` (`eltype=Float64`) on the CPU or
-# on GPUs with fast double precision gives reference results. The element types of the data must
-# match the projector's.
+# `Float32` is the default; `Float64` (`eltype=Float64`) on the CPU or on GPUs with fast double
+# precision gives reference results. The element type of a projector is that of its ray geometry and
+# of its arithmetic, and must be at least `Float32`.
+#
+# Images and data can be stored in a lower precision, such as `Float16`, which halves their memory.
+# The projector converts the values when it reads them and sums in its own element type:
+#
+# ```julia
+# x16 = CuArray{Float16}(x)    # an image stored in Float16
+# y = op * x16                 # Float32 data
+# y16 = similar(y, Float16)
+# mul!(y16, op, x16)           # Float16 data: every value rounded once
+# x = adjoint(op) * y16        # back projection of Float16 data into a Float32 image
+# ```
+#
+# The image of a back projection collects many contributions per voxel, so it must be at least
+# `Float32`; `mul!` into a `Float16` image throws an `ArgumentError`. Timings with `Float16` images
+# are in the
+# [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md).
 #
 # ## Performance notes
 #

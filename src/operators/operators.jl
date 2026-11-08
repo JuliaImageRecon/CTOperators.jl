@@ -153,17 +153,28 @@ function subset(op::AbstractProjector{T,<:Union{AbstractDetectorGeometry,MultiRa
   isnothing(rays) ? similar_projector(op, g) : similar_projector(op, g; raymask=Array(rays)[:, :, views])
 end
 
-Adapt.adapt_structure(to, op::AbstractProjector) = similar_projector(op, adapt(to, geometry(op)))
+function Adapt.adapt_structure(to, op::AbstractProjector)
+  g = adapt(to, geometry(op))
+  check_ray_precision(eltype(g))
+  similar_projector(op, g)
+end
 
 """
     device_geometry(geometry, T, storage)
 
 `geometry` with its arrays in element type `T` on the device of `storage`, an array type such as
 `Array` or `CuArray` (or a concrete one such as `CuArray{Float32}`). Projector constructors call it
-with their keywords `eltype` and `storage`.
+with their keywords `eltype` and `storage`. `T` must have at least the precision of `Float32`.
 """
-device_geometry(geometry, ::Type{T}, storage) where {T} =
+function device_geometry(geometry, ::Type{T}, storage) where {T}
+  check_ray_precision(T)
   adapt(storage isa UnionAll ? storage{T} : storage, geometry)
+end
+
+# Ray coordinates need Float32: in Float16 the spacing of numbers is 0.25 at voxel 256.
+check_ray_precision(::Type{T}) where {T} =
+  precision(T) >= precision(Float32) ||
+    throw(ArgumentError("the ray geometry needs at least Float32, got $T; images and data may be stored in Float16"))
 
 include("masks.jl")
 include("launch.jl")
