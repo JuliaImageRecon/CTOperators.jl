@@ -1,17 +1,15 @@
 # # Siddon's Method
 #
-# A projector computes line integrals of an image along rays. For an image of voxels, each with a
-# constant value, the line integral along a ray is a weighted sum: every voxel the ray passes
-# through contributes its value times the length of the ray inside it,
+# A projector applies the [System Matrix](@ref) ``A``, computing the weights ``a_{ij}`` whenever it
+# needs them. Siddon's method takes the image as voxels, each with a constant value, and a data
+# element as the line integral along one ray. The line integral is then a weighted sum: every voxel
+# the ray passes through contributes its value times the length of the ray inside it,
 #
 # ```math
 # y_i = \sum_j a_{ij} x_j, \qquad a_{ij} = \text{length of ray } i \text{ in voxel } j.
 # ```
 #
-# The weights ``a_{ij}`` form the system matrix. Although most of its entries are zero, it is too
-# large to store: with a 256³ volume and 10⁷ rays, each crossing a few hundred voxels, it has
-# billions of nonzero entries, tens of gigabytes. Projectors therefore compute the weights of a ray
-# on the fly, every time they need them. Siddon's method computes them exactly.
+# Siddon's method computes these lengths exactly.
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "siddon_figures.jl")) #hide

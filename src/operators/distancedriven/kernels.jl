@@ -1,8 +1,8 @@
 # The distance-driven method (De Man & Basu 2004) in continuous voxel coordinates (`to_index`):
 # voxel centers at integer coordinates, voxel v covers [v - 1/2, v + 1/2) per dimension.
 #
-# Per view, the slicing axis a is the axis along which the central ray of the view (through the
-# detector center) advances most in voxels. For a ray of detector cell (iu, iv) and the layer of
+# Per view, the principal axis a of the view is the axis along which the central ray of the view
+# (through the detector center) advances most in voxels. For a ray of detector cell (iu, iv) and the layer of
 # voxels at coordinate t along a, the rays through the midpoints of the four cell edges, (iu ± 1/2,
 # iv) and (iu, iv ± 1/2), cross the plane through the layer's centers; the two u-edge rays bound
 # the footprint along the transverse axis that u runs along, the two v-edge rays along the other
@@ -13,7 +13,7 @@
 #   y += slab length / ((bmax - bmin)(cmax - cmin)) * sum over voxels of o_b o_c x
 #
 # with o_b, o_c the overlaps of the footprint with the voxel along b and c. All rays of a view use
-# the same slicing axis, so neighboring cells share their edge rays and their footprints tile each
+# the same principal axis, so neighboring cells share their edge rays and their footprints tile each
 # layer. Forward and back projection compute the same weights: the back projection is the exact
 # adjoint. Along a transverse axis of a single voxel (a 2D image) the footprint is not averaged:
 # the weight is 1 if the central ray lies within that voxel.
@@ -63,7 +63,7 @@ end
   iu, iv, k = pixel_index(i, nu, nv)
   half = T(1 // 2)
   cu, cv = T(iu), T(iv)
-  # the slicing axis of the view, from its central ray
+  # the principal axis of the view, from its central ray
   _, d0 = voxel_ray(grid, geometry, T(nu + 1) / 2, T(nv + 1) / 2, k)
   ka = principal_axis(d0)
   kb = ifelse(ka == 1, 2, 1)
@@ -93,7 +93,7 @@ end
   blo, bhi = at(eb1, 1) <= at(eb2, 1) ? (eb1, eb2) : (eb2, eb1)
   clo, chi = at(ec1, 2) <= at(ec2, 2) ? (ec1, ec2) : (ec2, ec1)
   lines = ((blo[1], blo[2]), (bhi[1], bhi[2]), (clo[3], clo[4]), (chi[3], chi[4]), edge_line(p, d, ka, kb, kc))
-  # the slabs along the slicing axis that the central ray crosses, within the box of the image mask
+  # the slabs along the principal axis that the central ray crosses, within the box of the image mask
   # (the volume without a mask): the layers outside it hold only masked voxels
   lo = SVector(ntuple(m -> m == ka ? grid.lo[m] : typemin(T), 3))
   hi = SVector(ntuple(m -> m == ka ? grid.hi[m] : typemax(T), 3))

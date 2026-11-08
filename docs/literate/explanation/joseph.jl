@@ -1,11 +1,10 @@
 # # Joseph's Method
 #
 # [Siddon's Method](@ref) treats the image as a set of cubes with constant values and computes the
-# exact length of a ray in every cube. Joseph (1982) starts from a different picture: the voxel
-# values are samples of a *smooth* function at the voxel centers. Within each layer of voxels across
-# the ray, the function is interpolated linearly between the centers (bilinearly in 3D). The line
-# integral of this function along a ray is again a
-# weighted sum of the voxel values,
+# exact length of a ray in every cube. Joseph (1982) starts from a different image model: the voxel
+# values are samples of a *smooth* function at the voxel centers. Within each layer of voxels (see
+# [System Matrix](@ref)), the function is interpolated linearly between the centers (bilinearly in
+# 3D). The line integral of this function along a ray is again a weighted sum of the voxel values,
 #
 # ```math
 # y_i = \sum_j a_{ij} x_j,
@@ -22,26 +21,26 @@ bonito_page("joseph") #hide
 
 # ## The idea
 #
-# A ray runs more along one axis than along the others; call it the principal axis. Joseph cuts the
-# volume into the layers of voxels perpendicular to this axis and takes one sample per layer: where
-# the ray crosses the plane through the centers of the layer, the image is interpolated from the
-# nearest voxel centers in that plane (from two in 2D, from four in 3D, bilinear). Every sample
-# stands for the piece of the ray inside its layer, so it is multiplied by the length of that piece,
+# Joseph cuts the image into the layers along the principal axis of the ray and takes one sample
+# per layer: where the ray crosses the center plane of the layer, the interpolated image ``f`` is
+# evaluated from the nearest voxel centers in that plane (from two in 2D, from four in 3D,
+# bilinearly). Every sample stands for the piece of the ray inside its layer, so it is multiplied
+# by the length per layer,
 #
 # ```math
 # y_i = \sum_{\text{layers } l} \frac{\Delta_k}{|\cos \theta_k|} \, f(\text{sample}_l),
 # ```
 #
 # where ``\Delta_k`` is the voxel size along the principal axis ``k`` and ``\theta_k`` the angle
-# between the ray and that axis. This is the midpoint rule for the line integral of the
-# interpolated image, with one sample in the middle of each layer. Choosing the principal axis keeps
-# the steps at most ``\sqrt{3}`` voxels long and guarantees one sample in every layer the ray
-# crosses.
+# between the ray and that axis. This is the midpoint rule for the line integral of ``f``, with one
+# sample in the middle of each layer. The principal axis guarantees one sample in every layer the ray
+# crosses. The figure on the page [System Matrix](@ref) shows the layers and the length per layer for
+# one ray.
 #
-# In the figure a ray crosses a 2D image. The orange dots are its samples on the center lines (gray
-# dots are the pixel centers); the pixels are colored by their weight for this ray. Every sample
-# shares its weight between the two pixels next to it. The slider rotates and shifts the ray: when
-# the ray turns past 45°, the principal axis switches from x to y.
+# In the figure below a ray crosses a 2D image. The orange dots are its samples on the center lines
+# (gray dots are the pixel centers); the pixels are colored by their weight for this ray. Every
+# sample shares its weight between the two pixels next to it. The slider rotates and shifts the ray:
+# when the ray turns past 45°, the principal axis switches from x to y.
 
 joseph_app(8) #hide
 
@@ -73,10 +72,10 @@ round.(weights; digits=2)
 #   number of steps is known when the ray starts.
 #
 # The interpolated image is not zero right at the faces of the volume: across the ray it fades to
-# zero up to half a voxel beyond the faces. Segments that begin or end inside the
-# volume (rather than rays from a source outside it) count only the part of the first and last layer
-# they cover; there the method is less accurate, because along the principal axis the image is
-# constant within a layer.
+# zero up to half a voxel beyond the faces. Segments that begin or end inside the volume (rather
+# than rays from a source outside it) count only the part of the first and last layer they cover,
+# with the value of the sample in the middle of that part: along the principal axis, the image
+# model is constant within a layer.
 #
 # ## Coverage of the voxels
 #

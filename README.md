@@ -17,6 +17,8 @@ multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code base
 - **Two ray-driven projectors**: Siddon's method, which weights each voxel by the exact length of
   the ray inside it (in the incremental form of Jacobs et al.), and Joseph's method, which
   interpolates linearly between voxel centers.
+- **A distance-driven projector** (De Man & Basu), which averages the image over the area each
+  detector cell sees, for detector geometries.
 - **Generic geometries**: arbitrary rays given by start and end points, and cone-beam (flat or
   curved detector) and parallel-beam scanners described view by view, with any source trajectory
   (circular, helical, ...), including objects that move during the scan. Geometries of
