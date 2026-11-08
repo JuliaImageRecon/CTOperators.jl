@@ -93,7 +93,7 @@ end
   blo, bhi = at(eb1, 1) <= at(eb2, 1) ? (eb1, eb2) : (eb2, eb1)
   clo, chi = at(ec1, 2) <= at(ec2, 2) ? (ec1, ec2) : (ec2, ec1)
   lines = ((blo[1], blo[2]), (bhi[1], bhi[2]), (clo[3], clo[4]), (chi[3], chi[4]), edge_line(p, d, ka, kb, kc))
-  # the slabs along the principal axis that the central ray crosses, within the box of the image mask
+  # the slabs along the principal axis that the central ray crosses, within the bounding box of the image mask
   # (the volume without a mask): the layers outside it hold only masked voxels
   lo = SVector(ntuple(m -> m == ka ? grid.lo[m] : typemin(T), 3))
   hi = SVector(ntuple(m -> m == ka ? grid.hi[m] : typemax(T), 3))

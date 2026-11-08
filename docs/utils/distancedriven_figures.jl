@@ -289,7 +289,7 @@ function cell_weights3(image, g)
 end
 
 # Coverage of the pixels by the cells of one parallel-beam view, one cell per pixel: Siddon, Joseph
-# and distance driven (rows), at 45 degrees and at 0.3 rad (columns).
+# and distance-driven (rows), at 45 degrees and at 0.3 rad (columns).
 function coverage_three(n)
   image = ImageGeom(; dims=(n, n), deltas=(1.0, 1.0))
   fig = Figure(size=(640, 860))

@@ -129,8 +129,8 @@ end
 """
     colsums(op::AbstractCTOperator)
 
-`adjoint(op) * ones`: for projectors the sensitivity image, the summed weights of all rays per
-voxel. A normalization of SART/SIRT/OS-EM-type methods.
+`adjoint(op) * ones`, the column sums of the system matrix: for every voxel the summed weights of all
+data elements (the sensitivity image of OS-EM). A normalization of SART/SIRT/OS-EM-type methods.
 """
 colsums(op::AbstractCTOperator) = rowsums(adjoint(op))
 

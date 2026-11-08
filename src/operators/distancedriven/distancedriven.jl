@@ -2,12 +2,13 @@
     DistanceDrivenProjector(image::ImageGeom, geometry; eltype=Float32, storage=Array, launch=nothing, raymask=nothing)
 
 Projector with the distance-driven method (De Man & Basu 2004), which integrates over the detector
-cells instead of following single rays. Per view the image is cut into slices perpendicular to the
-axis most parallel to the view's central ray. In every slice, the rays through the midpoints of the
-four edges of a detector cell span a rectangle, the cell's footprint; the cell measures the mean
-of the image over the footprint times the length of the ray in the slice, summed over the slices.
-The footprints of neighboring cells share their edges and tile each slice, so the rays of a view
-cover the voxels evenly. The back projection is the exact adjoint.
+cells instead of following single rays. Per view the image is cut into layers perpendicular to the
+principal axis of the view, the axis along which the view's central ray (from the source through the
+detector center) advances most. In every layer, the edge rays through the midpoints of the four
+edges of a detector cell span a rectangle, the cell's footprint; the cell measures the mean of the
+image over the footprint times the length per layer of its ray, summed over the layers. The
+footprints of neighboring cells share their edges and cover each layer without gaps. The back
+projection is the exact adjoint. See [Distance-Driven Method](@ref) and [System Matrix](@ref).
 
 Works with detector geometries ([`AbstractDetectorGeometry`](@ref): [`ConeBeam`](@ref),
 [`ArcConeBeam`](@ref), [`ParallelBeam`](@ref)), not with ray lists, which have no detector cells,
@@ -21,14 +22,14 @@ Keywords:
   and projection data passed to the operator must live on that device.
 * `launch` is a [`LaunchConfig`](@ref) to tune the kernel launches for a device, `nothing` for the
   defaults of the device.
-* `raymask` is `nothing` or an array with one entry per detector cell and view, of the data size
+* `raymask` is `nothing` or an array with one entry per data element (detector cell and view), of the data size
   (`raymask[u, v, view]`) or a vector, on any device: the cells that are used (`true`). It is stored
-  as `Bool` on the device of the operator. Masked cells give 0 in the forward projection and
+  as `Bool` on the device of the operator. Masked data elements give 0 in the forward projection and
   contribute nothing to the back projection.
 
 The mask of `image` (e.g. `ImageGeom(MaskCircle(); dims, deltas)`, the circular field of view)
 selects the voxels: voxels outside count as 0 in the forward projection and get 0 in the back
-projection, and the slices are limited to the bounding box of the mask. See [Use Masks](@ref).
+projection, and the layers are limited to the bounding box of the image mask. See [Use Masks](@ref).
 
 # Example
 

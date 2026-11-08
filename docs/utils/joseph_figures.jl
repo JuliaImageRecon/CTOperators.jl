@@ -43,7 +43,7 @@ function joseph_app(n; nsweep=60)
   end
 end
 
-# Coverage of the pixels by the rays of one parallel-beam view, one ray per pixel: Siddon (top) and
+# Coverage of the pixels by the rays of one parallel-beam view, cells of 1 pixel: Siddon (top) and
 # Joseph (bottom), at 45 degrees and at 0.3 rad.
 function coverage_comparison(n)
   image = ImageGeom(; dims=(n, n), deltas=(1.0, 1.0))

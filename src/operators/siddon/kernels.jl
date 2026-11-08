@@ -41,7 +41,7 @@ end
 @inline function siddon_segment(action, grid::VoxelGrid{T}, a, b, rt) where {T}
   p = to_index(grid, a)
   d = (b - a) ./ grid.deltas
-  amin, amax = clip(p, d, grid.lo, grid.hi, rt)   # the box of the image mask
+  amin, amax = clip(p, d, grid.lo, grid.hi, rt)   # the bounding box of the image mask
   amin < amax || return zero(T)
   siddon_traverse(action, grid.dims, p, d, norm(b - a), amin, amax)
 end

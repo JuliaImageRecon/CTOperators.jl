@@ -22,7 +22,7 @@ y = op * x_true;
 # `rowsums(op)` is `op * ones`: for a projector the length of every ray inside the image (exactly
 # for Siddon's method; for Joseph's method approximately, since its image fades to zero just outside
 # the volume). `colsums(op)` is `adjoint(op) * ones`: for every voxel the summed weights of all
-# rays, its sensitivity. `r` has the shape of the projection data, `c` that of the image; both live
+# data elements, the column sums of the [System Matrix](@ref) (in OS-EM called the sensitivity). `r` has the shape of the projection data, `c` that of the image; both live
 # on the device of the projector.
 
 r = rowsums(op)
@@ -51,7 +51,7 @@ cs = [max.(colsums(o), 1.0f-6) for o in ops];
 # ## OS-SART
 #
 # One SART update per subset: back project the normalized residual of the subset and divide by the
-# sensitivity of the subset; then clip negative values. With one subset this is SIRT.
+# column sums of the subset; then clip negative values. With one subset this is SIRT.
 
 function os_sart(ops, ys, rs, cs, iterations; relaxation=1.0f0)
   x = zeros(Float32, imagesize(ops[1]))

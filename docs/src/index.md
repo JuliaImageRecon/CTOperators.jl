@@ -1,6 +1,6 @@
 # CTOperators.jl
 
-*Matched forward and back projectors for X-ray CT on CPUs and GPUs.*
+*Forward and back projectors for X-ray CT on CPUs and GPUs.*
 
 CTOperators.jl provides projection operators for tomographic reconstruction that run
 multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code. You create an operator

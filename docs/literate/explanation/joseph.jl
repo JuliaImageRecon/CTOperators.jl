@@ -54,7 +54,7 @@ weights = reshape(adjoint(JosephProjector(image, ray; eltype=Float64)) * [1.0], 
 round.(weights; digits=2)
 
 # Each row of the printout (fixed x) is one layer with one sample. Its two weights, for two
-# neighboring pixels, add up to the length of the ray inside the layer,
+# neighboring pixels, add up to the length per layer,
 # ``\sqrt{1 + (5/12)^2} \approx 1.08``.
 
 # ## Properties
@@ -80,8 +80,8 @@ round.(weights; digits=2)
 # ## Coverage of the voxels
 #
 # Like Siddon's, Joseph's method is ray-driven, and the rays of one view cover the voxels unevenly.
-# The figure shows, for one parallel-beam view with one ray per pixel, the summed weights of all
-# rays in every pixel (1 is even coverage). For rays in the plane at exactly 45° the two methods
+# The figure shows, for one parallel-beam view with cells of 1 pixel, the coverage (see
+# [System Matrix](@ref)). For rays in the plane at exactly 45° the two methods
 # give the same weights (Joseph already noted this), and the same pattern. At other angles Joseph's
 # interpolation spreads every ray over neighboring pixels: at 17° (0.3 rad) Siddon's coverage varies
 # between 0.89 and 1.05 in bands, Joseph's is 1.00 except for isolated pixels with up to 1.04.
@@ -96,13 +96,13 @@ nothing #hide
 #
 # ## Implementation
 #
-# - The ray is traversed in voxel coordinates (see [Coordinates and Conventions](@ref)); the
+# - The ray is traced in voxel coordinates (see [Coordinates and Conventions](@ref)); the
 #   principal axis is the one along which the ray advances most in voxels, so anisotropic voxels
 #   need no special case.
 # - The ray is clipped to the region where the interpolated image can be nonzero. This gives the
 #   first and last layer, and the loop visits every layer from one to the other. Neighbors outside
 #   the volume count as zero.
-# - The forward projection runs one thread per ray; the back projection adds the weighted values of
+# - The forward projection runs one thread per data element; the back projection adds the weighted values of
 #   every sample (four in 3D, two in 2D) with atomic additions.
 # - How the rays are distributed over the threads of a GPU is not part of the method; see
 #   [Workgroups and Ray Order on GPUs](@ref).

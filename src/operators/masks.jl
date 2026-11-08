@@ -1,5 +1,5 @@
 # Masks: an image mask (the voxels that are reconstructed, from the mask of the `ImageGeom`) and a
-# ray mask (the rays that are used, the projector keyword `raymask`); `true` means used, `false`
+# ray mask (the data elements that are used, the projector keyword `raymask`); `true` means used, `false`
 # masked. A projector with masks applies
 #
 #   forward:  y = M_rays A M_image x        back:  x = M_image Aᵀ M_rays y
@@ -14,7 +14,7 @@
 
 The masks of a projector on the device of `geometry`: the image mask of `image` (`nothing` if all
 voxels are used) and the ray mask `raymask` (`nothing`, or a `Bool` array of the data size, `true`
-for the rays that are used). For implementations of projectors.
+for the data elements that are used). For implementations of projectors.
 """
 struct ProjectorMasks{I,R}
   image::I

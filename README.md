@@ -1,7 +1,8 @@
 # CTOperators.jl
 
-This package provides matched forward and back projectors for X-ray computed tomography that run
-multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code base.
+This package provides forward and back projectors for X-ray computed tomography that run
+multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code base; each back
+projection is the exact adjoint of its forward projection.
 
 [![](https://img.shields.io/badge/docs-dev-blue.svg)](https://JuliaImageRecon.github.io/CTOperators.jl/dev)
 [![Build Status](https://github.com/JuliaImageRecon/CTOperators.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/JuliaImageRecon/CTOperators.jl/actions/workflows/CI.yml?query=branch%3Amain)

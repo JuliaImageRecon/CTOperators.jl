@@ -67,7 +67,7 @@ end
 end
 
 # the region where the image can be nonzero for rays with principal axis k: the slabs of the
-# layers along k within the box of the image mask (the volume without a mask), and across k up to
+# layers along k within the bounding box of the image mask (the volume without a mask), and across k up to
 # the next voxel center outside the box
 @inline function joseph_support(grid::VoxelGrid{T}, k) where {T}
   half = T(1 // 2)

@@ -13,7 +13,8 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # detector cell as a point: one ray from the source to the center of the cell. When the cells are
 # large compared to the voxels, the back projection of such rays has gaps (Miao 2013, p. 29). A real
 # cell integrates over its area. `MultiRay(geometry, points; weights)` replaces the one ray by `K` rays
-# per cell, ending at the offsets given by `points`, and averages their line integrals:
+# per cell, ending at the offsets given by `points`, and averages their line integrals with the ray
+# weights ``w_{ik}`` given by `weights`:
 #
 # ```math
 # y_i = \sum_{k=1}^K \frac{w_{ik}}{\sum_l w_{il}} \int_{\text{ray } (i, k)} x
@@ -23,7 +24,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # ``y_i``. Miao (2013) calls the integral over the area of a ray path the "area integral" model; the
 # rays of a cell sample such an integral.
 #
-# The weights average **line integrals**, which keeps the operator linear. A detector averages
+# The ray weights average **line integrals**, which keeps the operator linear. A detector averages
 # intensities, ``\exp(-\int x)``, which for a cell that sees an edge of the object is not the same
 # (the partial-volume effect); modeling that would make the operator nonlinear.
 #
@@ -37,9 +38,9 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # detectors.
 #
 # The point strategies give the offsets of the rays from the cell center, where ±1/2 are the cell
-# edges; some go beyond them. The weighting strategies give a weight for every offset. In the figure
+# edges; some go beyond them. The weighting strategies give a ray weight for every offset. In the figure
 # the blue square is one cell, the dotted lines its subcells, and the orange points the rays, with
-# the marker area relative to the largest weight in the panel:
+# the marker area relative to the largest ray weight in the panel:
 
 fig = points_figure([("RegularPoints(3, 3)", RegularPoints(3, 3), UniformWeights()), #hide
                      ("JitteredPoints(3, 3)", JitteredPoints(3, 3; seed=1), UniformWeights()), #hide
@@ -64,10 +65,10 @@ nothing #hide
 # * **Gaussian weights** describe a similar response with fixed positions: the points stay where
 #   they are, and the rays near the edges count less.
 #
-# For images with one layer of voxels along `z` (2D images, or 3D images with `nz = 1`) the projectors
-# keep all rays in the image plane: the offsets along `v` are set to 0, and strategies with several
-# subcells along `v` are rejected. Joseph's method interpolates across the layer, so a ray away from
-# its center is weighted down, and a tilted ray may leave the layer.
+# For images one voxel thick in `z` (2D images, or 3D images with `nz = 1`) the projectors keep all
+# rays in the image plane: the offsets along `v` are set to 0, and strategies with several subcells
+# along `v` are rejected. Joseph's method interpolates along `z` between voxel centers, so a ray away
+# from the plane through the voxel centers is weighted down, and a tilted ray may leave the image.
 #
 # ## Random positions without a random number generator
 #
@@ -93,8 +94,8 @@ nothing #hide
 #   the plain geometry in our benchmark (128³ on a GPU, see below).
 # * The kernels are those of the plain projectors: each thread handles one data element. For a
 #   `MultiRay` it traces the `K` rays one after the other and adds them up (forward), or first sums
-#   the weights and then lets every ray add its share (back). No memory per ray is needed.
-# * The time is about `K` times that of one ray; jittered offsets and Gaussian weights added nothing
+#   the ray weights and then lets every ray add its share (back). No memory per ray is needed.
+# * The time is about `K` times that of one ray; jittered offsets and Gaussian ray weights added nothing
 #   measurable on a GPU (see the
 #   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#several-rays-per-cell-gpu)).
 # * The ray mask applies per data element (a masked element skips all its rays), the clipping to the

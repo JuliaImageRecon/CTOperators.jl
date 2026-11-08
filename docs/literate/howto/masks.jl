@@ -62,7 +62,7 @@ y[defective, :, :] .= 0;
 # A defective cell lies at the same distance from the rotation axis in every view, so its wrong
 # values form a circle in the reconstruction: a ring artifact. The ray mask excludes these rays. It
 # has the size of the data, `(nu, nv, nviews)` (see `datasize`), so `raymask[u, v, view]` belongs to
-# detector cell `(u, v)` in view `view`; a vector with one entry per ray works too.
+# detector cell `(u, v)` in view `view`; a vector with one entry per data element works too.
 
 raymask = trues(size(y))
 raymask[defective, :, :] .= false
@@ -87,7 +87,7 @@ nothing #hide
 # ## A region of interest
 #
 # If only part of the object matters, the image mask can be a box around it, here deliberately off
-# center. The rays then only traverse this box: a centered mask of 64³ voxels in a 256³ volume, on an
+# center. The rays are then only traced through this box: a centered mask of 64³ voxels in a 256³ volume, on an
 # AMD Radeon RX 7900 XT, made the projections 30 to 43 times faster in our
 # [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md).
 
@@ -114,7 +114,7 @@ nothing #hide
 # * `subset(op, views)` keeps the part of the ray mask for these views; `adapt` moves both masks to
 #   the device.
 # * The masks are `Bool` arrays on the device of the operator, whatever its element type; a ray mask
-#   from any device is copied there. The ray mask takes one byte per ray, and the forward projection
+#   from any device is copied there. The ray mask takes one byte per data element, and the forward projection
 #   with an image mask allocates the masked image on every call.
 # * `rowsums` and `colsums` include the masks, and so do the normalizations of ordered-subset methods
 #   built on them.

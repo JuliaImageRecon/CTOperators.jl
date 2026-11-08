@@ -44,7 +44,7 @@ function view_figure(models, ratios; n=64, angle=0.3, crop=25:40)
   end
 end
 
-# the back projection of all views of ones (the "pixel support"), scaled so that even coverage is 1,
+# the back projection of all views of ones (the column sums), scaled so that even coverage is 1,
 # with its variation below the panel
 function support_figure(models, ratios; n=64, angles=range(0, pi, 181)[1:180])
   window = (0.8, 1.2)

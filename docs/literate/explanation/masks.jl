@@ -45,7 +45,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "mask_figures.jl")) #hide
 fig = mask_box_figure() #hide
 save("mask_box.png", fig) #hide
 nothing #hide
-# ![Rays traced only inside the bounding box of the mask](mask_box.png)
+# ![Rays traced only inside the bounding box of the image mask](mask_box.png)
 
 # For a small region of interest this saves most of the work: a centered mask of 64³ voxels in a 256³
 # volume, on the same GPU, made the projections 30 to 43 times faster in our

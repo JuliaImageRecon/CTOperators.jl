@@ -44,7 +44,8 @@ nothing #hide
 #
 # ## All views
 #
-# The back projection of all 180 views of ones (the "pixel support", `colsums`), scaled in the same
+# The back projection of all 180 views of ones (the column sums, `colsums`; Miao 2013 calls it pixel
+# support), scaled in the same
 # way and divided by the number of views, shows what remains after the views are added up. Below each
 # panel is the variation, the standard deviation relative to the mean, inside the circle of radius 24
 # pixels that is drawn; the color window is ±20 %:
