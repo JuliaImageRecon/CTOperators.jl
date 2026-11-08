@@ -1,4 +1,4 @@
-# # The Parameters of a Scan
+# # Parameters of a Scan
 #
 # The functions that build the common scans, such as [`circular_cone_beam`](@ref) and
 # [`helical_cone_beam`](@ref), take a handful of parameters: `angles`, `dso`, `dsd`, `nu`, `nv`,

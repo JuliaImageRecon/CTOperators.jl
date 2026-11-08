@@ -60,7 +60,7 @@ makedocs(;
     ],
     "Explanation" => [
       "Scans" => [
-        "The Parameters of a Scan" => "generated/explanation/scan_parameters.md",
+        "Parameters of a Scan" => "generated/explanation/scan_parameters.md",
         "Coordinates and Conventions" => "generated/explanation/conventions.md",
       ],
       "Projection Methods" => [
@@ -71,7 +71,7 @@ makedocs(;
       ],
       "Operators" => [
         "Masks" => "generated/explanation/masks.md",
-        "The Normal Operator" => "generated/explanation/normal.md",
+        "Normal Operator" => "generated/explanation/normal.md",
         "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
       ],
     ],

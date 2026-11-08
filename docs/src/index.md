@@ -55,7 +55,7 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   [differentiate through a projector](@ref "Differentiate through a Projector"), how to
   [use geometries of Sinograms.jl](@ref "Use Geometries of Sinograms.jl") and how to
   [write your own projector](@ref "Write a Projector") or [sampling strategy](@ref "Write a Sampling Strategy").
-- The explanation pages introduce [the parameters of a scan](@ref "The Parameters of a Scan") step by step,
+- The explanation pages introduce [the parameters of a scan](@ref "Parameters of a Scan") step by step,
   describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
   the projection methods, [Siddon's Method](@ref) and [Joseph's Method](@ref),
   [several rays per cell](@ref "Several Rays per Cell"), how they

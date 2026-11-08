@@ -1,4 +1,4 @@
-# # The Normal Operator
+# # Normal Operator
 #
 # Iterative solvers such as CGNR work with the normal operator ``A^T W A`` of a projector ``A``,
 # with ``W`` a diagonal matrix of weights per data element (the identity without weights). This page

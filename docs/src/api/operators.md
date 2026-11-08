@@ -41,7 +41,7 @@ Private = false
   normal operator `AᵀA` of a CT operator, e.g. for `AHA` of the solvers of
   RegularizedLeastSquares.jl. With LinearOperatorCollection.jl loaded, the normal operator of the
   projectors of this package runs in one pass over the rays, also with weights (see
-  [The Normal Operator](@ref)).
+  [Normal Operator](@ref)).
 * With ChainRulesCore.jl loaded, the operators are differentiable (see
   [Differentiate through a Projector](@ref)).
 * With Sinograms.jl loaded, its geometries are converted by `projection_geometry` (see
