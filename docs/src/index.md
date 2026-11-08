@@ -19,8 +19,7 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
 ```
 
 !!! warning
-    CTOperators.jl is in an early stage of development and not registered yet; its interface may
-    still change.
+    CTOperators.jl is in an early stage of development; its interface may still change.
 
 ## Features
 
@@ -87,5 +86,5 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
 
 ```julia
 using Pkg
-Pkg.add(url="https://github.com/JuliaImageRecon/CTOperators.jl")
+Pkg.add("CTOperators")
 ```
