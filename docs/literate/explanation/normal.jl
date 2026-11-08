@@ -42,9 +42,10 @@ x = rand(Float32, prod(image.dims))
 norm(N * x - vec(adjoint(op) * (w .* vec(op * x)))) / norm(N * x)
 
 # The result equals forward, weight and back up to rounding: the atomic additions on a GPU run in no
-# fixed order. Other weighting operators, and operators other than these two projectors, use the
-# generic normal operator. Each solver call stays the same, e.g. `AHA=normalOperator(op)` for CGNR of
-# RegularizedLeastSquares.jl.
+# fixed order. A weighted projector `ProdOp(WeightingOp(w), op)` is fused as well: its normal
+# operator ``A^T W^2 A`` is that of `op` with the squared weights. Other weighting operators, and
+# operators other than these two projectors, use the generic normal operator. Each solver call stays
+# the same, e.g. `AHA=normalOperator(op)` for CGNR of RegularizedLeastSquares.jl.
 #
 # ## What it changes
 #

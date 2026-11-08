@@ -1,7 +1,7 @@
 # LinearOperatorCollection.jl: the normal operator of the Siddon and Joseph projectors is fused (one
 # pass over the rays, no buffer for the projection data) and equals the back projection of the
-# weighted forward projection, with masks and several rays per cell. Other weighting operators keep
-# the generic normal operator.
+# weighted forward projection, with masks and several rays per cell, also for a weighted projector
+# ProdOp(WeightingOp(w), op). Other weighting operators keep the generic normal operator.
 
 @testitem "LinearOperatorCollection: fused normal operator" tags = [:operators, :gpu] setup = [Backends] begin
   using Adapt, LinearAlgebra, LinearOperatorCollection, LinearOperators
@@ -24,6 +24,10 @@
       @test ishermitian(N) && issymmetric(N) && ishermitian(Nw) && issymmetric(Nw)
       @test isapprox(Array(adjoint(Nw) * x), Array(Nw * x); rtol=sqrt(eps(T)))
       @test isapprox(Array(transpose(Nw) * x), Array(Nw * x); rtol=sqrt(eps(T)))
+      # a weighted projector W A: LinearOperatorCollection passes the squared weights on
+      Np = normalOperator(ProdOp(WeightingOp(w), op))
+      @test Np isa ext.FusedNormalOp
+      @test isapprox(Array(Np * x), Array(vec(adjoint(op) * (w .^ 2 .* vec(op * x)))); rtol=sqrt(eps(T)))
     end
   end
   # weights as an operator other than a WeightingOp: the generic normal operator
