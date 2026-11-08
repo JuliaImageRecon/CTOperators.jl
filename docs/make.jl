@@ -71,6 +71,7 @@ makedocs(;
       ],
       "Operators" => [
         "Masks" => "generated/explanation/masks.md",
+        "The Normal Operator" => "generated/explanation/normal.md",
         "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
       ],
     ],

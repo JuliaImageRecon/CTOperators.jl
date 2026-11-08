@@ -87,9 +87,11 @@ nthreads(o::TileOrder, geometry) = cld(o.nu, o.tu) * o.tu * cld(o.nv, o.tv) * o.
   ifelse(iu < o.nu && iv < o.nv, 1 + iu + o.nu * (iv + o.nv * k), 0)
 end
 
-# Launches `kernel(out, in, grid, geometry, order, raymask)` of the projector `op` over its rays;
-# `raymask` is `nothing` or the ray mask on the device (the kernels skip masked rays).
-function launch_rays!(kernel, op, out, in)
+# Launches `kernel(out, in, grid, geometry, order, raymask, args...)` of the projector `op` over its
+# rays; `raymask` is `nothing` or the ray mask on the device (the kernels skip masked rays). Further
+# arguments `args...` of a kernel are passed after `raymask`, in order (positional, as kernels of
+# KernelAbstractions.jl take no keywords).
+function launch_rays!(kernel, op, out, in, args...)
   g = geometry(op)
   nrays(g) == 0 && return out
   backend = KA.get_backend(op)
@@ -97,6 +99,6 @@ function launch_rays!(kernel, op, out, in)
   order = ray_order(config, g)
   wg = config.workgroupsize
   k = isnothing(wg) ? kernel(backend) : kernel(backend, wg)
-  k(out, in, op.grid, g, order, ray_mask(op); ndrange=nthreads(order, g))
+  k(out, in, op.grid, g, order, ray_mask(op), args...; ndrange=nthreads(order, g))
   out
 end

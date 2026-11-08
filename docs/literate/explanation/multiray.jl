@@ -96,7 +96,7 @@ nothing #hide
 #   the weights and then lets every ray add its share (back). No memory per ray is needed.
 # * The time is about `K` times that of one ray; jittered offsets and Gaussian weights added nothing
 #   measurable on a GPU (see the
-#   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#Several-rays-per-cell-(GPU))).
+#   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#several-rays-per-cell-gpu)).
 # * The ray mask applies per data element (a masked element skips all its rays), the clipping to the
 #   bounding box of the image mask per ray.
 # * A `MultiRay` has no single ray per data element. A projector that traces only one ray per cell
