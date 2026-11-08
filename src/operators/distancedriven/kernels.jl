@@ -12,6 +12,8 @@
 #
 #   y += slab length / ((bmax - bmin)(cmax - cmin)) * sum over voxels of o_b o_c x
 #
+# (the slab length is the "length per layer" of the documentation, page System Matrix)
+#
 # with o_b, o_c the overlaps of the footprint with the voxel along b and c. All rays of a view use
 # the same principal axis, so neighboring cells share their edge rays and their footprints tile each
 # layer. Forward and back projection compute the same weights: the back projection is the exact

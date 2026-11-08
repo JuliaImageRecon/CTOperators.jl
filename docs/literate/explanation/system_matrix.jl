@@ -72,23 +72,36 @@ bonito_page("system_matrix") #hide
 #   of pixels in 2D, a plane of voxels in 3D.
 # * The **center plane** of a layer runs through the centers of its voxels; in 2D it is a line, the
 #   center line.
-# * A ray that crosses a layer completely has the same length in every layer, the **length per
-#   layer**
+# * The **length per layer** is the length of the ray in a layer.
+#
+# A layer is a slab between two parallel planes perpendicular to the principal axis ``k``, a voxel
+# size ``\Delta_k`` apart. A ray that runs from one of these planes to the other crosses the layer
+# completely. Moving a distance ``s`` along the ray advances it ``s \, |\cos \theta_k|`` along
+# ``k``, where ``\theta_k`` is the angle between the ray and that axis; to advance ``\Delta_k`` it
+# needs
 #
 # ```math
-# \frac{\Delta_k}{|\cos \theta_k|},
+# s = \frac{\Delta_k}{|\cos \theta_k|}.
 # ```
 #
-# where ``\Delta_k`` is the voxel size along the principal axis ``k`` and ``\theta_k`` the angle
-# between the ray and that axis. For cubic voxels this angle is at most 45° in 2D and about 54.7° in
-# 3D, since the ray advances most along ``k``, so the length per layer is at most ``\sqrt{2}`` (2D)
-# or ``\sqrt{3}`` (3D) times the voxel size.
+# The angle is the same all along a straight ray, so every layer it crosses completely gets this
+# length. For cubic voxels the angle is at most 45° in 2D and about 54.7° in 3D, since the ray
+# advances most along ``k``, so the length per layer is at most ``\sqrt{2}`` (2D) or ``\sqrt{3}``
+# (3D) times the voxel size. A ray crosses a layer only partly where it starts or ends inside it,
+# which happens for segments with end points inside the image.
 #
-# The figure shows one ray through the center of an image of 8 × 8 pixels: the layers along its
-# principal axis (shaded alternately), the piece of the ray in each layer (alternating colors) and
-# the middle of each piece. The title gives the direction of the ray, its principal axis, the angle
-# to it and the length per layer. The slider turns the ray: at 45° and at 135° the principal axis
-# changes, and there the length per layer is largest, ``\sqrt{2}``.
+# The length per layer is not the length of the ray in a voxel. A layer contains a row of voxels
+# across the principal axis, and where the ray crosses a boundary between two of them inside the
+# layer, the piece of the layer is split between the two voxels. Only together do the voxels of a
+# layer get the length per layer, and only the part of the piece inside the image falls on voxels.
+#
+# The figure shows one ray through an image of 8 × 8 pixels, slightly off the center, in two ways.
+# Left, the pieces per layer: the layers along the principal axis are shaded alternately, and the
+# pieces between the layer planes alternate in color; they all have the length per layer. Right,
+# the pieces per pixel, between all pixel boundaries of both axes, as Siddon's method uses them;
+# their lengths vary. Dashed: parts of the ray outside the image. The slider turns the ray in steps
+# of 5°: at 45° and at 135° the principal axis changes, and there the length per layer is largest,
+# ``\sqrt{2}``.
 
 principal_axis_app() #hide
 
