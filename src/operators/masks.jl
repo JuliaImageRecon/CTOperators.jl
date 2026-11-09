@@ -69,18 +69,9 @@ handles_raymask(op::AbstractCTOperator) = false
 
 # the operator with its masks, as `mul!` applies it
 apply!(y, op::AbstractCTOperator, x) = masked_forward!(y, op, x)
-function apply!(x, a::AdjointCTOperator, y)
-  check_accumulation(x)
-  masked_backward!(x, parent(a), y)
-end
-
-# The back projection adds many contributions into every voxel; in Float16 small ones would be lost.
-# Data and the image of the forward projection may be Float16: each of their values is one rounding.
-check_accumulation(x) = check_accumulation(eltype(x))
-check_accumulation(::Type) = nothing
-check_accumulation(::Type{T}) where {T<:AbstractFloat} =
-  precision(T) >= precision(Float32) ||
-    throw(ArgumentError("the back projection accumulates into the image: use at least Float32, got $T"))
+# (the back projection accumulates into the element type of the image the caller gives, see the
+# how-to "Choose the Precision")
+apply!(x, a::AdjointCTOperator, y) = masked_backward!(x, parent(a), y)
 
 function masked_forward!(y, op, x)
   masks = projector_masks(op)

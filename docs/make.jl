@@ -52,6 +52,7 @@ makedocs(;
       ],
       "Devices" => [
         "Run on a GPU" => "generated/howto/gpu.md",
+        "Choose the Precision" => "generated/howto/precision.md",
       ],
       "Custom Components" => [
         "Write a Projector" => "generated/howto/write_projector.md",

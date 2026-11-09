@@ -182,7 +182,7 @@ use: approximate).
 | Int64 | 5.9–6.4 / 13.4–13.6 ms | 6.6–6.8 / 30.6 ms |
 | Int32 | 6.0–6.1 / 13.3–13.4 ms | 5.7–6.0 / 30.5 ms |
 
-### Float16 images (GPU)
+### Float16 and BFloat16 images (GPU)
 
 AMD Radeon RX 7900 XT, projectors in Float32, one ray per cell, random images, circular cone beam
 (`n³` volume, `n²` detector, `dso = 2n`, `dsd = 4n`), minimum of 10 or 15 runs, 2026-11-05 to
@@ -200,6 +200,26 @@ The forward projection with a Float16 image took about 14 % less time at 256³; 
 did not change. The 256³ forward times, measured again with values converted on reading
 (`nh/mixedprecision`), were 108.9 and 109.2 ms against 94.2 and 94.5 ms (Siddon) and 98.3 and
 101.0 ms against 83.1 and 83.7 ms (Joseph).
+
+BFloat16 (`nh/bfloat16`, 2026-11-09, same GPU, measured with a script: minimum of 3 runs, 128³, 180
+views, random images and data). Images and data stored in the given type, projectors in Float32;
+the last column is the back projection into an image of the given type (atomic additions in that
+type):
+
+| projector | storage | forward | back into Float32 | back into the storage type |
+|---|---|---|---|---|
+| Siddon | Float32 | 6.5 ms | 15.1 ms | – |
+| Siddon | Float16 | 5.0 ms | 14.9 ms | 17.5 ms |
+| Siddon | BFloat16 | 5.2 ms | 14.8 ms | 17.1 ms |
+| Joseph | Float32 | 5.8 ms | 34.5 ms | – |
+| Joseph | Float16 | 4.7 ms | 34.6 ms | 38.7 ms |
+| Joseph | BFloat16 | 5.1 ms | 34.5 ms | 36.5 ms |
+| distance driven | Float32 | 12.9 ms | 32.1 ms | – |
+| distance driven | Float16 | 10.1 ms | 32.1 ms | 41.8 ms |
+| distance driven | BFloat16 | 10.5 ms | 32.1 ms | 41.2 ms |
+
+BFloat16 storage took about as long as Float16 storage; the back projection into a Float16 or
+BFloat16 image took longer than into a Float32 image.
 
 ### Fused normal operator
 

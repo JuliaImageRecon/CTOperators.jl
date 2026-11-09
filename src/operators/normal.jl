@@ -13,7 +13,6 @@ function fused_normal!(z, op::Union{SiddonProjector,JosephProjector,DistanceDriv
   check_length(x, imagesize(op), "input")
   check_length(z, imagesize(op), "output")
   isnothing(weights) || check_length(weights, datasize(op), "weights")
-  check_accumulation(z)
   masks = projector_masks(op)
   zi, xi = reshape(z, imagesize(op)), reshape(x, imagesize(op))
   fill!(zi, zero(eltype(zi)))
