@@ -36,56 +36,54 @@ function layer_scene(theta, n; shift=0.3)
     push!(pixel_pieces, P(ts[j]) => P(ts[j+1]))
     push!(lengths, ts[j+1] - ts[j])
   end
-  layers = [k == 1 ? Rect2f(-half + j - 1, -half, 1, n) : Rect2f(-half, -half + j - 1, n, 1) for j in 1:n]
   axis = k == 1 ? "x" : "y"
   len = round(1 / abs(d[k]); digits=2)
-  (; layers, layer_pieces, layer_inside, pixel_pieces,
-   layer_title="per layer: $len each (principal axis $axis, $(round(Int, rad2deg(acos(abs(d[k])))))° to it)",
-   pixel_title="per pixel: from $(round(minimum(lengths); digits=2)) to $(round(maximum(lengths); digits=2))",
-   ray_title="ray at $(round(Int, rad2deg(theta)))°")
+  ray = "ray at $(round(Int, rad2deg(theta)))°"
+  (; k, layer_pieces, layer_inside, pixel_pieces,
+   layer_info="$ray: principal axis $axis, $(round(Int, rad2deg(acos(abs(d[k])))))° to it, $len per layer",
+   pixel_info="$ray: from $(round(minimum(lengths); digits=2)) to $(round(maximum(lengths); digits=2)) per pixel")
 end
 
-# Draws one panel: the layers (shaded alternately), the pixel grid, and the pieces in alternating
-# colors; parts of pieces outside the image dashed.
-function layer_panel!(ax, scene, n, pieces, inside_pieces)
+# Draws one panel: the layers along x and along y (shaded alternately, one set visible), the pixel
+# grid, the pieces in alternating colors (parts outside the image dashed) and a text line inside the
+# axis. Only data and visibility change with the slider, not the layout, which keeps the recorded
+# states of the static page light.
+function layer_panel!(ax, scene, n, pieces, inside_pieces, info)
+  half = n / 2
   colors = [isodd(j) ? (:steelblue, 0.10) : (:steelblue, 0.25) for j in 1:n]
-  poly!(ax, map(s -> s.layers, scene); color=colors, strokecolor=:steelblue, strokewidth=1.5)
-  for w in -n/2:n/2
-    lines!(ax, [w, w], [-n / 2, n / 2]; color=:gray70, linewidth=0.5)
-    lines!(ax, [-n / 2, n / 2], [w, w]; color=:gray70, linewidth=0.5)
-  end
+  along_x = map(s -> s.k == 1, scene)
+  poly!(ax, [Rect2f(-half + j - 1, -half, 1, n) for j in 1:n]; color=colors, strokecolor=:steelblue,
+        strokewidth=1.5, visible=along_x)
+  poly!(ax, [Rect2f(-half, -half + j - 1, n, 1) for j in 1:n]; color=colors, strokecolor=:steelblue,
+        strokewidth=1.5, visible=map(!, along_x))
+  grid = [w for v in -half:half for w in (Point2f(v, -half) => Point2f(v, half), Point2f(-half, v) => Point2f(half, v))]
+  linesegments!(ax, grid; color=:gray70, linewidth=0.5)
   linesegments!(ax, map(pieces, scene); color=:gray40, linestyle=:dash, linewidth=1)
   linesegments!(ax, map(inside_pieces, scene); color=map(s -> [isodd(j) ? :darkorange : :black
                                                                 for j in 1:length(inside_pieces(s))], scene), linewidth=3)
+  text!(ax, -half, half + 0.15; text=map(info, scene), align=(:left, :bottom), fontsize=13)
 end
 
-# The interactive figure: the slider turns the ray in steps of 5° from 0° to 175°. Left the pieces
-# per layer, right the pieces per pixel, of the same ray.
-function principal_axis_app(n=8; nsweep=36)
+function layer_figure(scene, n)
+  fig = Figure(size=(1000, 540))
+  lim = ((-n / 2 - 0.7, n / 2 + 0.7), (-n / 2 - 0.7, n / 2 + 1.2))
+  ax1 = Axis(fig[1, 1]; aspect=DataAspect(), limits=lim, xlabel="x", ylabel="y", title="pieces per layer")
+  ax2 = Axis(fig[1, 2]; aspect=DataAspect(), limits=lim, xlabel="x", ylabel="y", title="pieces per pixel")
+  layer_panel!(ax1, scene, n, s -> s.layer_pieces, s -> s.layer_inside, s -> s.layer_info)
+  layer_panel!(ax2, scene, n, s -> s.layer_pieces, s -> s.pixel_pieces, s -> s.pixel_info)
+  fig
+end
+
+# The interactive figure: the slider turns the ray in steps of 9° from 0° to 171° (through 45° and
+# 135°). Left the pieces per layer, right the pieces per pixel, of the same ray.
+function principal_axis_app(n=8; nsweep=20)
   App() do session
     k = Bonito.Slider(1:nsweep)
     scene = map(i -> layer_scene(pi * (i - 1) / nsweep, n), k.value)
-    fig = Figure(size=(1000, 560))
-    lim = ((-n / 2 - 0.7, n / 2 + 0.7), (-n / 2 - 0.7, n / 2 + 0.7))
-    ax1 = Axis(fig[1, 1]; aspect=DataAspect(), limits=lim, xlabel="x", ylabel="y",
-               title=map(s -> s.layer_title, scene), titlesize=14)
-    ax2 = Axis(fig[1, 2]; aspect=DataAspect(), limits=lim, xlabel="x", ylabel="y",
-               title=map(s -> s.pixel_title, scene), titlesize=14)
-    Label(fig[0, 1:2], map(s -> s.ray_title, scene); fontsize=16, font=:bold)
-    layer_panel!(ax1, scene, n, s -> s.layer_pieces, s -> s.layer_inside)
-    layer_panel!(ax2, scene, n, s -> s.layer_pieces, s -> s.pixel_pieces)
+    fig = layer_figure(scene, n)
     Bonito.record_states(session, DOM.div(DOM.div("ray ", k), fig))
   end
 end
 
 # the same as a static figure, for one angle (to check the figure without building the docs)
-function principal_axis_figure(theta, n=8)
-  scene = Observable(layer_scene(theta, n))
-  fig = Figure(size=(1000, 560))
-  ax1 = Axis(fig[1, 1]; aspect=DataAspect(), title=scene[].layer_title, titlesize=14)
-  ax2 = Axis(fig[1, 2]; aspect=DataAspect(), title=scene[].pixel_title, titlesize=14)
-  Label(fig[0, 1:2], scene[].ray_title; fontsize=16, font=:bold)
-  layer_panel!(ax1, scene, n, s -> s.layer_pieces, s -> s.layer_inside)
-  layer_panel!(ax2, scene, n, s -> s.layer_pieces, s -> s.pixel_pieces)
-  fig
-end
+principal_axis_figure(theta, n=8) = layer_figure(Observable(layer_scene(theta, n)), n)

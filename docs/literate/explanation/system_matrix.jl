@@ -100,7 +100,7 @@ bonito_page("system_matrix") #hide
 # pieces between the layer planes alternate in color; they all have the length per layer. Right,
 # the pieces per pixel, between all pixel boundaries of both axes, as Siddon's method uses them;
 # their lengths vary. Dashed: parts of the ray outside the image. The slider turns the ray in steps
-# of 5°: at 45° and at 135° the principal axis changes, and there the length per layer is largest,
+# of 9°: at 45° and at 135° the principal axis changes, and there the length per layer is largest,
 # ``\sqrt{2}``.
 
 principal_axis_app() #hide

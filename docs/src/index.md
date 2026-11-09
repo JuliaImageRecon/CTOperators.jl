@@ -50,7 +50,8 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   [sparse views and limited angles](@ref "Sparse Views and Limited Angles") and
   [tomosynthesis](@ref "Tomosynthesis").
 - The how-to guides show how to [set up a geometry](@ref "Set Up a Geometry"), including an object
-  that moves during the scan, how to [run on a GPU](@ref "Run on a GPU"), how to build
+  that moves during the scan, how to [run on a GPU](@ref "Run on a GPU") and
+  [choose the precision](@ref "Choose the Precision"), how to build
   [ordered-subset methods](@ref "Ordered Subsets and Normalization"), how to
   [use masks](@ref "Use Masks") for the image and the rays, how to
   [use several rays per detector cell](@ref "Use Several Rays per Cell"), how to
