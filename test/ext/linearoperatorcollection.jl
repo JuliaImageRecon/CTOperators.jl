@@ -32,6 +32,13 @@
       @test isapprox(Array(Np * x), Array(vec(adjoint(op) * (w .^ 2 .* vec(op * x)))); rtol=sqrt(eps(T)))
     end
   end
+  # the voxel-driven projector has no fused normal operator (a thread owns a voxel, not a data
+  # element): the generic one, with the same result
+  vd = VoxelDrivenProjector(image, g; eltype=Float64, raymask)
+  x, w = rand(prod(image.dims)), rand(prod(datasize(g)))
+  Nv = normalOperator(vd, w)
+  @test !(Nv isa ext.FusedNormalOp)
+  @test isapprox(Nv * x, vec(adjoint(vd) * (w .* vec(vd * x))); rtol=1e-10)
   # weights as an operator other than a WeightingOp: the generic normal operator
   op = SiddonProjector(image, g)
   W = opEye(Float32, prod(datasize(g)); S=Vector{Float32})

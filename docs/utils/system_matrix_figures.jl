@@ -64,26 +64,29 @@ function layer_panel!(ax, scene, n, pieces, inside_pieces, info)
   text!(ax, -half, half + 0.15; text=map(info, scene), align=(:left, :bottom), fontsize=13)
 end
 
-function layer_figure(scene, n)
-  fig = Figure(size=(1000, 540))
+# the pieces per layer, and with `pixels=true` next to them the pieces per pixel of the same ray
+function layer_figure(scene, n; pixels=true)
+  fig = Figure(size=pixels ? (1000, 540) : (540, 540))
   lim = ((-n / 2 - 0.7, n / 2 + 0.7), (-n / 2 - 0.7, n / 2 + 1.2))
   ax1 = Axis(fig[1, 1]; aspect=DataAspect(), limits=lim, xlabel="x", ylabel="y", title="pieces per layer")
-  ax2 = Axis(fig[1, 2]; aspect=DataAspect(), limits=lim, xlabel="x", ylabel="y", title="pieces per pixel")
   layer_panel!(ax1, scene, n, s -> s.layer_pieces, s -> s.layer_inside, s -> s.layer_info)
-  layer_panel!(ax2, scene, n, s -> s.layer_pieces, s -> s.pixel_pieces, s -> s.pixel_info)
+  if pixels
+    ax2 = Axis(fig[1, 2]; aspect=DataAspect(), limits=lim, xlabel="x", ylabel="y", title="pieces per pixel")
+    layer_panel!(ax2, scene, n, s -> s.layer_pieces, s -> s.pixel_pieces, s -> s.pixel_info)
+  end
   fig
 end
 
 # The interactive figure: the slider turns the ray in steps of 9° from 0° to 171° (through 45° and
-# 135°). Left the pieces per layer, right the pieces per pixel, of the same ray.
+# 135°), the pieces per layer only (one panel keeps the recorded states of the page light).
 function principal_axis_app(n=8; nsweep=20)
   App() do session
     k = Bonito.Slider(1:nsweep)
     scene = map(i -> layer_scene(pi * (i - 1) / nsweep, n), k.value)
-    fig = layer_figure(scene, n)
+    fig = layer_figure(scene, n; pixels=false)
     Bonito.record_states(session, DOM.div(DOM.div("ray ", k), fig))
   end
 end
 
-# the same as a static figure, for one angle (to check the figure without building the docs)
+# a static figure for one angle: the pieces per layer next to the pieces per pixel of the same ray
 principal_axis_figure(theta, n=8) = layer_figure(Observable(layer_scene(theta, n)), n)

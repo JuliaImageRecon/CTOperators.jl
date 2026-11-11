@@ -20,6 +20,9 @@ projection is the exact adjoint of its forward projection.
   interpolates linearly between voxel centers.
 - **A distance-driven projector** (De Man & Basu), which averages the image over the area each
   detector cell sees, for detector geometries.
+- **A voxel-driven projector**, which projects each voxel center onto the detector and interpolates
+  between the cells, for detector geometries: its back projection writes each voxel once, its
+  forward projection shows a pattern when the cells are smaller than the voxels.
 - **Generic geometries**: arbitrary rays given by start and end points, and cone-beam (flat or
   curved detector) and parallel-beam scanners described view by view, with any source trajectory
   (circular, helical, ...), including objects that move during the scan. Geometries of

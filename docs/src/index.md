@@ -31,6 +31,10 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   [Joseph's Method](@ref).
 - **A distance-driven projector** (De Man & Basu), which averages the image over the area each
   detector cell sees, for detector geometries; see [Distance-Driven Method](@ref).
+- **A voxel-driven projector**, which projects each voxel center onto the detector and interpolates
+  between the cells, for detector geometries: its back projection writes each voxel once, its
+  forward projection shows a pattern when the cells are smaller than the voxels; see
+  [Voxel-Driven Method](@ref).
 - **Generic geometries**: arbitrary rays given by start and end points, and cone-beam (flat or
   curved detector) and parallel-beam scanners described view by view, with any source trajectory
   (circular, helical, ...), including objects that move during the scan. Geometries of
@@ -61,8 +65,8 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
 - The explanation pages introduce [the parameters of a scan](@ref "Parameters of a Scan") step by step,
   describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
   what every projector computes (the [system matrix](@ref "System Matrix")), the projection methods
-  ([Siddon's Method](@ref), [Joseph's Method](@ref), [several rays per cell](@ref "Several Rays per Cell")
-  and the [Distance-Driven Method](@ref)), how they
+  ([Siddon's Method](@ref), [Joseph's Method](@ref), [several rays per cell](@ref "Several Rays per Cell"),
+  the [Distance-Driven Method](@ref) and the [Voxel-Driven Method](@ref)), how they
   [compare](@ref "Comparing Projectors"), and
   [workgroups and ray order on GPUs](@ref "Workgroups and Ray Order on GPUs").
 - The reference lists all types and functions by domain: [Images](api/images.md), [Projection Geometries](api/geometries.md), [Operators](api/operators.md), [Projectors](api/projectors.md) and, for implementers, [Internals](api/internals.md).

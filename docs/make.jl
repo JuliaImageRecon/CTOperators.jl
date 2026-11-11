@@ -70,6 +70,7 @@ makedocs(;
         "Joseph's Method" => "generated/explanation/joseph.md",
         "Several Rays per Cell" => "generated/explanation/multiray.md",
         "Distance-Driven Method" => "generated/explanation/distancedriven.md",
+        "Voxel-Driven Method" => "generated/explanation/voxeldriven.md",
         "Comparing Projectors" => "generated/explanation/comparing.md",
       ],
       "Operators" => [
