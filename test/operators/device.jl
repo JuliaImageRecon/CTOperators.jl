@@ -8,7 +8,7 @@
   using LinearAlgebra, Adapt
   using CTOperators: KA, storage_array
 
-  const PROJECTORS = (SiddonProjector, JosephProjector, DistanceDrivenProjector)
+  const PROJECTORS = (SiddonProjector, JosephProjector, DistanceDrivenProjector, VoxelDrivenProjector)
 
   device_problem() = (ImageGeom(; dims=(8, 7, 6), deltas=(1.0, 1.25, 0.8), offsets=(0.37, 0.11, -0.23)),
                       helical_cone_beam(; angles=range(0, 3pi, 7), pitch=4, dso=30, dsd=60, nu=13, nv=9,

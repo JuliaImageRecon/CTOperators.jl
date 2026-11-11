@@ -84,5 +84,26 @@ end
   s, b
 end
 
+@inline function project_point(g::ArcConeBeam, p, k)
+  s = column(g.source, k)
+  w = column(g.center, k) - s
+  u = column(g.u, k)
+  v = column(g.v, k)
+  T = eltype(s)
+  du, dv = norm(u), norm(v)
+  # the frame of the cylinder: radial direction of the center, the row tangent, the axis
+  ev = v / dv
+  hv = dot(w, ev)
+  radial = w - hv * ev
+  r = norm(radial)
+  d = p - s
+  x, y, z = dot(d, radial) / r, dot(d, u) / du, dot(d, ev)
+  rho = sqrt(x * x + y * y)                   # distance of p from the cylinder axis
+  t = r / rho                                 # R / r: the detector point is s + t d
+  # (R/r)^2 / (a cos phi) with a = du dv and cos phi = rho / |d| (the normal of the cylinder is radial)
+  DetectorHit(atan(y, x) * r / du + T(g.nu + 1) / 2, (t * z - hv) / dv + T(g.nv + 1) / 2,
+              t * t * norm(d) / (rho * du * dv), t, dv, x > 0)
+end
+
 Adapt.adapt_structure(to, g::ArcConeBeam) =
   ArcConeBeam(adapt(to, g.source), adapt(to, g.center), adapt(to, g.u), adapt(to, g.v); nu=g.nu, nv=g.nv)

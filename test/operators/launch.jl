@@ -37,7 +37,7 @@ end
 
 # Forward and back projection with tiles and workgroup sizes equal the defaults; the back
 # projection only up to rounding (atomic additions in another order)
-@testitem "launch: results independent of the configuration" tags = [:operators] begin
+@testitem "launch: results independent of the configuration" tags = [:operators] setup = [Projections] begin
   using Adapt
   image = ImageGeom(; dims=(8, 7, 6), deltas=(1.0, 1.25, 0.8))
   g = helical_cone_beam(; angles=range(0, 3pi, 5), pitch=4, dso=30, dsd=60, nu=13, nv=9, du=1.17, dv=0.93)
@@ -45,14 +45,14 @@ end
   x, y = rand(8, 7, 6), rand(13, 9, 5)
   configs = (LaunchConfig(; tile=(8, 8)), LaunchConfig(; workgroupsize=64, tile=(8, 8)),
              LaunchConfig(; workgroupsize=32, tile=(4, 2)), LaunchConfig(; workgroupsize=7))
-  # distance driven needs detector cells: no ray lists
+  # distance driven and voxel driven need detector cells: no ray lists
   for (P, geom) in ((SiddonProjector, g), (SiddonProjector, rays), (JosephProjector, g), (JosephProjector, rays),
-                    (DistanceDrivenProjector, g))
+                    (DistanceDrivenProjector, g), (VoxelDrivenProjector, g))
     ref = P(image, geom; eltype=Float64)
     yr = reshape(y, datasize(ref))
     for launch in configs
       op = P(image, geom; eltype=Float64, launch)
-      @test op * x == ref * x
+      @test same_projection(P, op * x, ref * x)
       @test isapprox(adjoint(op) * yr, adjoint(ref) * yr; rtol=1e-12)
     end
   end
