@@ -41,3 +41,15 @@ Modules = [CTOperators]
 Pages = ["operators/voxeldriven/voxeldriven.jl", "operators/voxeldriven/kernels.jl"]
 Private = false
 ```
+
+## FDK
+
+Reconstruction in one pass for circular scans, with the voxel-driven back projection (see
+[Reconstruct with FDK](@ref)), and the redundancy weighting: how lines measured more than once are
+weighted.
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["fdk/fdk.jl", "fdk/redundancy.jl", "fdk/scan.jl"]
+Private = false
+```

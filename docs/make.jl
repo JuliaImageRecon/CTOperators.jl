@@ -45,6 +45,7 @@ makedocs(;
         "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
       ],
       "Reconstruction" => [
+        "Reconstruct with FDK" => "generated/howto/fdk.md",
         "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
         "Use Masks" => "generated/howto/masks.md",
         "Use Several Rays per Cell" => "generated/howto/multiray.md",
@@ -77,6 +78,9 @@ makedocs(;
         "Masks" => "generated/explanation/masks.md",
         "Normal Operator" => "generated/explanation/normal.md",
         "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
+      ],
+      "Reconstruction" => [
+        "Filtered Back Projection" => "generated/explanation/fbp.md",
       ],
     ],
     "Reference" => [
