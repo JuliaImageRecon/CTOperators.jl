@@ -20,7 +20,7 @@ export datasize, nrays, ray, raytype, nviews, detectorsize, subset, projection_g
 export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, DistanceDrivenProjector, VoxelDrivenProjector, LaunchConfig
 export AbstractVoxelScale, LineIntegralScale, UnitScale
 export geometry, image_geometry, imagesize, rowsums, colsums
-export FDK, AbstractRedundancy, FullScan, ArrayRedundancy
+export FDK, AbstractRedundancy, FullScan, ParkerWeights, ArrayRedundancy
 
 # not exported, but part of the interface: for projectors, geometries and strategies of other packages
 public forward!, backward!, similar_projector, storage_array, device_geometry

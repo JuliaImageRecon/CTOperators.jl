@@ -130,6 +130,40 @@ end
   @test FDK(image, g; eltype=Float64).redundancy isa CTOperators.UniformRedundancy
 end
 
+# Parker weights: the two measurements of every line add up to 1 (Wesarg et al. 2002, Eq. 11, the
+# exact condition: no tolerance beyond rounding), the fan angle of a cell, the view weights (the angle
+# steps, the ends half), and scans that are too short or longer than a turn.
+@testitem "FDK: Parker weights" tags = [:fdk] begin
+  using CTOperators: parker_weight, redundancy_weights, circular_scan, fan_angle
+  delta = 0.4
+  function line_total(beta, gamma)
+    total = parker_weight(beta, gamma, delta)
+    for other in (beta + pi + 2gamma, beta - pi + 2gamma)
+      0 <= other <= pi + 2delta && (total += parker_weight(other, -gamma, delta))
+    end
+    total
+  end
+  @test maximum(abs(line_total(beta, gamma) - 1) for beta in range(0, pi + 2delta, 301), gamma in range(-0.35, 0.35, 71)) < 1e-12
+  @test parker_weight(0.0, 0.1, delta) == 0 && parker_weight(pi + 2delta, -0.1, delta) == 0
+  # the fan angle of the cells of a flat detector, in either direction of rotation
+  nu, du, dsd = 16, 1.5, 150.0
+  fan = atan((nu - 1) / 2 * du / dsd)
+  for direction in (1, -1)
+    g = circular_cone_beam(; angles=0.2 .+ direction .* range(0, pi + 2fan, 40), dso=100, dsd, nu, nv=4, du)
+    w, views = redundancy_weights(ParkerWeights(), circular_scan(g), g)
+    @test isapprox(sum(views), pi + 2fan) && isapprox(views[1], views[2] / 2)
+    gammas = [direction * w.orientation * fan_angle(g, w, iu, 1, 1) for iu in 1:nu]
+    @test isapprox(abs.(gammas), abs.(atan.(((1:nu) .- (nu + 1) / 2) .* du ./ dsd)))
+    @test issorted(gammas) || issorted(gammas; rev=true)
+    @test isapprox(w.delta, fan)
+  end
+  cone(angles) = circular_cone_beam(; angles, dso=100, dsd, nu, nv=4, du)
+  @test_throws ArgumentError redundancy_weights(ParkerWeights(), circular_scan(cone(range(0, pi + 2fan - 0.05, 40))),
+                                                cone(range(0, pi + 2fan - 0.05, 40)))
+  @test_throws ArgumentError FDK(ImageGeom(; dims=(8, 8, 4)), cone(range(0, 2.2pi, 80)); redundancy=ParkerWeights())
+  @test_throws ArgumentError FDK(ImageGeom(; dims=(8, 8, 4)), cone(range(0, pi + 2fan, 40)))   # FullScan
+end
+
 # Weights given as arrays: the full scan as arrays reconstructs as FullScan(), dimensions of length
 # 1 stand for all cells or views along them.
 @testitem "FDK: array redundancy" tags = [:fdk] begin
@@ -208,6 +242,32 @@ end
   end
 end
 
+# Short scans with Parker weights, the ellipsoid as in "FDK: circular cone beam". Wesarg et al. (2002)
+# show that the weights give the exact image from continuous data; what remains is the
+# discretization: central slices measured 0.997 to 0.999 (max deviation 0.0034 cone, 0.007
+# parallel), the volume as for the full scans (flat and parallel within 0.15 %, arc -0.7 %).
+@testitem "FDK: short scans" tags = [:fdk] setup = [Rays] begin
+  using ImagePhantoms
+  using ImageGeoms: axis
+  image = ImageGeom(; dims=(40, 40, 24), deltas=(1.0, 1.0, 1.0))
+  ob = [ellipsoid((0, 0, 0), (12, 12, 7), (0, 0, 0), 1.0)]
+  exact = 4 / 3 * pi * 12 * 12 * 7
+  inner = [hypot(a, b) < 9 for a in axis(image, 1), b in axis(image, 2)]
+  fan = Dict(:flat => atan(47.5 * 1.5 / 240), :arc => 47.5 * 1.5 / 240)   # half the fan angle
+  cone(detector, start, direction, extra) =
+    circular_cone_beam(; angles=start .+ direction .* range(0, pi + 2fan[detector] + extra, 130), dso=120, dsd=240,
+                       nu=96, nv=48, du=1.5, detector)
+  for (g, volume_bound) in ((cone(:flat, 0.0, 1, 0.0), 0.005), (cone(:arc, 0.0, 1, 0.0), 0.01),
+                            (cone(:flat, 1.0, -1, 0.0), 0.005), (cone(:flat, 0.3, 1, 0.5), 0.005),
+                            (parallel_beam(; angles=range(0, 1.3pi, 160), nu=64, nv=32, du=1.0), 0.005))
+    y = reshape([radon(ob)(line_coordinates(ray(g, i)...)...) for i in 1:nrays(g)], datasize(g))
+    x = CTOperators.fdk(image, g, y; eltype=Float64, window=:ramp, redundancy=ParkerWeights())
+    central = x[:, :, 12][inner]
+    @test abs(sum(central) / count(inner) - 1) < 0.005 && maximum(abs.(central .- 1)) < 0.01
+    @test abs(sum(x) / exact - 1) < volume_bound
+  end
+end
+
 # Sinograms.jl's FDK (MIT) as reference: on its own test case both reconstruct with errors of the
 # same size; the reconstructions differ by about as much as each differs from the phantom at its edge.
 @testitem "FDK: Sinograms" tags = [:fdk, :sinograms] begin
@@ -257,6 +317,12 @@ end
       @test CTOperators.KA.get_backend(plan.padded) == CTOperators.KA.get_backend(adapt(arrayType, y))
       @test norm(Array(plan * adapt(arrayType, y)) - reference) <= 1e-5 * norm(reference)
       @test norm(adapt(Array, plan) * y - reference) <= 1e-5 * norm(reference)
+      # Parker weights on the device (the cone beams: one turn is a valid short scan too)
+      if !(g isa ParallelBeam)
+        parker = CTOperators.fdk(image, g, y; redundancy=ParkerWeights())
+        x = Array(CTOperators.fdk(image, g, adapt(arrayType, y); storage=arrayType, redundancy=ParkerWeights()))
+        @test norm(x - parker) <= 1e-5 * norm(parker)
+      end
     end
   end
 end

@@ -39,29 +39,31 @@ Reconstruction with the method of Feldkamp, Davis & Kress (1984) for a circular 
 ([`ConeBeam`](@ref) or [`ArcConeBeam`](@ref) with the source on a circle about the rotation axis),
 and filtered back projection for a [`ParallelBeam`](@ref): the data are weighted, the detector rows
 filtered with the ramp filter and the result back projected with the voxel-driven method (see
-[`VoxelDrivenProjector`](@ref)). The plan holds the filter, the FFT plans and the buffers;
+[`VoxelDrivenProjector`](@ref); [Filtered Back Projection](@ref) explains the steps). The plan holds the filter, the FFT plans and the buffers;
 `plan * y` and `mul!(x, plan, y)` reconstruct the image from the line integrals `y` (of the data
-size of `geometry`). `CTOperators.fdk(image, geometry, y)` does it in one call (not exported; with
-Sinograms.jl loaded, `fdk` of Sinograms.jl also takes an `FDK` plan or a geometry of this package).
+size of `geometry`). [`CTOperators.fdk`](@ref)`(image, geometry, y)` does it in one call.
 
 The geometry must be a circular scan: the rotation axis runs along the detector columns (`v`) in all
 views, the rows (`u`) are perpendicular to it, the sources lie on a circle about the axis in a plane
 perpendicular to it, a flat detector is perpendicular to the central ray (the ray from the source to
-the axis), and the views are in order along the circle. How much of the circle the views must cover
-depends on the redundancy weighting: with [`FullScan`](@ref), the default, the whole circle
-(parallel beams: half or the whole circle), with angle steps that may differ between views. Short
-scans (they need Parker weights), helical scans and detectors that cover only part of the field of
-view are not supported; geometries that are not such a scan give an `ArgumentError`. Sinograms.jl
-geometries are converted with [`projection_geometry`](@ref).
+the axis), the cells have the same width in all views, and the views are in order along the
+circle; geometries that break these give an `ArgumentError` (helical scans, for example). How much of
+the circle the views must cover depends on the redundancy weighting: with [`FullScan`](@ref), the
+default, the whole circle (parallel beams: half or the whole circle), with [`ParkerWeights`](@ref)
+half the circle plus the fan angle; the angle steps may differ between views. Whether the detector
+covers the object in every view is not checked: data of an object that reaches beyond the rays of
+the detector give a wrong image. Sinograms.jl geometries are converted with
+[`projection_geometry`](@ref).
 
 Keywords:
 
 * `redundancy`: how lines measured more than once are weighted, an [`AbstractRedundancy`](@ref):
-  [`FullScan`](@ref) (the default) or a weighting of your own.
+  [`FullScan`](@ref) (the default), [`ParkerWeights`](@ref) (short scans), [`ArrayRedundancy`](@ref)
+  (weights as arrays) or a weighting of your own.
 * `window`: the window of the ramp filter, `:hann` (the default), `:ramp` (none), `:hamming`,
   `:cosine`, `:shepplogan`, or a function `w(f)` of the frequency `f` as a fraction of the cutoff.
-  A window lowers the noise and the resolution of the image; the default trades some resolution
-  for less noise, `:ramp` keeps the full resolution (see [Reconstruct with FDK](@ref)).
+  A window lowers the ramp at high frequencies: the image is smoother, with less resolution; on
+  data free of noise the plain ramp is closest to the object (see [Reconstruct with FDK](@ref)).
 * `cutoff`: the highest frequency passed, a fraction of the Nyquist frequency of the cells (`0 <
   cutoff ≤ 1`).
 * `eltype`, `storage`, `launch`: as for the projectors (the element type of the computation, the
@@ -119,12 +121,13 @@ function FDK(image::ImageGeom, geometry::AbstractDetectorGeometry; redundancy::A
   npad = padded_length(nu)
   tap = geometry isa ArcConeBeam ? (n -> ramp_tap(n, du, sum(scan.dsd) / length(scan.dsd))) : (n -> ramp_tap(n, du))
   response = filter_response(tap, nu, du, npad, window, float(cutoff))
-  weight, views = redundancy_weights(redundancy, scan, geometry)
+  # the geometry of the plan: element type T, on the device
+  g = device_geometry(geometry, T, storage)
+  weight, views = redundancy_weights(redundancy, scan, g)
   length(views) == nviews(geometry) ||
     throw(DimensionMismatch("redundancy_weights gave $(length(views)) view weights for $(nviews(geometry)) views"))
   weights = views .* scan.dso ./ scan.dsd
   # on the device
-  g = device_geometry(geometry, T, storage)
   backend = KA.get_backend(storage_array(g))
   device(a) = copyto!(KA.allocate(backend, T, size(a)), T.(a))
   backprojector = voxel_driven_projector(image, g, launch, nothing, FDKScale(device(weights)))
@@ -148,8 +151,14 @@ Adapt.adapt_structure(to, plan::FDK) =
   fdk_plan(adapt(to, plan.backprojector), adapt(to, plan.central), adapt(to, plan.redundancy), adapt(to, plan.response),
            size(plan.padded, 1))
 
-# The FDK reconstruction of the line integrals `y` in one call (private: Sinograms.jl exports a
-# function `fdk` of its own; the Sinograms extension adds methods to it for the types of this package).
+"""
+    CTOperators.fdk(image::ImageGeom, geometry, y; kwargs...)
+
+The [`FDK`](@ref) reconstruction of the line integrals `y` in one call, `FDK(image, geometry;
+kwargs...) * y`. Public but not exported: Sinograms.jl exports a function `fdk` of its own; with
+Sinograms.jl loaded, its `fdk` also takes an `FDK` plan, `fdk(plan, y)`, or the image and a
+geometry of this package, `fdk(image, geometry, y)`.
+"""
 fdk(image::ImageGeom, geometry, y; kwargs...) = FDK(image, geometry; kwargs...) * y
 
 Base.eltype(::FDK{T}) where {T} = T
