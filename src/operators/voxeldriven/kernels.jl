@@ -125,7 +125,7 @@ function launch_voxels!(kernel, op::VoxelDrivenProjector, out, in)
   n = Int(box_length(box))
   n == 0 && return out
   backend = KA.get_backend(op)
-  wg = isnothing(op.launch) ? (backend isa KA.CPU ? nothing : 64) : op.launch.workgroupsize
+  wg = launch_config(op.launch, geometry(op), backend).workgroupsize
   k = isnothing(wg) ? kernel(backend) : kernel(backend, wg)
   k(out, in, op.grid, geometry(op), box, ray_mask(op), op.scale; ndrange=n)
   out

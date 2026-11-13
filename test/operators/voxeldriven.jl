@@ -63,7 +63,9 @@ end
     yv = VoxelDrivenProjector(image, g; eltype=Float64) * x
     yd = DistanceDrivenProjector(image, g; eltype=Float64) * x
     @test isapprox(sum(yv), sum(yd); rtol=2e-3)
-    # measured: 0.027 (cells of one voxel at the center), 0.23 (half a voxel)
+    # The detector models differ (a point interpolated between cells, a box averaged over a cell):
+    # no bound from theory; the thresholds keep the measured values, 0.027 (cells of one voxel at
+    # the center) and 0.23 (half a voxel), on their side.
     du == 2.0 ? (@test rel(yv, yd) < 0.04) : (@test rel(yv, yd) > 0.15)
   end
 end
@@ -80,8 +82,59 @@ end
     yv = VoxelDrivenProjector(image, g; eltype=Float64) * x
     yd = DistanceDrivenProjector(image, g; eltype=Float64) * x
     @test isapprox(sum(yv), sum(yd); rtol=1e-5)
-    @test norm(yv - yd) / norm(yd) < 0.03   # measured 0.008 (fan), 0.016 (parallel)
+    # the detector models differ (see the ball): measured 0.008 (fan), 0.016 (parallel)
+    @test norm(yv - yd) / norm(yd) < 0.03
   end
+end
+
+# A slab (2D image, or 3D with one voxel along z) and a detector with several rows: the rows whose
+# rays pass through the slab get its in-plane line integrals, the others 0, as for the
+# distance-driven projector, which uses the same rule (row sums equal; the detector models differ
+# along u as above, measured 0.010 to 0.015).
+@testitem "Voxel driven: slab with several rows" tags = [:voxeldriven] begin
+  using ImagePhantoms, LinearAlgebra
+  using ImageGeoms: axis
+  for image in (ImageGeom(; dims=(64, 64), deltas=(1.0, 1.0)), ImageGeom(; dims=(64, 64, 1), deltas=(1.0, 1.0, 2.0)))
+    x = reshape(phantom(axis(image, 1), axis(image, 2), [ellipse((3, -2), (20, 14), 0.3, 1.0)]), image.dims)
+    for detector in (:flat, :arc)
+      g = circular_cone_beam(; angles=range(0, 2pi, 37)[1:36], dso=120, dsd=240, nu=64, nv=9, du=2.0, dv=1.0, detector)
+      yv = VoxelDrivenProjector(image, g; eltype=Float64) * x
+      yd = DistanceDrivenProjector(image, g; eltype=Float64) * x
+      rows_v, rows_d = vec(sum(yv; dims=(1, 3))), vec(sum(yd; dims=(1, 3)))
+      @test count(>(0), rows_v) == (length(image.dims) == 2 ? 3 : 5) && iszero(rows_v[1:2]) && iszero(rows_v[8:9])
+      @test isapprox(rows_v, rows_d; rtol=1e-3)
+      @test norm(yv - yd) / norm(yd) < 0.03
+    end
+  end
+end
+
+# Scales of one's own: an isbits factor, and one weight per view in an array, which subset and adapt
+# carry along.
+@testitem "Voxel driven: custom scales" tags = [:voxeldriven] begin
+  using Adapt
+  using CTOperators: voxel_scale, VoxelGrid
+  struct Doubled <: AbstractVoxelScale end
+  CTOperators.voxel_scale(::Doubled, geometry, k, grid::VoxelGrid{T}, hit) where {T} =
+    2 * voxel_scale(LineIntegralScale(), geometry, k, grid, hit)
+  struct PerViewScale{V} <: AbstractVoxelScale
+    weights::V
+  end
+  Adapt.@adapt_structure PerViewScale
+  CTOperators.voxel_scale(s::PerViewScale, geometry, k, grid::VoxelGrid{T}, hit) where {T} = T(s.weights[k])
+  CTOperators.subset(s::PerViewScale, views) = PerViewScale(s.weights[views])
+
+  image = ImageGeom(; dims=(8, 8, 6))
+  g = circular_cone_beam(; angles=range(0, 2pi, 9)[1:8], dso=25, dsd=50, nu=12, nv=9, du=1.0)
+  x = rand(8, 8, 6)
+  @test isapprox(VoxelDrivenProjector(image, g; eltype=Float64, scale=Doubled()) * x,
+                 2 * (VoxelDrivenProjector(image, g; eltype=Float64) * x))
+  w = collect(1.0:8.0)
+  op = VoxelDrivenProjector(image, g; eltype=Float64, scale=PerViewScale(w))
+  unit = VoxelDrivenProjector(image, g; eltype=Float64, scale=UnitScale())
+  @test isapprox(op * x, (unit * x) .* reshape(w, 1, 1, 8))
+  @test isapprox(subset(op, [2, 5]) * x, (op * x)[:, :, [2, 5]])
+  op32 = adapt(Array{Float32}, op)
+  @test op32.scale.weights isa Vector{Float32} && isapprox(op32 * Float32.(x), op * x; rtol=1e-5)
 end
 
 # UnitScale: the weights are the bilinear weights alone, which sum to 1 per voxel and view inside

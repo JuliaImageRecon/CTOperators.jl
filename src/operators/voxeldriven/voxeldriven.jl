@@ -6,10 +6,15 @@ of voxel `j` in cell `i` is `voxel_scale(scale, geometry, k, grid, hit)` times t
 of cell `i` at the point where voxel `j` projects (`hit`, from
 [`project_point`](@ref CTOperators.project_point)). Subtypes: [`LineIntegralScale`](@ref) (the
 default) and [`UnitScale`](@ref). A new scale is a subtype with a method of
-[`voxel_scale`](@ref CTOperators.voxel_scale); it must be usable inside kernels (an `isbits`
-struct).
+[`voxel_scale`](@ref CTOperators.voxel_scale); it must be usable inside kernels: `isbits`, or with
+arrays and an `Adapt.adapt_structure` method (`adapt` of the projector moves the scale with it). A
+scale that depends on the view `k` needs a method of [`subset`](@ref)`(scale, views)` that returns
+the scale of the views `views`, for [`subset`](@ref) of the projector.
 """
 abstract type AbstractVoxelScale end
+
+# the scale of the views `views`: the same for scales that do not depend on the view
+subset(scale::AbstractVoxelScale, views) = scale
 
 """
     LineIntegralScale()
@@ -161,6 +166,16 @@ similar_projector(op::VoxelDrivenProjector, geometry::AbstractDetectorGeometry; 
 projector_masks(op::VoxelDrivenProjector) = op.masks
 handles_raymask(::VoxelDrivenProjector) = true
 KA.get_backend(op::VoxelDrivenProjector) = op.backend
+
+# as for all projectors, with the scale moved and subset along
+Adapt.adapt_structure(to, op::VoxelDrivenProjector) =
+  voxel_driven_projector(op.image, adapt(to, geometry(op)), op.launch, ray_mask(op), adapt(to, op.scale))
+
+function subset(op::VoxelDrivenProjector, views)
+  rays = ray_mask(op)
+  raymask = isnothing(rays) ? nothing : Array(rays)[:, :, views]
+  voxel_driven_projector(op.image, subset(geometry(op), views), op.launch, raymask, subset(op.scale, views))
+end
 
 function forward!(y, op::VoxelDrivenProjector, x)
   fill!(y, zero(eltype(y)))
