@@ -2,7 +2,7 @@
 # `Pkg.test(test_args=["geometry"])`, single items from VS Code. Items tagged :gpu run on Array here
 # and on JLArrays or a GPU device with `julia test/gpu/run.jl <backend>`.
 #
-# Tags: :image, :geometry, :operators, :siddon, :chainrules, :gpu, :aqua
+# Tags: :image, :geometry, :operators, :siddon, :fdk, :chainrules, :gpu, :aqua
 
 using TestItemRunner
 
