@@ -45,8 +45,8 @@ Private = false
 ## FDK
 
 Reconstruction in one pass for circular scans, with the voxel-driven back projection (see
-[Reconstruct with FDK](@ref)), and the redundancy weighting: how lines measured more than once are
-weighted.
+[Reconstruct with FDK](@ref) and [Filtered Back Projection](@ref)), and the redundancy weighting: how
+lines measured more than once are weighted.
 
 ```@autodocs
 Modules = [CTOperators]
