@@ -62,8 +62,8 @@ Keywords:
   (weights as arrays) or a weighting of your own.
 * `window`: the window of the ramp filter, `:hann` (the default), `:ramp` (none), `:hamming`,
   `:cosine`, `:shepplogan`, or a function `w(f)` of the frequency `f` as a fraction of the cutoff.
-  A window lowers the ramp at high frequencies: the image is smoother, with less resolution; on
-  data free of noise the plain ramp is closest to the object (see [Reconstruct with FDK](@ref)).
+  A window lowers the ramp at high frequencies (see [Reconstruct with FDK](@ref) and [Write FDK
+  Windows and Weights](@ref)).
 * `cutoff`: the highest frequency passed, a fraction of the Nyquist frequency of the cells (`0 <
   cutoff ≤ 1`).
 * `eltype`, `storage`, `launch`: as for the projectors (the element type of the computation, the

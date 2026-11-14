@@ -58,6 +58,7 @@ makedocs(;
       "Custom Components" => [
         "Write a Projector" => "generated/howto/write_projector.md",
         "Write a Sampling Strategy" => "generated/howto/write_sampling.md",
+        "Write FDK Windows and Weights" => "generated/howto/write_fdk.md",
       ],
     ],
     "Explanation" => [

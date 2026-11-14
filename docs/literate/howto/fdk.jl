@@ -56,12 +56,12 @@ nothing #hide
 #
 # ## Windows
 #
-# The ramp filter amplifies high frequencies, and with them noise and the discretization error of
-# the data. A window lowers the ramp towards high frequencies: the keyword `window` takes `:ramp`
+# A window lowers the ramp filter towards high frequencies: the keyword `window` takes `:ramp`
 # (no window), `:hann` (the default), `:hamming`, `:cosine`, `:shepplogan` or a function `w(f)` of
 # the frequency `f` as a fraction of the cutoff (`0 ≤ f ≤ 1`), and `cutoff` the highest frequency
-# passed, as a fraction of the Nyquist frequency of the cells. A profile through the axial slice,
-# along `x`:
+# passed, as a fraction of the Nyquist frequency of the cells ([Write FDK Windows and
+# Weights](@ref) passes windows and weightings of its own). A profile through the axial slice, along
+# `x`:
 
 x_ramp = CTOperators.fdk(image, geometry, y; window=:ramp)
 x_half = CTOperators.fdk(image, geometry, y; window=:hann, cutoff=0.5)
@@ -75,15 +75,12 @@ save("fdk_windows.png", fig) #hide
 nothing #hide
 # ![A profile through the reconstructions with different windows](fdk_windows.png)
 
-# The skull, one voxel thick with the value 2, comes out at about 1.7 with the plain ramp; the Hann
-# window lowers and widens it, and the lower cutoff widens it further. The relative errors of the
-# whole volume:
+# The relative errors of the whole volume:
 
 [(window=name, error=round(norm(x - x_true) / norm(x_true); sigdigits=3))
  for (name, x) in (("ramp", x_ramp), ("Hann", x_fdk), ("Hann, cutoff 0.5", x_half))]
 
-# These data are free of noise, and the plain ramp gives the smallest error here: the windows smooth
-# the sharp edges of the skull. With noisy data, the noise that the ramp amplifies weighs against it.
+# On these data, free of noise, the plain ramp gives the smallest error.
 #
 # ## Short scans
 #
@@ -118,7 +115,6 @@ nothing #hide
 [(scan=name, views=n, error=round(norm(x - x_true) / norm(x_true); sigdigits=3))
  for (name, n, x) in (("short", 121, x_short), ("full", 180, x_fdk))]
 
-# The short scan, with fewer views and most lines measured once, has the somewhat larger error.
 
 # ## Start image for an iterative method
 #
