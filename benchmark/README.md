@@ -238,3 +238,25 @@ detector, 180 views, minimum of 10 runs (also the desktop GPU in use: approximat
 
 The buffer of the separate version holds the projection data (1.4 MiB on the CPU, 11.2 MiB on the
 GPU here).
+
+### FDK against Sinograms.jl
+
+`benchmark/fdk.jl` (own environment `envs/fdk`, run with `julia --project=benchmark/envs/fdk -t
+<threads> benchmark/fdk.jl [rocm]`): one circular cone-beam scan of Sinograms.jl (`CtFanFlat`, 360
+views over one turn, 256 × 128 cells of 2 mm, 1 mm at the axis), a volume of 128³ voxels of 1 mm,
+the 3D Shepp-Logan phantom projected with `JosephProjector`, the plain ramp filter in both.
+Setup: building the plan (`FDK` / `plan_fbp`); reconstruction: `plan * y` / `fdk(plan, y)`;
+minimum of 5 calls (3 with one thread) after a first one; error: relative to the phantom.
+
+Float32, AMD Ryzen 9 9900X (12 cores, 24 threads), Radeon RX 7900 XT (ROCm), Julia 1.13.3,
+CTOperators at cd874a2, Sinograms 0.5.1, 2026-11-13.
+
+| library | setup | reconstruction, 24 threads | reconstruction, 1 thread | error |
+|---|---|---|---|---|
+| CTOperators `FDK` (CPU) | 38 ms | 0.89 s | 9.0 s | 0.099 |
+| Sinograms `fdk` (CPU) | 0.02 ms | 1.00 s | 7.5 s | 0.077 |
+| CTOperators `FDK` (ROCm) | 12 ms | 21 ms | | 0.099 |
+
+The reconstructions differ by 3.5 %. Sinograms.jl divides its filter by sinc² by default
+(`decon1=true`, `src/fbp/filter.jl`); with `plan_fbp(rg, ig; decon1=false)` its error is 0.0993,
+that of CTOperators.

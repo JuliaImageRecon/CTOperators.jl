@@ -1,0 +1,10 @@
+[deps]
+AMDGPU = "21141c5a-9bdb-4563-92ae-f87d6854732e"
+CTOperators = "99c336b8-d208-42d5-a173-9011a20607ec"
+ImageGeoms = "9ee76f2b-840d-4475-b6d6-e485c9297852"
+ImagePhantoms = "71a99df6-f52c-4da1-bd2a-69d6f37f3252"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Sinograms = "02a14def-c6e6-4ab0-b2df-0ab64bc8cdd7"
+
+[sources]
+CTOperators = {path = "../../.."}
