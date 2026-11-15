@@ -181,4 +181,5 @@ launch_workgroupsize(::RayDrivenProjector, layout) = nothing
 launch_workgroupsize(::RayDrivenProjector, layout::NTuple{2,Int}) = prod(layout)
 
 include("voxeldriven/voxeldriven.jl")
+include("sampled.jl")
 include("normal.jl")

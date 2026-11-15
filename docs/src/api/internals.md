@@ -27,7 +27,16 @@ CTOperators.is_masked
 ```@autodocs
 Modules = [CTOperators]
 Pages = ["geometry/geometry.jl", "geometry/raylist.jl", "geometry/conebeam.jl", "geometry/arcconebeam.jl",
-         "geometry/parallelbeam.jl", "geometry/trajectories.jl", "geometry/multiray.jl"]
+         "geometry/parallelbeam.jl", "geometry/trajectories.jl", "geometry/multiray.jl", "geometry/sampling.jl",
+         "geometry/shifted.jl"]
+Public = false
+```
+
+## Sampled operators
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["operators/sampled.jl"]
 Public = false
 ```
 

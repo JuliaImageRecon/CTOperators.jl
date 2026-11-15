@@ -84,6 +84,19 @@ struct Points{K,T} <: AbstractPoints{K}
   offsets::SVector{K,SVector{2,T}}
 end
 
+"""
+    DiskPoints(rings, angles=6)
+
+Points inside the disk of radius 1/2 about the center: `rings` rings of equal area with `angles`
+points each, `rings * angles` points, the same in every cell and view. The point of ring `i` and
+angle `j` sits at radius `sqrt((i - 1/2) / rings) / 2` and angle `2π (j - 1/2) / angles`. For a
+circular focal spot ([`FocalSpot`](@ref)); also a point strategy of [`MultiRay`](@ref).
+"""
+struct DiskPoints{K} <: AbstractPoints{K}
+  rings::Int
+  angles::Int
+end
+
 function check_subcells(su, sv)
   su > 0 && sv > 0 || throw(ArgumentError("numbers of subcells must be positive, got ($su, $sv)"))
 end
@@ -108,6 +121,11 @@ function GaussianPoints(n::Integer, sigma_u::Real, sigma_v::Real=sigma_u; seed::
   sigma_u > 0 && sigma_v > 0 || throw(ArgumentError("standard deviations must be positive, got ($sigma_u, $sigma_v)"))
   T = float(promote_type(typeof(sigma_u), typeof(sigma_v)))
   GaussianPoints{Int(n),T}(sigma_u, sigma_v, UInt32(seed))
+end
+
+function DiskPoints(rings::Integer, angles::Integer=6)
+  rings > 0 && angles > 0 || throw(ArgumentError("numbers of rings and angles must be positive, got ($rings, $angles)"))
+  DiskPoints{Int(rings * angles)}(rings, angles)
 end
 
 function Points(offsets::AbstractMatrix{<:Real})
@@ -166,6 +184,13 @@ end
   r = sqrt(-2 * log(1 - ru))
   s, c = sincos(2 * T(pi) * rv)
   T(p.sigma_u) * r * c, T(p.sigma_v) * r * s
+end
+
+@inline function point_offset(p::DiskPoints, ::Type{T}, iu, iv, view, k) where {T}
+  i, j = div(k - 1, p.angles) + 1, rem(k - 1, p.angles) + 1
+  r = sqrt((T(i) - T(1 // 2)) / T(p.rings)) / 2
+  s, c = sincospi(T(2j - 1) / T(p.angles))
+  r * c, r * s
 end
 
 @inline function point_offset(p::Points, ::Type{T}, iu, iv, view, k) where {T}
@@ -336,7 +361,20 @@ one_layer(image::ImageGeom) = length(image.dims) == 2 || image.dims[3] == 1
 
 check_in_plane(p::Union{RegularPoints,JitteredPoints}) =
   p.sv == 1 || throw(ArgumentError("an image with one layer of voxels needs one row of rays: use $(nameof(typeof(p)))(su, 1)"))
+check_in_plane(::DiskPoints) =
+  throw(ArgumentError("an image with one layer of voxels needs one row of rays, not DiskPoints"))
 check_in_plane(p) = nothing
+
+"""
+    varies_per_cell(points::AbstractPoints) -> Bool
+
+Whether the offsets of `points` depend on the detector cell and the view (`true` for random
+positions). Sampling that runs sequentially, as one projector per offset (see [`sampled`](@ref)),
+needs offsets that do not: it shifts a whole geometry. `true` for custom strategies unless they
+define a method.
+"""
+varies_per_cell(::AbstractPoints) = true
+varies_per_cell(::Union{RegularPoints,Points,DiskPoints}) = false
 
 function Base.show(io::IO, ::MIME"text/plain", g::MultiRay)
   print(io, "MultiRay with ", nsubrays(g), " rays per cell (", nameof(typeof(g.points)), ", ",

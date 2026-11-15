@@ -32,6 +32,17 @@ Pages = ["geometry/multiray.jl"]
 Private = false
 ```
 
+## Sampling of the beam
+
+The samples of a focal spot and of the detector cells, for [`sampled`](@ref) and
+[`stacked`](@ref), and the geometry of a sample.
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["geometry/sampling.jl", "geometry/shifted.jl"]
+Private = false
+```
+
 ## Trajectories
 
 Constructors for the common scans.
