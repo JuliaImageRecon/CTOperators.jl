@@ -81,8 +81,7 @@ nothing #hide
 # the image convolved with ``1/r``. In 2D the Fourier transform of ``1/r`` is ``1/|k|`` up to a
 # constant factor (``k`` the spatial frequency): the back projection damps high frequencies, and dividing by ``1/|k|``, that is,
 # multiplying by ``|k|``, undoes it. By the Fourier slice theorem this multiplication can be done on
-# each projection, along the detector, before the back projection: the ramp filter ``|k|`` (Kak &
-# Slaney 1988, chapter 3).
+# each projection, along the detector, before the back projection: the ramp filter ``|k|``.
 #
 # ## The ramp filter
 #
@@ -112,7 +111,7 @@ nothing #hide
 # ## Fan and cone beams
 #
 # For a fan beam the rays of a view are not parallel, and FBP needs weights in addition to the ramp
-# filter (Kak & Slaney 1988, chapter 3):
+# filter:
 #
 # - every data element is weighted by the cosine of the angle between its ray and the central ray of
 #   the view, before the filter;
@@ -134,5 +133,8 @@ nothing #hide
 #
 # - L. A. Feldkamp, L. C. Davis, J. W. Kress, "Practical cone-beam algorithm", J. Opt. Soc. Am. A
 #   1(6), 612–619, 1984.
+#
+# See also:
+#
 # - A. C. Kak, M. Slaney, "Principles of Computerized Tomographic Imaging", IEEE Press, 1988,
 #   chapter 3.

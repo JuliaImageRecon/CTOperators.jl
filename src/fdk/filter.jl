@@ -1,11 +1,11 @@
 # The ramp filter of FDK along the detector rows, as the frequency response of a discrete convolution
 # applied with FFTs (FFTL.jl). The convolution kernel is the band-limited ramp sampled at the cell
-# spacing du (Kak & Slaney 1988, chapter 3), in the length unit of the detector:
+# spacing du, in the length unit of the detector (see also Kak & Slaney 1988, chapter 3):
 #
 #   h(0) = 1 / (4 du^2),   h(n) = 0 for even n,   h(n) = -1 / (n pi du)^2 for odd n,
 #
 # and for a detector on an arc of radius dsd (cells at angles n alpha, alpha = du / dsd) the
-# equiangular kernel of Kak & Slaney in arc length, h(n) (n alpha / sin(n alpha))^2. The
+# equiangular kernel in arc length, h(n) (n alpha / sin(n alpha))^2. The
 # filtered row is du * sum_m h(n - m) q(m). The rows are padded with zeros to at least 2 nu - 1
 # values, so the circular convolution of the FFT equals the linear one (no wraparound).
 

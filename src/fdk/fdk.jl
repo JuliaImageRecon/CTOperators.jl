@@ -1,7 +1,7 @@
 # FDK (Feldkamp, Davis & Kress 1984) for circular cone beams, and filtered back projection for
 # parallel beams: weight the data, filter the detector rows with the ramp, back project with the
-# voxel-driven projector. In the quantities of this package (fan-beam forms of Kak & Slaney 1988,
-# chapter 3, carried over to the cone as Feldkamp et al. do):
+# voxel-driven projector. In the quantities of this package (fan-beam forms carried over to the
+# cone as Feldkamp et al. do; see also Kak & Slaney 1988, chapter 3):
 #
 # 1. Weight: every cell by the cosine of the angle between its ray and the central ray of the view
 #    (the ray from the source to the rotation axis, perpendicular to it). For a flat detector this
@@ -87,6 +87,8 @@ x = plan * y               # y: line integrals of size (256, 128, 360)
 References:
 * L. A. Feldkamp, L. C. Davis, J. W. Kress, "Practical cone-beam algorithm", J. Opt. Soc. Am. A
   1(6), 612–619, 1984.
+
+See also:
 * A. C. Kak, M. Slaney, "Principles of Computerized Tomographic Imaging", IEEE Press, 1988,
   chapter 3.
 """
