@@ -70,6 +70,7 @@ JosephProjector(image::ImageGeom, geometry; kwargs...) =
 # from a geometry already in the operator's element type and on its device; for images of one layer
 # the rays of a MultiRay stay in the image plane
 function joseph_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}, launch, raymask) where {T}
+  check_ray_layout(launch, "JosephProjector")
   g = one_layer(image) ? in_plane(geometry) : geometry
   backend = KA.get_backend(storage_array(g))
   JosephProjector(image, VoxelGrid{T}(image), g, backend, launch, ProjectorMasks(image, g, raymask))

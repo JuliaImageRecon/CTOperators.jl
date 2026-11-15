@@ -98,7 +98,7 @@ Keywords:
 * `storage` is the array type that selects the device (`Array`, `CuArray`, `ROCArray`, …). Image
   and projection data passed to the operator must live on that device.
 * `launch` is a [`LaunchConfig`](@ref) to tune the kernel launches for a device, `nothing` for the
-  defaults of the device; only its workgroup size applies (the threads take the voxels in order).
+  defaults of the device; its layout is `()` or `(R,)`, runs of `R` voxels along `x` per thread.
 * `raymask` is `nothing` or an array with one entry per data element (detector cell and view), of
   the data size (`raymask[u, v, view]`) or a vector, on any device: the cells that are used
   (`true`). It is stored as `Bool` on the device of the operator. Masked data elements give 0 in
@@ -126,10 +126,11 @@ References:
 * W. Zhuang, S. S. Gopal, T. J. Hebert, "Numerical evaluation of methods for computing tomographic
   projections", IEEE Trans. Nucl. Sci. 41(4), 1660–1665, 1994.
 """
-struct VoxelDrivenProjector{T,G<:AbstractDetectorGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T},S<:AbstractVoxelScale} <: AbstractProjector{T,G}
+struct VoxelDrivenProjector{T,G<:AbstractDetectorGeometry{T},Q,B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T},S<:AbstractVoxelScale} <: AbstractProjector{T,G}
   image::I
   grid::V
   geometry::G
+  projection::Q     # the per-view table of project_point (projection.jl)
   backend::B
   launch::L
   masks::M
@@ -155,8 +156,10 @@ VoxelDrivenProjector(image::ImageGeom, geometry; kwargs...) =
 
 # from a geometry already in the operator's element type and on its device
 function voxel_driven_projector(image::ImageGeom, geometry::AbstractDetectorGeometry{T}, launch, raymask, scale) where {T}
+  check_layout(launch, "VoxelDrivenProjector", (0, 1), "() or (R,), runs of R voxels along x")
   backend = KA.get_backend(storage_array(geometry))
-  VoxelDrivenProjector(image, VoxelGrid{T}(image), geometry, backend, launch, ProjectorMasks(image, geometry, raymask), scale)
+  VoxelDrivenProjector(image, VoxelGrid{T}(image), geometry, point_projection(geometry, backend), backend, launch,
+                       ProjectorMasks(image, geometry, raymask), scale)
 end
 
 geometry(op::VoxelDrivenProjector) = op.geometry
@@ -189,4 +192,5 @@ function backward!(x, op::VoxelDrivenProjector, y)
   x
 end
 
+include("projection.jl")
 include("kernels.jl")

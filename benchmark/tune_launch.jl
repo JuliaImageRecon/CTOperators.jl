@@ -41,12 +41,12 @@ function measure(launch)
 end
 
 configs = Any[nothing]   # the defaults of the device
-for workgroupsize in (nothing, 32, 64, 128, 256), tile in (nothing, (8, 4), (8, 8), (16, 4), (16, 8), (16, 16))
-  push!(configs, LaunchConfig(; workgroupsize, tile))
+for workgroupsize in (nothing, 32, 64, 128, 256), layout in ((), (8, 4), (8, 8), (16, 4), (16, 8), (16, 16))
+  push!(configs, LaunchConfig(; workgroupsize, layout))
 end
 
 label(::Nothing) = "defaults of the device"
-label(c::LaunchConfig) = "workgroupsize=$(something(c.workgroupsize, "backend")), tile=$(something(c.tile, "none"))"
+label(c::LaunchConfig) = "workgroupsize=$(something(c.workgroupsize, "backend")), layout=$(isempty(c.layout) ? "none" : c.layout)"
 
 @printf("%s on %s (device %d), %s\n\n", nameof(PROJECTOR), devicename(), DEVICE, PROBLEM)
 results = []

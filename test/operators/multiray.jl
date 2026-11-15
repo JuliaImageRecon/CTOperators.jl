@@ -80,7 +80,7 @@ end
   @test all(iszero, y[.!raymask])
   # the default launch tiles the detector also with several rays per cell; results do not depend on it
   tiled = JosephProjector(image, MultiRay(g, JitteredPoints(2; seed=9)); eltype=Float64, raymask,
-                          launch=LaunchConfig(; tile=(4, 2)))
+                          launch=LaunchConfig(; layout=(4, 2)))
   @test isapprox(tiled * x, y)
 end
 

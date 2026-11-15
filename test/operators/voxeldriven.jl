@@ -145,3 +145,71 @@ end
   op = VoxelDrivenProjector(image, g; eltype=Float64, scale=UnitScale())
   @test all(isapprox.(colsums(op), 4; rtol=1e-12))
 end
+
+# The per-view tables (src/operators/voxeldriven/projection.jl) give the hits of project_point of the
+# geometry: the same rational function of the point, rearranged. In Float64, with coordinates up to
+# about 100 and some 30 operations, the rounding is of order 1e-12 (in cells, and relative for the
+# density and the magnification); the bounds leave a factor of 100. Runs (view_run, run_hit) add the
+# step to the first voxel instead of projecting each one: the same bounds.
+@testitem "Voxel driven: per-view tables" tags = [:voxeldriven] begin
+  using CTOperators: KA, point_projection, project_point, view_run, run_hit
+  using StaticArrays, Random
+  Random.seed!(3)
+  m(cols...) = reduce(hcat, cols)
+  tilted = ConeBeam(m([-30.0, 0, 5], [-28, 3, 4]), m([30.0, 2, -1], [31, -1, 0]), m([0.1, 1.0, 0.2], [0.2, 0.9, -0.1]),
+                    m([0.05, -0.1, 0.9], [0.0, 0.1, 1.1]); nu=20, nv=15)
+  oblique = ParallelBeam(m([1.0, 0.2, 0.3], [0.8, -0.5, 0.1]), m([20.0, 1, 0], [-3, 18, 2]),
+                         m([-0.1, 1.0, 0.1], [1.0, 0.3, 0.0]), m([0.1, 0.0, 1.2], [0.1, 0.2, 0.9]); nu=20, nv=15)
+  # rays parallel to the detector: no hits
+  flat_rays = ParallelBeam(m([0.0, 1.0, 0.0]), m([20.0, 0, 0]), m([0.0, 1.0, 0.0]), m([0.0, 0.0, 1.0]); nu=20, nv=15)
+  geometries = (circular_cone_beam(; angles=range(0, 2pi, 7)[1:6], dso=40, dsd=80, nu=30, nv=20, du=1.3, dv=0.9,
+                                   offset_u=1.5, offset_v=-0.7),
+                helical_cone_beam(; angles=range(0, 4pi, 9), pitch=10, dso=40, dsd=80, nu=30, nv=20, du=1.3),
+                tilted, parallel_beam(; angles=range(0, pi, 5), nu=30, nv=20, du=1.1), oblique, flat_rays,
+                circular_cone_beam(; angles=range(0, 2pi, 5)[1:4], dso=40, dsd=80, nu=30, nv=20, du=1.3, detector=:arc))
+  close_hits(a, b) = a.ok == b.ok && (!a.ok || (isapprox(a.cu, b.cu; atol=1e-10) && isapprox(a.cv, b.cv; atol=1e-10) &&
+                     isapprox(a.density, b.density; rtol=1e-10) && isapprox(a.magnification, b.magnification; rtol=1e-10) &&
+                     a.rowsize == b.rowsize))
+  for g in geometries
+    table = point_projection(g, KA.CPU())
+    @test (table === g) == (g isa ArcConeBeam)
+    step = SVector(0.7, 0.0, 0.0)
+    for k in 1:nviews(g), _ in 1:20
+      p = SVector{3}(30 .* (rand(3) .- 0.5))
+      @test close_hits(project_point(table, p, k), project_point(g, p, k))
+      run = view_run(table, p, step, k)
+      @test all(r -> close_hits(run_hit(run, r), project_point(g, p + (r - 1) * step, k)), 1:5)
+    end
+    if g isa ConeBeam
+      # behind the source: no hit
+      s, c = g.source[:, 1], g.center[:, 1]
+      p = SVector{3}(s + 0.5 * (s - c))
+      @test !project_point(table, p, 1).ok && !project_point(g, p, 1).ok
+    end
+  end
+  @test !project_point(point_projection(flat_rays, KA.CPU()), SVector(1.0, 2.0, 3.0), 1).ok
+end
+
+# Runs of voxels give the projections of one voxel per thread, also for boxes that are no multiple
+# of the run (odd sizes, an image mask), with a ray mask, for 2D images and for every detector type.
+@testitem "Voxel driven: runs of voxels" tags = [:voxeldriven] setup = [Projections] begin
+  using LinearAlgebra, Random
+  Random.seed!(4)
+  cases = ((ImageGeom(MaskCircle(); dims=(13, 7, 5), deltas=(1.0, 1.1, 0.9)),
+            circular_cone_beam(; angles=range(0, 2pi, 6)[1:5], dso=30, dsd=60, nu=17, nv=11, du=1.2)),
+           (ImageGeom(; dims=(13, 7, 5)),
+            circular_cone_beam(; angles=range(0, 2pi, 6)[1:5], dso=30, dsd=60, nu=17, nv=11, du=1.2, detector=:arc)),
+           (ImageGeom(; dims=(11, 9, 4)), parallel_beam(; angles=range(0, pi, 4), nu=17, nv=11, du=1.0)),
+           (ImageGeom(; dims=(21, 17)),
+            circular_cone_beam(; angles=range(0, 2pi, 6)[1:5], dso=40, dsd=80, nu=31, nv=3, du=1.5)))
+  for (image, g) in cases
+    raymask = rand(datasize(g)...) .> 0.2
+    ref = VoxelDrivenProjector(image, g; eltype=Float64, raymask, launch=LaunchConfig(; layout=(1,)))
+    x, y = rand(imagesize(ref)...), rand(datasize(ref)...)
+    for R in (2, 3, 8)
+      op = VoxelDrivenProjector(image, g; eltype=Float64, raymask, launch=LaunchConfig(; layout=(R,)))
+      @test isapprox(op * x, ref * x; rtol=1e-12)
+      @test isapprox(adjoint(op) * y, adjoint(ref) * y; rtol=1e-12)
+    end
+  end
+end

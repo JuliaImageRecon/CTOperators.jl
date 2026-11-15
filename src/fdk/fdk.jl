@@ -67,7 +67,8 @@ Keywords:
 * `cutoff`: the highest frequency passed, a fraction of the Nyquist frequency of the cells (`0 <
   cutoff ≤ 1`).
 * `eltype`, `storage`, `launch`: as for the projectors (the element type of the computation, the
-  array type that selects the device, the launch of the back projection).
+  array type that selects the device, the launch of the back projection: a [`LaunchConfig`](@ref)
+  with the layout of the [`VoxelDrivenProjector`](@ref), `()` or `(R,)`).
 
 The image mask of `image` selects the voxels that are reconstructed. An image with one voxel along
 `z` (2D, or 3D with `nz = 1`) needs a detector with one row. A plan owns its buffers: it must not
@@ -190,7 +191,7 @@ function LinearAlgebra.mul!(x::AbstractArray, plan::FDK, y::AbstractArray)
   mul!(plan.spectrum, plan.rfft, plan.padded)
   plan.spectrum .*= plan.response
   mul!(plan.padded, plan.brfft, plan.spectrum)
-  plan.filtered .= view(plan.padded, 1:nu, :, :)
+  copy_rows!(backend)(plan.filtered, plan.padded; ndrange=length(plan.filtered))
   # 3. back projection
   mul!(x, adjoint(plan.backprojector), plan.filtered)
 end
@@ -202,6 +203,14 @@ end
   T = eltype(padded)
   w = cosine_weight(geometry, central, iu, iv, k) * redundancy_weight(redundancy, geometry, iu, iv, k)
   padded[iu, iv, k] = T(w) * T(y[i])
+end
+
+# the first nu entries of every padded row
+@kernel inbounds = true function copy_rows!(filtered, @Const(padded))
+  i = @index(Global, Linear)
+  nu = size(filtered, 1)
+  r, iu = divrem(i - 1, nu)
+  filtered[i] = padded[iu + 1 + r * size(padded, 1)]
 end
 
 # the cosine of the angle between the ray of cell (iu, iv) and the central ray of view k

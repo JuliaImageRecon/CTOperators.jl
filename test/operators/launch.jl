@@ -1,5 +1,6 @@
-# Launch configurations (src/operators/launch.jl): the order in which threads take the rays and the
-# workgroup size change how the kernels run, never their results.
+# Launch configurations (src/operators/launch.jl): the layout (the order in which threads take the rays,
+# or the voxels per thread) and the workgroup size change how the kernels run, not their results
+# (beyond rounding).
 
 # Every ray exactly once, padding threads none, for detectors that are no multiple of the tile
 @testitem "launch: tiles cover every ray once" tags = [:operators] begin
@@ -20,15 +21,16 @@ end
 
 @testitem "launch: configuration and defaults" tags = [:operators] begin
   using CTOperators: KA, launch_config, ray_order, DataOrder, TileOrder
-  @test LaunchConfig() == LaunchConfig(nothing, nothing)
+  @test LaunchConfig() == LaunchConfig{0}(nothing, ())
+  @test LaunchConfig(; layout=(4, 8)) isa LaunchConfig{2} && LaunchConfig(; layout=(8,)).layout === (8,)
   @test_throws ArgumentError LaunchConfig(; workgroupsize=0)
-  @test_throws ArgumentError LaunchConfig(; tile=(8, 0))
+  @test_throws ArgumentError LaunchConfig(; layout=(8, 0))
   g = parallel_beam(; angles=range(0, pi, 3), nu=13, nv=9, du=1.0)
   rays = RayList(rand(3, 5), rand(3, 5))
   # CPU: the backend's workgroups, data order; an explicit configuration is kept
   @test launch_config(nothing, g, KA.CPU()) == LaunchConfig()
   @test launch_config(nothing, rays, KA.CPU()) == LaunchConfig()
-  config = LaunchConfig(; workgroupsize=32, tile=(4, 8))
+  config = LaunchConfig(; workgroupsize=32, layout=(4, 8))
   @test launch_config(config, g, KA.CPU()) === config
   @test ray_order(config, g) == TileOrder(13, 9, 4, 8)
   @test ray_order(config, rays) == DataOrder()          # ray lists keep their order
@@ -43,23 +45,48 @@ end
   g = helical_cone_beam(; angles=range(0, 3pi, 5), pitch=4, dso=30, dsd=60, nu=13, nv=9, du=1.17, dv=0.93)
   rays = RayList(g)
   x, y = rand(8, 7, 6), rand(13, 9, 5)
-  configs = (LaunchConfig(; tile=(8, 8)), LaunchConfig(; workgroupsize=64, tile=(8, 8)),
-             LaunchConfig(; workgroupsize=32, tile=(4, 2)), LaunchConfig(; workgroupsize=7))
+  ray_configs = (LaunchConfig(; layout=(8, 8)), LaunchConfig(; workgroupsize=64, layout=(8, 8)),
+                 LaunchConfig(; workgroupsize=32, layout=(4, 2)), LaunchConfig(; workgroupsize=7))
+  # runs of voxels: the hits of a run follow from the first by adding steps, rounded differently
+  voxel_configs = (LaunchConfig(; layout=(1,)), LaunchConfig(; layout=(3,)), LaunchConfig(; workgroupsize=7, layout=(8,)),
+                   LaunchConfig(; workgroupsize=7))
   # distance driven and voxel driven need detector cells: no ray lists
   for (P, geom) in ((SiddonProjector, g), (SiddonProjector, rays), (JosephProjector, g), (JosephProjector, rays),
                     (DistanceDrivenProjector, g), (VoxelDrivenProjector, g))
     ref = P(image, geom; eltype=Float64)
     yr = reshape(y, datasize(ref))
-    for launch in configs
+    for launch in (P === VoxelDrivenProjector ? voxel_configs : ray_configs)
       op = P(image, geom; eltype=Float64, launch)
       @test same_projection(P, op * x, ref * x)
       @test isapprox(adjoint(op) * yr, adjoint(ref) * yr; rtol=1e-12)
     end
   end
   # the configuration travels with subset and adapt
-  launch = LaunchConfig(; workgroupsize=32, tile=(4, 2))
+  launch = LaunchConfig(; workgroupsize=32, layout=(4, 2))
   op = JosephProjector(image, g; launch)
   @test subset(op, [1, 3]).launch === launch
   @test adapt(Array{Float64}, op).launch === launch
   @test JosephProjector(image, g).launch === nothing
+end
+
+# Each projector checks the length of the layout: tiles (tu, tv) for the ray-driven projectors, runs
+# (R,) for the voxel-driven one and FDK; () for all. The voxel-driven defaults: runs of 8 voxels on
+# the CPU, runs of 2 in workgroups of 64 on GPUs.
+@testitem "launch: layouts of the projectors" tags = [:operators] begin
+  using CTOperators: KA, voxel_launch, voxels_per_thread
+  image = ImageGeom(; dims=(8, 7, 6))
+  g = circular_cone_beam(; angles=range(0, 2pi, 5)[1:4], dso=30, dsd=60, nu=13, nv=9, du=1.0)
+  tiles, runs = LaunchConfig(; layout=(4, 2)), LaunchConfig(; layout=(3,))
+  for P in (SiddonProjector, JosephProjector, DistanceDrivenProjector)
+    @test P(image, g; launch=tiles).launch === tiles && P(image, g; launch=LaunchConfig()).launch == LaunchConfig()
+    @test_throws ArgumentError P(image, g; launch=runs)
+  end
+  @test VoxelDrivenProjector(image, g; launch=runs).launch === runs
+  @test VoxelDrivenProjector(image, g; launch=LaunchConfig()).launch == LaunchConfig()
+  @test_throws ArgumentError VoxelDrivenProjector(image, g; launch=tiles)
+  @test_throws ArgumentError VoxelDrivenProjector(image, g; launch=LaunchConfig(; layout=(2, 2, 2)))
+  @test_throws ArgumentError FDK(image, g; launch=tiles)
+  @test voxel_launch(nothing, KA.CPU()) == LaunchConfig(; layout=(8,))
+  @test voxel_launch(runs, KA.CPU()) === runs
+  @test voxels_per_thread(LaunchConfig()) == 1 && voxels_per_thread(runs) == 3
 end

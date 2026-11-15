@@ -57,6 +57,8 @@ nothing #hide
 # - on GPUs: workgroups of 64 threads and tiles of 8 × 8 detector cells;
 # - on the CPU: the workgroup size that KernelAbstractions.jl chooses, and data order.
 #
+# The voxel-driven projector has its own defaults (see [Runs of voxels](@ref launch-runs) below).
+#
 # A projector moved with `adapt` switches to the defaults of its new device. The GPU defaults were
 # chosen on the GPU above; on other GPUs they are a starting point.
 #
@@ -65,12 +67,14 @@ nothing #hide
 # projector with `subset` or `adapt` keep it:
 #
 # ```julia
-# launch = LaunchConfig(; workgroupsize=128, tile=(16, 8))
+# launch = LaunchConfig(; workgroupsize=128, layout=(16, 8))
 # op = JosephProjector(image, geometry; storage=CuArray, launch)
 # ```
 #
-# `workgroupsize=nothing` lets KernelAbstractions.jl choose the workgroup size; `tile=nothing` keeps
-# data order. Tile size and workgroup size are independent: the threads take the cells tile by tile,
+# `workgroupsize=nothing` lets KernelAbstractions.jl choose the workgroup size. The `layout` says how
+# the work is laid out over the threads; for the ray-driven projectors it is the tile, `(tu, tv)`
+# cells, and `layout=()` keeps data order. Tile size and workgroup size are independent: the threads
+# take the cells tile by tile,
 # so with `workgroupsize` equal to the number of cells of a tile each workgroup traces one tile,
 # with a smaller one several workgroups share a tile.
 #
@@ -80,13 +84,35 @@ nothing #hide
 #
 # ```julia
 # using CUDA
-# for workgroupsize in (32, 64, 128, 256), tile in (nothing, (8, 4), (8, 8), (16, 4))
-#   op = JosephProjector(image, geometry; storage=CuArray, launch=LaunchConfig(; workgroupsize, tile))
+# for workgroupsize in (32, 64, 128, 256), layout in ((), (8, 4), (8, 8), (16, 4))
+#   op = JosephProjector(image, geometry; storage=CuArray, launch=LaunchConfig(; workgroupsize, layout))
 #   y = op * x                                       # compile
 #   adjoint(op) * y
 #   tf = CUDA.@elapsed op * x
 #   tb = CUDA.@elapsed adjoint(op) * y
-#   println((workgroupsize, tile), ": forward ", round(1000tf; digits=1), " ms, back ",
+#   println((workgroupsize, layout), ": forward ", round(1000tf; digits=1), " ms, back ",
 #           round(1000tb; digits=1), " ms")
 # end
 # ```
+#
+# ## [Runs of voxels](@id launch-runs)
+#
+# The [`VoxelDrivenProjector`](@ref) (and [`FDK`](@ref), which back projects with it) runs threads per
+# voxel, not per ray, so its layout means something else: `layout=(R,)` lets every thread take a run of
+# `R` neighboring voxels along `x` instead of one; the last run of a row may be shorter. A thread loops
+# over the views and, within each view, over the voxels of its run. For flat detectors and parallel
+# beams the voxels of a run do not each start from scratch: where a voxel lands on the detector
+# follows from where its neighbor lands by adding a step that is the same for the whole run in that
+# view (see [Voxel-Driven Method](@ref)). The result is the same up to rounding.
+#
+# Without `launch`, the voxel-driven projector takes runs of 8 voxels on the CPU and runs of 2 in
+# workgroups of 64 threads on GPUs, chosen on one CPU and one GPU (the measurements are in
+# `benchmark/README.md` of the repository, with the script `benchmark/voxeldriven.jl`). A layout of
+# another length gives an `ArgumentError`, as does a run for a ray-driven projector:
+#
+# ```julia
+# launch = LaunchConfig(; layout=(16,))
+# op = VoxelDrivenProjector(image, geometry; launch)
+# plan = FDK(image, geometry; launch)
+# ```
+

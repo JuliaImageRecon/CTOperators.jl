@@ -164,10 +164,19 @@ nothing #hide
 #
 # ## Implementation
 #
-# - One thread per voxel, within the bounding box of the image mask, and a loop over the views.
-# - The projected center comes from [`CTOperators.project_point`](@ref), the inverse of
+# - One thread per run of voxels along `x` (by default 8 on the CPU, 2 on GPUs; see [Runs of
+#   voxels](@ref launch-runs)), within the bounding box of the image mask, and a loop over the views.
+# - The projected center is that of [`CTOperators.project_point`](@ref), the inverse of
 #   [`CTOperators.cell_ray`](@ref), for flat and curved detectors and parallel beams. It also
 #   returns the magnification and the density ``(R/r)^2 / (a \cos\varphi)`` that the scale uses.
+# - For a flat detector, the point where the ray from the source through a point ``p`` meets the
+#   detector is a projective map of ``p``: with ``(a, b, c) = P_k\,[p; 1]`` for a ``3 × 4`` matrix
+#   ``P_k`` of view ``k``, the cell coordinates are ``(a/c, b/c)`` and the magnification is ``1/c``.
+#   For a parallel beam the map is affine (``c = 1``). The projector computes these matrices once per
+#   view when it is built; in a run, ``(a, b, c)`` of a voxel follows from that of its neighbor by
+#   adding the first column of ``P_k`` times the voxel size. For a curved detector the cell
+#   coordinate along the arc is an angle, and every voxel is projected with `project_point` of the
+#   geometry.
 # - The cells (2 × 2 in 3D; two per row for a 2D image) are visited with the same actions as the
 #   voxels of the ray-driven projectors, applied to the data: the back projection gathers, the
 #   forward projection scatters. Masked cells are skipped.
