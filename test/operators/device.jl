@@ -8,7 +8,7 @@
   using LinearAlgebra, Adapt
   using CTOperators: KA, storage_array
 
-  const PROJECTORS = (SiddonProjector, JosephProjector, DistanceDrivenProjector)
+  const PROJECTORS = (SiddonProjector, JosephProjector, DistanceDrivenProjector, VoxelDrivenProjector)
 
   device_problem() = (ImageGeom(; dims=(8, 7, 6), deltas=(1.0, 1.25, 0.8), offsets=(0.37, 0.11, -0.23)),
                       helical_cone_beam(; angles=range(0, 3pi, 7), pitch=4, dso=30, dsd=60, nu=13, nv=9,
@@ -131,23 +131,36 @@ end
   end
 end
 
-# The default launch per device: on GPUs workgroups of 64 and tiles of 8 × 8 detector cells (none for
-# ray lists), on the CPU the backend's choice; an explicit configuration gives the same results
+# The default launch per device: on GPUs tiles of 8 × 8 detector cells in workgroups of 64 (data
+# order for ray lists), for the voxel-driven projector runs of 2 voxels; on the CPU data order,
+# for the voxel-driven projector runs of 8; otherwise the backend's workgroups. An explicit
+# configuration gives the same results.
 @testitem "device: launch configuration" tags = [:operators, :gpu] setup = [Backends, DeviceProblem] begin
-  using CTOperators: launch_config
+  using CTOperators: launch_layout, launch_workgroupsize
+  # workgroup size and layout of a launch
+  settings(op, launch, g, b) = (l = launch_layout(op, launch, g, b); (launch_workgroupsize(op, launch, l, b), l))
   image, g = device_problem()
   for arrayType in arrayTypes
     backend = KA.get_backend(adapt(arrayType, zeros(1)))
     gpu = !(backend isa KA.CPU)
-    @test launch_config(nothing, g, backend) ==
-          (gpu ? LaunchConfig(; workgroupsize=64, tile=(8, 8)) : LaunchConfig())
-    @test launch_config(nothing, RayList(g), backend) == (gpu ? LaunchConfig(; workgroupsize=64) : LaunchConfig())
+    op = JosephProjector(image, g; storage=arrayType)
+    @test settings(op, nothing, geometry(op), backend) == (gpu ? (64, (8, 8)) : (nothing, ()))
+    rays = JosephProjector(image, RayList(g); storage=arrayType)
+    @test settings(rays, nothing, geometry(rays), backend) == (nothing, ())
+    vop = VoxelDrivenProjector(image, g; storage=arrayType)
+    @test settings(vop, nothing, geometry(vop), backend) == (nothing, gpu ? (2,) : (8,))
     x, y = rand(imagesize(JosephProjector(image, g))...), rand(datasize(g)...)
     for P in PROJECTORS
       ref = P(image, g; eltype=Float64)
-      op = P(image, g; eltype=Float32, storage=arrayType, launch=LaunchConfig(; workgroupsize=32, tile=(4, 8)))
+      layout = P === VoxelDrivenProjector ? (3,) : (4, 8)
+      op = P(image, g; eltype=Float32, storage=arrayType, launch=LaunchConfig(; workgroupsize=32, layout))
       @test agree(op * adapt(arrayType{Float32}, x), ref * x, Float32)
       @test agree(adjoint(op) * adapt(arrayType{Float32}, y), adjoint(ref) * y, Float32)
+      # a workgroup size larger than the device allows fails when the projector runs
+      big = LaunchConfig(; workgroupsize=KA.KernelInterface.max_work_group_size(backend) + 1)
+      op = P(image, g; eltype=Float32, storage=arrayType, launch=big)
+      @test_throws ArgumentError op * adapt(arrayType{Float32}, x)
+      @test_throws ArgumentError adjoint(op) * adapt(arrayType{Float32}, y)
     end
   end
 end

@@ -77,4 +77,10 @@ CTOperators.ConeBeam(rg::Union{CtFanFlat,SinoFanFlat}) = projection_geometry(rg)
 CTOperators.ArcConeBeam(rg::Union{CtFanArc,SinoFanArc}) = projection_geometry(rg)
 CTOperators.ParallelBeam(rg::Union{CtPar,SinoPar}) = projection_geometry(rg)
 
+# Sinograms' `fdk` for the FDK of this package: methods only for an `FDK` plan or a geometry of this
+# package (Sinograms' own geometries keep Sinograms' method).
+Sinograms.fdk(plan::CTOperators.FDK, proj::AbstractArray) = plan * proj
+Sinograms.fdk(image::CTOperators.ImageGeom, geometry::CTOperators.AbstractProjectionGeometry, proj::AbstractArray; kwargs...) =
+  CTOperators.fdk(image, geometry, proj; kwargs...)
+
 end

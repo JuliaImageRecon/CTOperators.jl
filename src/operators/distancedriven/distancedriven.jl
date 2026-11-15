@@ -76,6 +76,7 @@ DistanceDrivenProjector(image::ImageGeom, geometry; kwargs...) =
 
 # from a geometry already in the operator's element type and on its device
 function distance_driven_projector(image::ImageGeom, geometry::AbstractDetectorGeometry{T}, launch, raymask) where {T}
+  check_ray_layout(launch, "DistanceDrivenProjector")
   backend = KA.get_backend(storage_array(geometry))
   DistanceDrivenProjector(image, VoxelGrid{T}(image), geometry, backend, launch, ProjectorMasks(image, geometry, raymask))
 end

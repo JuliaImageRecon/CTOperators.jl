@@ -53,5 +53,16 @@ end
   a, a + column(g.direction, k)
 end
 
+@inline function project_point(g::ParallelBeam, p, k)
+  e, c, u, v = column(g.direction, k), column(g.center, k), column(g.u, k), column(g.v, k)
+  T = eltype(e)
+  n = cross(u, v)
+  en = dot(e, n)
+  alpha, beta = plane_coordinates(p + (dot(c - p, n) / en) * e - c, u, v)
+  # 1 / (a cos phi) with a = |n| and cos phi = |en| / (|e| |n|)
+  DetectorHit(alpha + T(g.nu + 1) / 2, beta + T(g.nv + 1) / 2, norm(e) / abs(en), one(T), norm(v),
+              !iszero(en))
+end
+
 Adapt.adapt_structure(to, g::ParallelBeam) =
   ParallelBeam(adapt(to, g.direction), adapt(to, g.center), adapt(to, g.u), adapt(to, g.v); nu=g.nu, nv=g.nv)

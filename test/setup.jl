@@ -42,3 +42,13 @@ end
     end
   end
 end
+
+# How two forward projections of the same input compare, per projector. The ray-driven projectors
+# gather: one thread sums each data value in a fixed order, so repeated projections are bitwise
+# equal, and data stored in a lower precision are the result rounded once. The voxel-driven
+# projector adds into the data with atomic additions in no fixed order, in the element type of the
+# data: equal up to rounding.
+@testsnippet Projections begin
+  atomic_forward(P) = P <: VoxelDrivenProjector
+  same_projection(P, a, b; rtol=sqrt(eps(Float64))) = atomic_forward(P) ? isapprox(a, b; rtol) : a == b
+end

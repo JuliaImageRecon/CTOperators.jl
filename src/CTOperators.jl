@@ -5,6 +5,7 @@ using StaticArrays
 using Adapt
 using KernelAbstractions
 using Atomix
+import FFTL
 using ImageGeoms: ImageGeom, axis, MaskCircle, MaskEllipse, MaskAllButEdge
 const KA = KernelAbstractions
 
@@ -16,13 +17,16 @@ export MultiRay, AbstractPoints, RegularPoints, JitteredPoints, RandomPoints, Ga
 export AbstractWeights, UniformWeights, GaussianWeights
 export circular_cone_beam, helical_cone_beam, parallel_beam
 export datasize, nrays, ray, raytype, nviews, detectorsize, subset, projection_geometry
-export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, DistanceDrivenProjector, LaunchConfig
+export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, DistanceDrivenProjector, VoxelDrivenProjector, LaunchConfig
+export AbstractVoxelScale, LineIntegralScale, UnitScale
 export geometry, image_geometry, imagesize, rowsums, colsums
+export FDK, AbstractRedundancy, FullScan, ParkerWeights, ArrayRedundancy
 
 # not exported, but part of the interface: for projectors, geometries and strategies of other packages
 public forward!, backward!, similar_projector, storage_array, device_geometry
 public point_offset, random_pair, points_eltype, subray_weight, weights_eltype
-public trace_element, in_plane, one_layer, cell_ray, is_masked, visit, Gather, Scatter, to_index, clip, VoxelGrid, index_type
+public trace_element, in_plane, one_layer, cell_ray, project_point, DetectorHit, voxel_scale, is_masked, visit, Gather, Scatter, to_index, clip, VoxelGrid, index_type
+public CircularScan, redundancy_weights, redundancy_weight, fdk
 public image_mask, ray_mask, handles_raymask, projector_masks, ProjectorMasks
 
 """
@@ -44,5 +48,9 @@ include("image/image.jl")
 include("geometry/geometry.jl")
 include("raytracing/raytracing.jl")
 include("operators/operators.jl")
+include("fdk/scan.jl")
+include("fdk/filter.jl")
+include("fdk/redundancy.jl")
+include("fdk/fdk.jl")
 
 end

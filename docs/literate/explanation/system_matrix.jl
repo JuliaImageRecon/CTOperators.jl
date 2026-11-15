@@ -39,7 +39,9 @@ bonito_page("system_matrix") #hide
 # all images ``x`` and data ``y``, ``\langle A x, y \rangle = \langle x, A^T y \rangle``, up to
 # rounding. Threads of different data elements add into the same voxels, so the additions are
 # atomic; on a GPU they run in no fixed order, and the last digits of a back projection can differ
-# from call to call.
+# from call to call. The voxel-driven projector, which computes columns, has it the other way
+# round: its back projection writes each voxel once, and its forward projection adds into the data
+# with atomic additions.
 #
 # Two sums of the matrix appear in reconstruction methods:
 #
@@ -60,8 +62,10 @@ bonito_page("system_matrix") #hide
 # | [Joseph's Method](@ref) | interpolated linearly between the voxel centers, within each layer (below) | the line integral along one ray, through the center of the cell |
 # | [Several Rays per Cell](@ref) | that of the method used | the mean of the line integrals along several rays of the cell |
 # | [Distance-Driven Method](@ref) | constant within each voxel, on the center plane of each layer | the mean over the area the cell sees, per layer |
+# | [Voxel-Driven Method](@ref) | a point mass at the center of each voxel | the mean of the line integrals over the cell, each point mass spread over the 2 × 2 nearest cells by bilinear interpolation |
 #
-# The first two are *ray-driven*: a data element is one ray, a line without width.
+# The first two are *ray-driven*: a data element is one ray, a line without width. The voxel-driven
+# method computes the matrix by columns: one thread per voxel finds the cells that see it.
 #
 # ## Layers and the principal axis
 #
@@ -95,15 +99,24 @@ bonito_page("system_matrix") #hide
 # layer, the piece of the layer is split between the two voxels. Only together do the voxels of a
 # layer get the length per layer, and only the part of the piece inside the image falls on voxels.
 #
-# The figure shows one ray through an image of 8 × 8 pixels, slightly off the center, in two ways.
-# Left, the pieces per layer: the layers along the principal axis are shaded alternately, and the
-# pieces between the layer planes alternate in color; they all have the length per layer. Right,
-# the pieces per pixel, between all pixel boundaries of both axes, as Siddon's method uses them;
-# their lengths vary. Dashed: parts of the ray outside the image. The slider turns the ray in steps
-# of 9°: at 45° and at 135° the principal axis changes, and there the length per layer is largest,
-# ``\sqrt{2}``.
+# The figure shows one ray through an image of 8 × 8 pixels, slightly off the center, cut into its
+# pieces per layer: the layers along the principal axis are shaded alternately, and the pieces
+# between the layer planes alternate in color; they all have the length per layer. Dashed: parts of
+# the ray outside the image. The slider turns the ray in steps of 9°: at 45° and at 135° the
+# principal axis changes, and there the length per layer is largest, ``\sqrt{2}``.
 
 principal_axis_app() #hide
+
+# The pieces per voxel are different. The next figure shows the same ray at 27°, left again cut
+# into its pieces per layer, right into its pieces per pixel, between all pixel boundaries of both
+# axes, as Siddon's method uses them. Where the ray crosses a boundary between two pixels of the
+# same layer, a piece of the left panel is split in two on the right, so the pieces per pixel vary
+# in length, while the pieces per layer do not.
+
+fig = principal_axis_figure(deg2rad(27)) #hide
+save("system_matrix_pieces.png", fig) #hide
+nothing #hide
+# ![Pieces per layer and per pixel of one ray](system_matrix_pieces.png)
 
 # Joseph's method chooses the principal axis per ray, the distance-driven method once per view, for
 # all cells of the view. Siddon's method does not use layers: it follows the crossings of the ray

@@ -10,8 +10,8 @@ CTOperators.KA.device!(CUDABackend(), DEVICE)
 library_version() = string(pkgversion(CTOperators))
 method_name() = string(nameof(PROJECTOR))[1:end-length("Projector")]
 device_name() = CUDA.name(CUDA.device())
-# distance driven needs detector cells; the ray-driven projectors take every geometry
-supports(p) = PROJECTOR !== DistanceDrivenProjector || p.geometry isa AbstractDetectorGeometry
+# distance driven and voxel driven need detector cells; the ray-driven projectors take every geometry
+supports(p) = PROJECTOR in (SiddonProjector, JosephProjector) || p.geometry isa AbstractDetectorGeometry
 measures_error(p) = true
 
 setup(p) = PROJECTOR(p.image, p.geometry; storage=CuArray)

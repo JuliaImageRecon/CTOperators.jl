@@ -72,7 +72,7 @@ end
   rg = CtFanArc(; ns=20, nt=8, na=10, dsd=120, dod=40)
   image = ImageGeom(; dims=(16, 16, 8))
   x = rand(16, 16, 8)
-  for P in (SiddonProjector, JosephProjector, DistanceDrivenProjector)
+  for P in (SiddonProjector, JosephProjector, DistanceDrivenProjector, VoxelDrivenProjector)
     op = P(image, rg; eltype=Float64)
     @test datasize(op) == Sinograms.dims(rg)
     @test isapprox(op * x, P(image, projection_geometry(rg); eltype=Float64) * x)

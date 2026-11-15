@@ -133,6 +133,51 @@ Callable inside kernels. A [`MultiRay`](@ref) needs it from its geometry.
 """
 function cell_ray end
 
+"""
+    DetectorHit{T}
+
+Where a point projects onto the detector, the result of
+[`project_point`](@ref CTOperators.project_point). Fields:
+
+* `cu`, `cv`: the position in cell units as in [`cell_ray`](@ref) (integers are cell centers), so
+  that `cell_ray(g, cu, cv, k)` runs through the point.
+* `density`: `(R / r)² / (a cos φ)`, with `R` the distance from the source to the detector point,
+  `r` that to `p` (`R / r = 1` for parallel beams), `a` the area of a cell and `φ` the angle
+  between the ray and the detector normal there. A point mass `m` at `p` adds `m * density` to the
+  means of the line integrals over the cells around `(cu, cv)`, summed over these cells (derived
+  on the page [Voxel-Driven Method](@ref)).
+* `magnification`: `R / r`.
+* `rowsize`: the spacing of the detector rows (`dv`, the length of the geometry vector `v`).
+* `ok`: whether the ray meets the detector in front of the source (cone beams) or at all (rays
+  parallel to a flat detector do not).
+"""
+struct DetectorHit{T}
+  cu::T
+  cv::T
+  density::T
+  magnification::T
+  rowsize::T
+  ok::Bool
+end
+
+"""
+    project_point(g::AbstractDetectorGeometry, p, k) -> DetectorHit
+
+Where the ray of view `k` through the point `p` (world coordinates) meets the detector, as a
+[`DetectorHit`](@ref CTOperators.DetectorHit): the inverse of [`cell_ray`](@ref). Implemented for
+[`ConeBeam`](@ref), [`ArcConeBeam`](@ref) and [`ParallelBeam`](@ref); callable inside kernels.
+"""
+function project_point end
+
+# coordinates (alpha, beta) of q = alpha u + beta v in the plane spanned by u, v (not necessarily
+# orthogonal)
+@inline function plane_coordinates(q, u, v)
+  uu, vv, uv = dot(u, u), dot(v, v), dot(u, v)
+  qu, qv = dot(q, u), dot(q, v)
+  det = uu * vv - uv * uv
+  (qu * vv - qv * uv) / det, (qv * uu - qu * uv) / det
+end
+
 function check_views(name, ms...)
   for m in ms
     size(m, 1) == 3 || throw(DimensionMismatch("$name: per-view vectors must be 3 × nviews, got $(size(m))"))

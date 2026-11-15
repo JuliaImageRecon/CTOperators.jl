@@ -51,5 +51,18 @@ end
 @inline cell_ray(g::ConeBeam, cu, cv, k) =
   column(g.source, k), cell_position(column(g.center, k), column(g.u, k), column(g.v, k), cu, cv, g.nu, g.nv)
 
+@inline function project_point(g::ConeBeam, p, k)
+  s, c, u, v = column(g.source, k), column(g.center, k), column(g.u, k), column(g.v, k)
+  T = eltype(s)
+  n = cross(u, v)
+  d = p - s
+  dn = dot(d, n)
+  t = dot(c - s, n) / dn                      # R / r: the detector point is s + t d
+  alpha, beta = plane_coordinates(s + t * d - c, u, v)
+  # (R/r)^2 / (a cos phi) with a = |n| and cos phi = |dn| / (|d| |n|)
+  DetectorHit(alpha + T(g.nu + 1) / 2, beta + T(g.nv + 1) / 2, t * t * norm(d) / abs(dn), t, norm(v),
+              t > 0 && isfinite(t))
+end
+
 Adapt.adapt_structure(to, g::ConeBeam) =
   ConeBeam(adapt(to, g.source), adapt(to, g.center), adapt(to, g.u), adapt(to, g.v); nu=g.nu, nv=g.nv)

@@ -45,6 +45,7 @@ makedocs(;
         "Use Geometries of Sinograms.jl" => "generated/howto/sinograms.md",
       ],
       "Reconstruction" => [
+        "Reconstruct with FDK" => "generated/howto/fdk.md",
         "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
         "Use Masks" => "generated/howto/masks.md",
         "Use Several Rays per Cell" => "generated/howto/multiray.md",
@@ -57,6 +58,7 @@ makedocs(;
       "Custom Components" => [
         "Write a Projector" => "generated/howto/write_projector.md",
         "Write a Sampling Strategy" => "generated/howto/write_sampling.md",
+        "Write FDK Windows and Weights" => "generated/howto/write_fdk.md",
       ],
     ],
     "Explanation" => [
@@ -70,12 +72,16 @@ makedocs(;
         "Joseph's Method" => "generated/explanation/joseph.md",
         "Several Rays per Cell" => "generated/explanation/multiray.md",
         "Distance-Driven Method" => "generated/explanation/distancedriven.md",
+        "Voxel-Driven Method" => "generated/explanation/voxeldriven.md",
         "Comparing Projectors" => "generated/explanation/comparing.md",
       ],
       "Operators" => [
         "Masks" => "generated/explanation/masks.md",
         "Normal Operator" => "generated/explanation/normal.md",
-        "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
+        "Workgroups, Ray Order and Runs of Voxels" => "generated/explanation/launch.md",
+      ],
+      "Reconstruction" => [
+        "Filtered Back Projection" => "generated/explanation/fbp.md",
       ],
     ],
     "Reference" => [

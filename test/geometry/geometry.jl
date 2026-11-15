@@ -138,6 +138,39 @@ end
   end
 end
 
+# project_point inverts cell_ray, and its density is the number of cells (per unit area) that the
+# projection of a small area perpendicular to the ray covers: the Jacobian of the map from that
+# area to the cell coordinates, here by finite differences.
+@testitem "project_point" tags = [:geometry] begin
+  using CTOperators: cell_ray, project_point
+  using LinearAlgebra: normalize, cross, det
+  angles = range(0, 2pi, 5)[1:4]
+  geos = (circular_cone_beam(; angles, dso=50, dsd=100, nu=20, nv=10, du=1.3, dv=0.9, offset_u=1.5, offset_v=-0.7),
+          circular_cone_beam(; angles, dso=50, dsd=100, nu=20, nv=10, du=1.3, dv=0.9, offset_u=1.5, detector=:arc),
+          helical_cone_beam(; angles, pitch=3, dso=50, dsd=100, nu=20, nv=10, du=1.3, dv=0.9, detector=:arc),
+          parallel_beam(; angles, nu=20, nv=10, du=1.3, dv=0.9, offset_u=0.4))
+  for g in geos, k in 1:4, (cu, cv) in ((3.3, 2.1), (17.8, 9.4), (10.5, 5.5)), f in (0.2, 0.6)
+    a, b = cell_ray(g, cu, cv, k)
+    p = a + f * (b - a)
+    h = project_point(g, p, k)
+    @test h.ok && isapprox(h.cu, cu; atol=1e-9) && isapprox(h.cv, cv; atol=1e-9)
+    # an orthonormal pair perpendicular to the ray
+    e = normalize(b - a)
+    e1 = normalize(cross(e, abs(e[3]) < 0.9 ? [0.0, 0.0, 1.0] : [1.0, 0.0, 0.0]))
+    e2 = cross(e, e1)
+    eps = 1e-5
+    J = map((e1, e2)) do d
+      hp, hm = project_point(g, p + eps * d, k), project_point(g, p - eps * d, k)
+      [(hp.cu - hm.cu) / 2eps, (hp.cv - hm.cv) / 2eps]
+    end
+    @test isapprox(h.density, abs(det(hcat(J...))); rtol=1e-6)
+  end
+  # points behind the source do not meet a cone-beam detector
+  g = geos[1]
+  a, b = cell_ray(g, 10.0, 5.0, 1)
+  @test !project_point(g, a - (b - a), 1).ok
+end
+
 @testitem "subset" tags = [:geometry] setup = [Rays] begin
   views = [2, 5, 6]
   for g in (helical_cone_beam(; angles=range(0, 2pi, 8), pitch=10, dso=500, dsd=900, nu=4, nv=3, du=1.0),

@@ -170,4 +170,15 @@ include("launch.jl")
 include("siddon/siddon.jl")
 include("joseph/joseph.jl")
 include("distancedriven/distancedriven.jl")
+
+# The launch of the ray-driven projectors (launch.jl): on GPUs tiles of 8 x 8 detector cells for
+# detector geometries, one tile per workgroup; on the CPU and for ray lists data order.
+# (KA.GPU is no help: since KernelAbstractions 0.10 it is the same as KA.Backend, the CPU included)
+const RayDrivenProjector = Union{SiddonProjector,JosephProjector,DistanceDrivenProjector}
+launch_layout(::RayDrivenProjector, geometry, backend) =
+  backend isa KA.CPU || !(geometry isa Union{AbstractDetectorGeometry,MultiRay}) ? () : (8, 8)
+launch_workgroupsize(::RayDrivenProjector, layout) = nothing
+launch_workgroupsize(::RayDrivenProjector, layout::NTuple{2,Int}) = prod(layout)
+
+include("voxeldriven/voxeldriven.jl")
 include("normal.jl")

@@ -1,7 +1,8 @@
 # Benchmarks of CTOperators.jl
 
-Compares the projectors of CTOperators.jl (Siddon, Joseph) with parallelproj (Joseph's method, C/OpenMP, Python) and
-RadonKA.jl (parallel beam as a stack of 2D slices). Run from the repository root with any Julia; the
+Compares the projectors of CTOperators.jl (Siddon, Joseph, distance-driven, voxel-driven) with parallelproj (Joseph's
+method, C/OpenMP, Python) and RadonKA.jl (parallel beam as a stack of 2D slices), and its FDK with that of
+Sinograms.jl. Run from the repository root with any Julia; the
 orchestrator uses the standard library only.
 
 ```
@@ -11,6 +12,8 @@ julia benchmark/bench.jl run standard --threads 1,24
 julia benchmark/bench.jl run quick --libs ctoperators-joseph,parallelproj --budget 1
 julia benchmark/bench.jl run standard --libs ctoperators-siddon-rocm,ctoperators-joseph-rocm,radonka-rocm --threads 1
 julia benchmark/bench.jl run standard --libs ctoperators-siddon-cuda,ctoperators-joseph-cuda,parallelproj-cuda --threads 1
+julia benchmark/bench.jl run fdk --threads 1,24      # FDK of CTOperators.jl and Sinograms.jl
+julia benchmark/bench.jl run fdk --libs ctoperators-fdk-rocm --threads 1
 ```
 
 GPU libraries (`*-rocm`: AMD GPUs through AMDGPU.jl; `*-cuda`: NVIDIA GPUs through CUDA.jl, and
@@ -18,9 +21,10 @@ GPU libraries (`*-rocm`: AMD GPUs through AMDGPU.jl; `*-cuda`: NVIDIA GPUs throu
 `envs/parallelproj-cuda`) run only when named with `--libs`. Before a first CUDA run,
 `julia --project=benchmark/envs/parallelproj-cuda benchmark/check_parallelproj_cuda.jl` checks that
 parallelproj computes on CuPy arrays directly (otherwise its timings would include transfers). To choose
-a `LaunchConfig` for a GPU, `julia --project=benchmark/envs/ctoperators benchmark/tune_launch.jl
-<cuda|rocm> [device] [problem] [projector]` times workgroup sizes and tiles of detector cells on one
-problem.
+a `LaunchConfig` for a device, `julia --project=benchmark/envs/ctoperators [-t N] benchmark/tune_launch.jl
+<cpu|cuda|rocm> [device] [problem] [projector]` times workgroup sizes and layouts (tiles of detector
+cells, runs of voxels) of one projector (`Siddon`, `Joseph`, `DistanceDriven`, `VoxelDriven`) or of
+`FDK` on one problem.
 
 Options: `--libs` (comma separated), `--threads` (comma separated, default all cores), `--device`
 (the GPU of GPU libraries, counted from 1, default 1; e.g. a free one on a shared machine), `--budget`
@@ -39,10 +43,18 @@ OpenMP).
 - `worker/worker.jl`: per problem the setup time (second call), forward and back projection
   (minimum and median of repeated calls within the budget; the back projection of random data), and
   the relative error of the forward projection of the voxelized phantom against its analytic line
-  integrals on up to 20 000 rays (where the library takes our rays).
+  integrals on up to 20 000 rays (where the library takes our rays). For the reconstructions (suite
+  `fdk`, adapters that define `reconstruct!`): the setup time, the reconstruction of the problem's
+  data (the projection of the phantom with `JosephProjector`, Float32) and its relative error against
+  the phantom image, with a CSV header of their own.
 - `worker/adapters/<lib>.jl`: maps our problem onto the library:
-  - `ctoperators-siddon`, `ctoperators-joseph`: `SiddonProjector`, `JosephProjector`, Float32,
-    KernelAbstractions' CPU backend.
+  - `ctoperators-siddon`, `ctoperators-joseph`, `ctoperators-distancedriven`,
+    `ctoperators-voxeldriven`: the projectors, Float32, KernelAbstractions' CPU backend, default
+    launch; distance-driven and voxel-driven only on detector geometries.
+  - `ctoperators-fdk`: `FDK` with the plain ramp filter; `sinograms-fdk`: `fdk` of Sinograms.jl
+    with `plan_fbp` and its default filter (`decon1=true`, divided by sinc²), `sinograms-fdk-nodecon1`
+    with `decon1=false`. In their own environment `envs/sinograms`; its `CtFanFlat` geometry is
+    checked to be the problem's geometry.
   - `parallelproj`: `parallelproj_core.joseph3d_fwd/back` with the rays of our geometry as start
     and end points (parallel-beam lines become segments through the volume). Installed from
     conda-forge by CondaPkg.jl into `envs/parallelproj/.CondaPkg` (its compiled backend is not on
@@ -50,7 +62,7 @@ OpenMP).
     `(nz, ny, nx)` array).
   - `radonka`: `radon`/`backproject` on the same image size, number of angles and detector cells
     per slice. Its geometry is not expressed in our rays, so only the time is compared.
-  - `ctoperators-siddon-rocm`, `ctoperators-joseph-rocm`, `radonka-rocm`: the same on an AMD GPU,
+  - `ctoperators-<method>-rocm` and `-cuda` (also `ctoperators-fdk-rocm`, `-cuda`), `radonka-rocm`: the same on a GPU,
     with image, data (and RadonKA's angles) as `ROCArray`s. Adapters for devices define
     `device_array` (moves the worker's arrays to the device), `synchronize` (the timings wait for
     the device) and `device_name`; the defaults are those of the CPU. RadonKA requires
@@ -238,3 +250,61 @@ detector, 180 views, minimum of 10 runs (also the desktop GPU in use: approximat
 
 The buffer of the separate version holds the projection data (1.4 MiB on the CPU, 11.2 MiB on the
 GPU here).
+
+### FDK against Sinograms.jl
+
+`julia benchmark/bench.jl run fdk --threads 24,1` and `--libs ctoperators-fdk-rocm --threads 1`: the
+problem `fdk128`, a full circular scan with a flat detector (360 views, 256 × 128 cells of 2 mm, 1 mm
+at the axis, the source 500 mm from the axis) and a volume of 128³ voxels of 1 mm, with the phantom of
+the suite; the plain ramp filter in CTOperators.jl. Setup: building the plan (`FDK` / `plan_fbp`);
+reconstruction: `plan * y` / `fdk(plan, y)`, minimum of repeated calls; error: relative to the
+phantom image.
+
+Float32, AMD Ryzen 9 9900X (12 cores, 24 threads), Radeon RX 7900 XT (ROCm), Julia 1.13.3,
+Sinograms 0.5.1, CTOperators at 9523bdb (default launch: runs of 8 voxels on the CPU, of 2 on ROCm),
+2026-11-15:
+
+| library | setup | reconstruction, 24 threads | reconstruction, 1 thread | error |
+|---|---|---|---|---|
+| CTOperators `FDK` (CPU) | 9 ms | 0.18 s | 2.2 s | 0.053 |
+| Sinograms `fdk` (CPU) | < 1 ms | 0.86 s | 6.9 s | 0.042 |
+| Sinograms `fdk`, `decon1=false` (CPU) | < 1 ms | 0.82 s | 6.9 s | 0.053 |
+| CTOperators `FDK` (ROCm) | 3 ms | 12 ms | | 0.053 |
+
+With `decon1=false`, the filter of CTOperators.jl, Sinograms.jl's error equals ours; its default
+divides the filter by sinc² (`src/fbp/filter.jl`).
+
+Before the per-view tables and runs of voxels (cd874a2, 2026-11-13, measured with an earlier script
+on the same scan with the 3D Shepp-Logan phantom): `FDK` 0.89 s with 24 threads, 9.0 s with one,
+21 ms on ROCm; Sinograms `fdk` 1.00 s and 7.5 s.
+
+### Voxel-driven projector: per-view tables and runs of voxels
+
+`julia --project=benchmark/envs/ctoperators -t 24 benchmark/tune_launch.jl cpu 1 cone128 VoxelDriven`
+and `... tune_launch.jl rocm 1 cone128 VoxelDriven` (forward and back projection, default scale), and
+`... tune_launch.jl rocm 1 fdk128 FDK` (FDK back projects with a scale of its own). `project_point` is
+computed from a 3 × 4 matrix per view (an affine map for parallel beams), and within a run the matrix
+row values of a voxel follow from those of its neighbor by adding a step.
+
+Float32, AMD Ryzen 9 9900X (24 threads, KernelAbstractions' CPU backend), Radeon RX 7900 XT (ROCm),
+Julia 1.13.3, CTOperators at 9523bdb, 2026-11-15; workgroups of the size KernelAbstractions chooses:
+
+| layout | cone128, CPU forward / back | cone128, ROCm forward / back | fdk128 FDK, ROCm |
+|---|---|---|---|
+| () one voxel per thread | 317 / 280 ms | 5.36 / 6.26 ms | 15.9 ms |
+| (2,) | 258 / 222 ms | 5.20 / 5.80 ms | 12.1 ms |
+| (4,) | 234 / 164 ms | 6.09 / 5.90 ms | 12.6 ms |
+| (8,) | 234 / 100 ms | 7.17 / 6.72 ms | 13.7 ms |
+| (16,) | 258 / 108 ms | 7.46 / 7.32 ms | 15.1 ms |
+| default | 231 / 100 ms (8,) | 5.11 / 5.77 ms (2,) | 11.9 ms (2,) |
+
+- CPU: runs of 8 make the back projection 2.8× faster than one voxel per thread, the forward
+  projection 1.4×; longer runs are not faster.
+- ROCm: runs of 2 make FDK 1.3× faster than one voxel per thread; on the projector the differences
+  between runs of 1, 2 and 4 are within 0.5 ms, longer runs are slower. Workgroups of 64 or 256
+  instead of KernelAbstractions' choice change the times by at most 0.3 ms (cone128) and 0.8 ms
+  (FDK) for runs of 1 and 2, for longer runs by up to 1.0 ms (cone128) and 2.2 ms (FDK, runs of 16).
+- Before the per-view tables (e60ce11, one voxel per thread, `project_point` of the geometry, on
+  the FDK scan with 128³ voxels): CPU back 864 ms, forward 1134 ms; ROCm back 19.3 ms, forward
+  50.2 ms; the same scan at 9523bdb with the default launch: CPU back 205 ms, forward 824 ms; ROCm
+  back 13.5 ms, forward 48.8 ms.
