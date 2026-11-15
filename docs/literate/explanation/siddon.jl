@@ -88,7 +88,7 @@ nothing #hide
 #   taken from either side. Siddon's method takes the side that the rounding gives, which may differ
 #   between Float32 and Float64 or between devices.
 # - How the rays are distributed over the threads of a GPU is not part of the method; see
-#   [Workgroups and Ray Order on GPUs](@ref).
+#   [Workgroups, Ray Order and Runs of Voxels](@ref).
 #
 # ## References
 #

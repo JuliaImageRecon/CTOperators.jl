@@ -76,9 +76,9 @@ projection is the exact adjoint, the way implementations of filtered back projec
 project, with the weights of the scale. See [Voxel-Driven Method](@ref) and [System Matrix](@ref).
 Compared with the ray-driven projectors:
 
-* the back projection runs one thread per voxel and writes each voxel once, without atomic
-  additions, so repeated back projections are equal; every voxel is covered, whatever the cell
-  size;
+* the back projection runs one thread per run of voxels along `x` and writes each voxel once,
+  without atomic additions, so repeated back projections are equal; every voxel is covered,
+  whatever the cell size;
 * the forward projection adds into the data with atomic additions, and with cells (at the object)
   smaller than the voxels it shows a pattern at the scale of the cells, the high-frequency
   artifacts of De Man & Basu (2004).

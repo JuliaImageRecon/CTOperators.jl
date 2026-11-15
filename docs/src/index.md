@@ -68,7 +68,7 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   ([Siddon's Method](@ref), [Joseph's Method](@ref), [several rays per cell](@ref "Several Rays per Cell"),
   the [Distance-Driven Method](@ref) and the [Voxel-Driven Method](@ref)), how they
   [compare](@ref "Comparing Projectors"), and
-  [workgroups and ray order on GPUs](@ref "Workgroups and Ray Order on GPUs").
+  [workgroups, ray order and runs of voxels](@ref "Workgroups, Ray Order and Runs of Voxels").
 - The reference lists all types and functions by domain: [Images](api/images.md), [Projection Geometries](api/geometries.md), [Operators](api/operators.md), [Projectors](api/projectors.md) and, for implementers, [Internals](api/internals.md).
 
 ## Related packages

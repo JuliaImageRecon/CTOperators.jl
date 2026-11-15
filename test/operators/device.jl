@@ -132,7 +132,7 @@ end
 end
 
 # The default launch per device: on GPUs tiles of 8 × 8 detector cells in workgroups of 64 (data
-# order for ray lists), for the voxel-driven projector one voxel per thread; on the CPU data order,
+# order for ray lists), for the voxel-driven projector runs of 2 voxels; on the CPU data order,
 # for the voxel-driven projector runs of 8; otherwise the backend's workgroups. An explicit
 # configuration gives the same results.
 @testitem "device: launch configuration" tags = [:operators, :gpu] setup = [Backends, DeviceProblem] begin
@@ -148,7 +148,7 @@ end
     rays = JosephProjector(image, RayList(g); storage=arrayType)
     @test settings(rays, nothing, geometry(rays), backend) == (nothing, ())
     vop = VoxelDrivenProjector(image, g; storage=arrayType)
-    @test settings(vop, nothing, geometry(vop), backend) == (nothing, gpu ? () : (8,))
+    @test settings(vop, nothing, geometry(vop), backend) == (nothing, gpu ? (2,) : (8,))
     x, y = rand(imagesize(JosephProjector(image, g))...), rand(datasize(g)...)
     for P in PROJECTORS
       ref = P(image, g; eltype=Float64)

@@ -111,14 +111,14 @@ nothing #hide
 # ## Fan and cone beams
 #
 # For a fan beam the rays of a view are not parallel, and FBP needs weights in addition to the ramp
-# filter:
+# filter (Feldkamp et al. 1984, Section 2, derive them for a flat detector):
 #
 # - every data element is weighted by the cosine of the angle between its ray and the central ray of
 #   the view, before the filter;
 # - in the back projection, every pixel is weighted by the square of its magnification in the view:
 #   the distance from the source to the detector divided by the distance from the source to the
-#   pixel (for a flat detector both along the central ray, for a detector on an arc within the plane
-#   of the orbit);
+#   pixel (for a flat detector both along the central ray; for a detector on an arc [`FDK`](@ref)
+#   takes both within the plane of the orbit);
 # - lines that the scan measures more than once are weighted so that each line counts once (the
 #   redundancy weighting, [`AbstractRedundancy`](@ref)).
 #

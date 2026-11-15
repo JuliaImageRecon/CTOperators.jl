@@ -93,13 +93,16 @@
 #
 # ## Performance notes
 #
-# - Forward projections run one thread per ray and need no atomic operations. Back projections add
-#   into the image from many rays at once with atomic additions.
+# - The ray-driven projectors (Siddon, Joseph, distance-driven) run one thread per ray: their
+#   forward projections need no atomic operations, their back projections add into the image from
+#   many rays at once with atomic additions. The voxel-driven projector (and FDK) is the reverse: one
+#   thread per voxel or run of voxels, atomic additions in the forward projection, none in the back
+#   projection.
 # - The workgroup size and the layout of the work over the threads (the order in which threads take
 #   the rays, or the voxels per thread of the voxel-driven projector) can be tuned for a device with
-#   the keyword `launch`, a [`LaunchConfig`](@ref); the defaults (workgroups of 64, tiles of 8 × 8
-#   detector cells, runs of 2 voxels) were chosen on an AMD Radeon RX 7900 XT. See
-#   [Workgroups and Ray Order on GPUs](@ref).
+#   the keyword `launch`, a [`LaunchConfig`](@ref); the defaults (tiles of 8 × 8 detector cells, one
+#   tile per workgroup; runs of 2 voxels) were chosen on an AMD Radeon RX 7900 XT. See
+#   [Workgroups, Ray Order and Runs of Voxels](@ref).
 # - The projector holds no workspace: its memory is the geometry (a few numbers per view for
 #   detector geometries, two points per ray for ray lists) and the masks.
 # - Creating a projector is cheap; for ordered subsets, create the projectors of all subsets once

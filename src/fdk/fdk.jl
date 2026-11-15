@@ -113,6 +113,7 @@ FDK(image::ImageGeom, geometry::AbstractProjectionGeometry; kwargs...) =
 function FDK(image::ImageGeom, geometry::AbstractDetectorGeometry; redundancy::AbstractRedundancy=FullScan(),
              window=:hann, cutoff::Real=1,
              eltype::Type{T}=Float32, storage=Array, launch::Union{Nothing,LaunchConfig}=nothing) where {T<:AbstractFloat}
+  check_layout(launch, "FDK", (0, 1), "() or (R,), runs of R voxels along x")
   scan = circular_scan(geometry)
   nu, nv = detectorsize(geometry)
   one_layer(image) && nv != 1 &&

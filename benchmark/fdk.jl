@@ -6,13 +6,17 @@
 #   julia --project=benchmark/envs/fdk -t 24 benchmark/fdk.jl          # CPU, 24 threads
 #   julia --project=benchmark/envs/fdk -t 1 benchmark/fdk.jl           # CPU, 1 thread
 #   julia --project=benchmark/envs/fdk benchmark/fdk.jl rocm           # CTOperators on an AMD GPU
+#   julia --project=benchmark/envs/fdk benchmark/fdk.jl rocm 1         # ... with runs of 1 voxel
 #
+# The optional second argument is the run length R of the back projection (LaunchConfig(; layout=(R,)));
+# without it, the default launch of the device.
 # Measure on a quiet machine. Results: benchmark/README.md.
 
 using CTOperators, Sinograms, ImagePhantoms, LinearAlgebra
 using ImageGeoms: ImageGeom, axis
 
 const DEVICE = get(ARGS, 1, "cpu")
+const launch = length(ARGS) >= 2 ? LaunchConfig(; layout=(parse(Int, ARGS[2]),)) : nothing
 const REPEATS = Threads.nthreads() == 1 ? 3 : 5
 
 if DEVICE == "rocm"
@@ -42,9 +46,9 @@ truth = Float32.(phantom(axis(ig, 1), axis(ig, 2), axis(ig, 3), ob, 2))
 y = JosephProjector(ig, g) * truth
 relative_error(x) = norm(x - truth) / norm(truth)
 
-println("CTOperators FDK, $DEVICE, $(Threads.nthreads()) threads")
-setup = best(() -> FDK(ig, g; window=:ramp, storage), REPEATS)
-plan = FDK(ig, g; window=:ramp, storage)
+println("CTOperators FDK, $DEVICE, $(Threads.nthreads()) threads, ", isnothing(launch) ? "default launch" : "layout $(launch.layout)")
+setup = best(() -> FDK(ig, g; window=:ramp, storage, launch), REPEATS)
+plan = FDK(ig, g; window=:ramp, storage, launch)
 yd = storage(y)
 recon = best(() -> plan * yd, REPEATS)
 x = Array(plan * yd)

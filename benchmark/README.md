@@ -250,7 +250,7 @@ minimum of 5 calls (3 with one thread) after a first one; error: relative to the
 
 Float32, AMD Ryzen 9 9900X (12 cores, 24 threads), Radeon RX 7900 XT (ROCm), Julia 1.13.3,
 Sinograms 0.5.1. CTOperators with the per-view tables and runs of voxels of the voxel-driven back
-projection (see below), 2026-11-15:
+projection (see below), default launch (runs of 8 voxels on the CPU, of 2 on ROCm), 2026-11-15:
 
 | library | setup | reconstruction, 24 threads | reconstruction, 1 thread | error |
 |---|---|---|---|---|
@@ -258,7 +258,7 @@ projection (see below), 2026-11-15:
 | Sinograms `fdk` (CPU) | 0.02 ms | 0.82 s | 6.9 s | 0.077 |
 | CTOperators `FDK` (ROCm) | 7 ms | 12 ms | | 0.099 |
 
-Before them (CTOperators at cd874a2, 2026-11-13): `FDK` 0.89 s with 24 threads, 9.0 s with one,
+Before (CTOperators at cd874a2, 2026-11-13): `FDK` 0.89 s with 24 threads, 9.0 s with one,
 21 ms on ROCm; Sinograms `fdk` 1.00 s and 7.5 s.
 
 The reconstructions differ by 3.5 %. Sinograms.jl divides its filter by sinc² by default
@@ -269,9 +269,10 @@ that of CTOperators.
 
 `benchmark/voxeldriven.jl` (environment `envs/fdk`, run with `julia --project=benchmark/envs/fdk -t
 <threads> benchmark/voxeldriven.jl [rocm]`): forward and back projection of the
-`VoxelDrivenProjector` (default scale) on the problem of the FDK benchmark (360 views, 256 × 128
-cells, 128³ voxels), Float32, for the layouts of `LaunchConfig` (runs of R voxels along x per
-thread) and the default; minimum of 5 calls after a first one.
+`VoxelDrivenProjector` with its default scale (FDK back projects with a scale of its own) on the
+problem of the FDK benchmark (360 views, 256 × 128 cells, 128³ voxels), Float32, for the layouts of
+`LaunchConfig` (runs of R voxels along x per thread) and the default, all in the workgroups that
+KernelAbstractions chooses; minimum of 5 calls after a first one.
 
 `project_point` is computed from a 3 × 4 matrix per view (an affine map for parallel beams), and
 within a run the matrix row values of a voxel follow from those of its neighbor by adding a step.
@@ -279,21 +280,21 @@ Before (e60ce11, default launch: one voxel per thread, `project_point` of the ge
 864 ms, forward 1134 ms; ROCm back 19.3 ms, forward 50.2 ms.
 
 AMD Ryzen 9 9900X (24 threads, KernelAbstractions' CPU backend), Radeon RX 7900 XT (ROCm), Julia
-1.13.3, 2026-11-15:
+1.13.3, 2026-11-15 (the ROCm columns at 30f1ae6 with runs of 2 as the default):
 
 | layout | CPU back | CPU forward | ROCm back | ROCm forward |
 |---|---|---|---|---|
-| (1,) | 650 ms | 968 ms | 14.0 ms | 49.7 ms |
-| (2,) | 464 ms | 876 ms | 12.9 ms | 48.7 ms |
-| (4,) | 352 ms | 856 ms | 13.0 ms | 66.5 ms |
-| (8,) | 208 ms | 830 ms | 15.5 ms | 84.1 ms |
-| (16,) | 198 ms | 828 ms | 17.2 ms | 101.3 ms |
-| default | 205 ms (8,) | 824 ms | 12.7 ms (2,) | 49.0 ms |
+| (1,) | 650 ms | 968 ms | 13.8 ms | 49.3 ms |
+| (2,) | 464 ms | 876 ms | 13.2 ms | 48.9 ms |
+| (4,) | 352 ms | 856 ms | 12.9 ms | 66.4 ms |
+| (8,) | 208 ms | 830 ms | 14.9 ms | 84.5 ms |
+| (16,) | 198 ms | 828 ms | 16.7 ms | 101.2 ms |
+| default | 205 ms (8,) | 824 ms | 13.5 ms (2,) | 48.8 ms |
 
-- CPU: the back projection is 4.2× faster than before with the default runs of 8; most of it comes
-  from the runs (one voxel per thread with the matrix: 1.3×). In a prototype, projecting every voxel
-  of a run on its own, without the step, gained almost nothing over single voxels. The forward
-  projection, which adds into the data atomically, gains 1.4×.
-- ROCm: the back projection is 1.5× faster than before with runs of 2; longer runs are slower, the
-  forward projection does not change with runs of 1 or 2 and slows down with longer runs.
-
+- CPU: the back projection is 4.2× faster than before with the default runs of 8, one voxel per
+  thread with the matrix 1.3×. The forward projection gains 1.4×.
+- ROCm: the back projection is 1.4× faster than before; runs of 1, 2 and 4 are within the spread of
+  repeated runs (about ±0.5 ms), longer runs are slower. The forward projection does not change with
+  runs of 1 or 2 and slows down with longer runs. FDK on ROCm: 16.7 ms with one voxel per thread,
+  12.1 ms with runs of 2 (`benchmark/fdk.jl rocm 1` and `rocm 2`), the reason for runs of 2 as the
+  GPU default.

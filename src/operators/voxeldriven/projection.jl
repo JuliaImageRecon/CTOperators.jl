@@ -32,8 +32,7 @@
 #
 # Runs of R voxels (p0, p0 + step, ...): `view_run` and `run_hit` give the hits of them in one view. For
 # the matrices, a, b, c of the first voxel are computed once and the others follow by adding the
-# matrix times the step (a sum of the same products, rounded differently); this is what makes runs
-# faster on the CPU (measured: projecting every voxel of the run separately gains almost nothing).
+# matrix times the step (a sum of the same products, rounded differently).
 
 struct FlatProjection{M}
   matrix::M     # 12 x nviews: the rows a (1:4), b (5:8), c (9:12) of P

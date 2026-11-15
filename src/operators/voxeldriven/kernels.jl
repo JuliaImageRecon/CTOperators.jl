@@ -1,6 +1,6 @@
 # The voxel-driven method: one thread per run of R neighboring voxels along x (within the bounding box
-# of the image mask; R from the layout of the launch, 1 on GPUs by default), a loop over the views and,
-# within it, over the voxels of the run. Per view the voxel center p is projected onto the detector
+# of the image mask; R from the layout of the launch, by default 8 on the CPU and 2 on GPUs), a loop
+# over the views and, within it, over the voxels of the run. Per view the voxel center p is projected onto the detector
 # (`project_point` of the per-view table, projection.jl, at continuous cell coordinates (cu, cv)), and
 # the voxel meets the 2 x 2 cells around that point with the bilinear weights times the scale of the
 # voxel in that view (`voxel_scale`):
@@ -171,9 +171,10 @@ function launch_voxels!(kernel, op::VoxelDrivenProjector, out, in)
   out
 end
 
-# the defaults of the voxel-driven projector: runs of 8 voxels on the CPU, one voxel per thread on
-# GPUs, and KernelAbstractions' workgroups (a run is work per thread, not threads per workgroup)
-launch_layout(::VoxelDrivenProjector, geometry, backend) = backend isa KA.CPU ? (8,) : ()
+# the defaults of the voxel-driven projector: runs of 8 voxels on the CPU, runs of 2 on GPUs, and
+# KernelAbstractions' workgroups (a run is work per thread, not threads per workgroup); chosen on one
+# CPU and one GPU (benchmark/README.md)
+launch_layout(::VoxelDrivenProjector, geometry, backend) = backend isa KA.CPU ? (8,) : (2,)
 launch_workgroupsize(::VoxelDrivenProjector, layout) = nothing
 
 voxels_per_thread(::Tuple{}) = 1

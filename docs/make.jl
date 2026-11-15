@@ -78,7 +78,7 @@ makedocs(;
       "Operators" => [
         "Masks" => "generated/explanation/masks.md",
         "Normal Operator" => "generated/explanation/normal.md",
-        "Workgroups and Ray Order on GPUs" => "generated/explanation/launch.md",
+        "Workgroups, Ray Order and Runs of Voxels" => "generated/explanation/launch.md",
       ],
       "Reconstruction" => [
         "Filtered Back Projection" => "generated/explanation/fbp.md",

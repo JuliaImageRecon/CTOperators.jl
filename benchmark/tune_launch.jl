@@ -46,7 +46,7 @@ for workgroupsize in (nothing, 32, 64, 128, 256), layout in ((), (8, 4), (8, 8),
 end
 
 label(::Nothing) = "defaults of the device"
-label(c::LaunchConfig) = "workgroupsize=$(something(c.workgroupsize, "backend")), layout=$(isempty(c.layout) ? "none" : c.layout)"
+label(c::LaunchConfig) = "workgroupsize=$(something(c.workgroupsize, "derived")), layout=$(isempty(c.layout) ? "data order" : c.layout)"
 
 @printf("%s on %s (device %d), %s\n\n", nameof(PROJECTOR), devicename(), DEVICE, PROBLEM)
 results = []

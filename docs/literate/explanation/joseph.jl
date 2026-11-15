@@ -105,7 +105,7 @@ nothing #hide
 # - The forward projection runs one thread per data element; the back projection adds the weighted values of
 #   every sample (four in 3D, two in 2D) with atomic additions.
 # - How the rays are distributed over the threads of a GPU is not part of the method; see
-#   [Workgroups and Ray Order on GPUs](@ref).
+#   [Workgroups, Ray Order and Runs of Voxels](@ref).
 #
 # ## References
 #

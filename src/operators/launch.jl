@@ -32,10 +32,11 @@ The defaults (`launch=nothing` or `LaunchConfig()`) of the device the projector 
 
 * ray-driven projectors: on GPUs tiles of 8 × 8 cells (in workgroups of 64), on the CPU the order
   of the data;
-* the voxel-driven projector: on GPUs one voxel per thread, on the CPU runs of 8 voxels.
+* the voxel-driven projector: on GPUs runs of 2 voxels, on the CPU runs of 8 voxels, in the
+  workgroups KernelAbstractions.jl chooses.
 
 The layouts were chosen on one AMD GPU and one AMD CPU; tune them for yours. See the explanation
-page [Workgroups and Ray Order on GPUs](@ref) in the documentation.
+page [Workgroups, Ray Order and Runs of Voxels](@ref) in the documentation.
 
 # Example
 
