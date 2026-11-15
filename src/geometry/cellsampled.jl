@@ -133,7 +133,7 @@ end
 
 function Points(offsets::AbstractMatrix{<:Real})
   size(offsets, 1) == 2 && size(offsets, 2) > 0 ||
-    throw(DimensionMismatch("offsets must be 2 × K with K > 0, got $(size(offsets))"))
+    throw(DimensionMismatch("offsets must be 2 x K with K > 0, got $(size(offsets))"))
   K = size(offsets, 2)
   T = float(eltype(offsets))
   Points{K,T}(SVector{K}(ntuple(k -> SVector{2,T}(offsets[1, k], offsets[2, k]), K)))
@@ -226,7 +226,7 @@ struct UniformWeights <: AbstractWeights end
     GaussianWeights(sigma_u, sigma_v=sigma_u)
 
 Rays of a cell weighted by a Gaussian of the offset from the cell center, with standard deviations
-`sigma_u`, `sigma_v` in cell units: a detector response that falls off towards the cell edges.
+`sigma_u`, `sigma_v` in cell units: a detector response that falls off toward the cell edges.
 Weighting strategy of [`DetectorSampling`](@ref) and [`FocalSpot`](@ref).
 """
 struct GaussianWeights{T} <: AbstractWeights
@@ -282,8 +282,9 @@ builds for a projector that samples the cells in its kernel (see
     y[i] = sum_k w_k * (line integral along ray k of data element i)
 
 and the exact adjoint, through [`CTOperators.trace_element`](@ref). The data have the size of
-`geometry`. For images with one layer of voxels along `z` the rays stay in the image plane: offsets
-along `u` only, and point strategies with several subcells along `v` are rejected.
+`geometry`. For images one voxel thick in `z` the rays stay in the image plane: offsets
+along `u` only; `RegularPoints` and `JitteredPoints` with several subcells along `v` and
+`DiskPoints` are rejected, other strategies get offsets along `v` of 0.
 
 It has no single ray per data element (no [`ray`](@ref)): a projector that traces only one ray per
 cell fails with a `MethodError` when applied, instead of ignoring the other rays. `subset` and
@@ -330,9 +331,9 @@ Adapt.adapt_structure(to, g::CellSampled) =
 """
     in_plane(geometry)
 
-`geometry` with the rays of a [`CellSampled`](@ref) in the image plane (offsets along `u` only); other
-geometries unchanged. The constructor of a projector calls it for images with one layer of voxels
-along `z`, see [`CTOperators.one_layer`](@ref).
+`geometry` with the rays of a [`CTOperators.CellSampled`](@ref) geometry in the image plane (offsets
+along `u` only); other geometries unchanged. The constructor and `similar_projector` of a projector
+call it for images one voxel thick in `z`, see [`CTOperators.one_layer`](@ref).
 """
 in_plane(g) = g
 function in_plane(g::CellSampled)
@@ -344,16 +345,16 @@ end
 """
     one_layer(image::ImageGeom)
 
-Whether `image` has one layer of voxels along `z`: a 2D image, or a 3D image with `nz = 1`. The rays
+Whether `image` is one voxel thick in `z`: a 2D image, or a 3D image with `nz = 1`. The rays
 of a cell stay in its plane: Joseph's method weights rays away from the center of the layer down, and
 a tilted ray may leave the layer.
 """
 one_layer(image::ImageGeom) = length(image.dims) == 2 || image.dims[3] == 1
 
 check_in_plane(p::Union{RegularPoints,JitteredPoints}) =
-  p.sv == 1 || throw(ArgumentError("an image with one layer of voxels needs one row of rays: use $(nameof(typeof(p)))(su, 1)"))
+  p.sv == 1 || throw(ArgumentError("an image one voxel thick in z needs one row of rays: use $(nameof(typeof(p)))(su, 1)"))
 check_in_plane(::DiskPoints) =
-  throw(ArgumentError("an image with one layer of voxels needs one row of rays, not DiskPoints"))
+  throw(ArgumentError("an image one voxel thick in z needs one row of rays, not DiskPoints"))
 check_in_plane(p) = nothing
 
 """

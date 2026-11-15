@@ -33,7 +33,7 @@ circular = circular_cone_beam(; angles, dso=200, dsd=400, nu=400, nv=300, du=0.4
 datasize(circular)
 
 # The projection data has one detector image per view, `(nu, nv, nviews)`. Offsets shift the
-# detector within its plane, in cells; a positive `offset_u` moves it by `offset_u` cells towards
+# detector within its plane, in cells; a positive `offset_u` moves it by `offset_u` cells toward
 # `−u` (here a quarter-cell offset):
 
 shifted = circular_cone_beam(; angles, dso=200, dsd=400, nu=400, nv=300, du=0.4, dv=0.4, offset_u=0.25);

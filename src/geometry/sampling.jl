@@ -24,7 +24,9 @@ or any [`AbstractPoints`](@ref) evaluated once per view), weighted with `weights
 
 The keyword `points` has no default: one point at the center would be a point source.
 
-For images with one layer of voxels along `z` the spot is sampled along `u` only.
+For images one voxel thick in `z` the spot is sampled along `u` only: `RegularPoints` and
+`JitteredPoints` need one row (`RegularPoints(n, 1)`), `DiskPoints` are rejected, other strategies
+get offsets along `v` of 0.
 """
 struct FocalSpot{P<:AbstractPoints,W<:AbstractWeights} <: AbstractSampling
   fu::Float64
@@ -63,7 +65,7 @@ function Base.show(io::IO, s::DetectorSampling)
 end
 
 # The offsets of sample k of a sampling in every view (in point units, restricted to u for an image
-# with one layer of voxels) and their weights normalized over the samples of the view: a 2 x nviews
+# one voxel thick in z) and their weights normalized over the samples of the view: a 2 x nviews
 # matrix per sample and a nviews x K matrix of weights, on the host in Float64. `views` numbers the
 # views as in the full geometry, so that random offsets do not depend on subsets.
 function sample_offsets(s::AbstractSampling, views, span)

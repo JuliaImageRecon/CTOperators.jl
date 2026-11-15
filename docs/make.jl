@@ -49,6 +49,7 @@ makedocs(;
         "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
         "Use Masks" => "generated/howto/masks.md",
         "Use Several Rays per Cell" => "generated/howto/multiray.md",
+        "Model the Focal Spot" => "generated/howto/focalspot.md",
         "Differentiate through a Projector" => "generated/howto/differentiation.md",
       ],
       "Devices" => [
@@ -70,10 +71,10 @@ makedocs(;
         "System Matrix" => "generated/explanation/system_matrix.md",
         "Siddon's Method" => "generated/explanation/siddon.md",
         "Joseph's Method" => "generated/explanation/joseph.md",
-        "Several Rays per Cell" => "generated/explanation/multiray.md",
         "Distance-Driven Method" => "generated/explanation/distancedriven.md",
         "Voxel-Driven Method" => "generated/explanation/voxeldriven.md",
         "Comparing Projectors" => "generated/explanation/comparing.md",
+        "Sampling the Beam" => "generated/explanation/sampling.md",
       ],
       "Operators" => [
         "Masks" => "generated/explanation/masks.md",

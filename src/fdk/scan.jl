@@ -17,7 +17,7 @@ geometry, angles in radians):
 * `dso`, `dsd`: per view the distance from the source to the axis and to the detector along the
   central ray (both 1 for parallel beams)
 * `central`: `3 × nviews`, the unit vector of the central ray of each view, from the source
-  towards the axis and perpendicular to it (for parallel beams the ray direction)
+  toward the axis and perpendicular to it (for parallel beams the ray direction)
 """
 struct CircularScan
   axis::SVector{3,Float64}

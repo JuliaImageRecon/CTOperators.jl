@@ -51,12 +51,12 @@ nothing #hide
 # ![Axial and sagittal slices of the phantom and the FDK reconstruction](fdk_slices.png)
 
 # The axial slice shows a faint pattern of streaks from the finite number of views. The sagittal
-# slice deviates more from the phantom towards its top and bottom: away from the plane of the orbit,
+# slice deviates more from the phantom toward its top and bottom: away from the plane of the orbit,
 # FDK is an approximation (Feldkamp et al. 1984).
 #
 # ## Windows
 #
-# A window lowers the ramp filter towards high frequencies: the keyword `window` takes `:ramp`
+# A window lowers the ramp filter toward high frequencies: the keyword `window` takes `:ramp`
 # (no window), `:hann` (the default), `:hamming`, `:cosine`, `:shepplogan` or a function `w(f)` of
 # the frequency `f` as a fraction of the cutoff (`0 ≤ f ≤ 1`), and `cutoff` the highest frequency
 # passed, as a fraction of the Nyquist frequency of the cells ([Write FDK Windows and

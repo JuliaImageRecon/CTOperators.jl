@@ -91,7 +91,7 @@ x_sinograms = CTOperators.fdk(image, sinograms_scan, y_sinograms; redundancy)
 # The example is the weighting of Wesarg et al. (2002, Eq. 12–17) for short scans, with a parameter
 # `q`; `q = 1` gives Parker's weights. From the [`CircularScan`](@ref CTOperators.CircularScan), the kernel
 # object takes for every view the angle `beta` from the first view and two directions in the plane
-# of the orbit: the central ray and the direction across it (towards larger angles). The fan angle
+# of the orbit: the central ray and the direction across it (toward larger angles). The fan angle
 # of a cell follows from its ray, [`cell_ray`](@ref CTOperators.cell_ray).
 
 using Adapt

@@ -150,7 +150,7 @@ nothing #hide
 #
 # - One thread per data element, as for the other projectors. The central ray of the view gives the
 #   principal axis of the view; the edge rays come from the same geometry function that
-#   [Several Rays per Cell](@ref) uses ([`CTOperators.cell_ray`](@ref)), so flat and curved detectors
+#   [Sampling the Beam](@ref) uses ([`CTOperators.cell_ray`](@ref)), so flat and curved detectors
 #   and parallel beams need no special case.
 # - The crossings of the four edge rays with the center plane of a layer are linear in the position
 #   of the layer, so they are computed once per cell; per layer only the overlaps remain. Footprints

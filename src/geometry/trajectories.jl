@@ -22,7 +22,7 @@ distance `dsd` (an angle of `du / dsd` per cell) and `offset_u` shifting the cel
 
 `offset_u` and `offset_v` shift the detector within its plane, in cells: the cell positions along
 `u` are `((0:nu-1) .- (nu - 1)/2 .- offset_u) .* du`, so a positive offset moves the detector
-towards `−u` (`−v`). Lengths are in the unit of the `ImageGeom` the geometry is used with.
+toward `−u` (`−v`). Lengths are in the unit of the `ImageGeom` the geometry is used with.
 """
 function circular_cone_beam(; angles::AbstractVector{<:Real}, dso::Real, dsd::Real, nu::Integer, nv::Integer,
                             du::Real, dv::Real=du, offset_u::Real=0, offset_v::Real=0,
@@ -46,7 +46,7 @@ function circular_cone_beam(; angles::AbstractVector{<:Real}, dso::Real, dsd::Re
       u[:, k] = du * eu
     else
       # the center turned on the arc by the offset, about the source; the row direction with it
-      ew = SVector(s, -c, 0.0)          # from the source towards the rotation axis
+      ew = SVector(s, -c, 0.0)          # from the source toward the rotation axis
       sg, cg = sincos(-offset_u * du / dsd)
       center[:, k] = src + dsd * (cg * ew + sg * eu) - offset_v * dv * ev
       u[:, k] = du * (cg * eu - sg * ew)
@@ -83,7 +83,7 @@ of `radon` in ImagePhantoms.jl.
 
 `offset_u` and `offset_v` shift the detector within its plane, in cells: the cell positions along
 `u` are `((0:nu-1) .- (nu - 1)/2 .- offset_u) .* du`, so a positive offset moves the detector
-towards `−u` (`−v`). Lengths are in the unit of the `ImageGeom` the geometry is used with.
+toward `−u` (`−v`). Lengths are in the unit of the `ImageGeom` the geometry is used with.
 """
 function parallel_beam(; angles::AbstractVector{<:Real}, nu::Integer, nv::Integer, du::Real, dv::Real=du,
                        offset_u::Real=0, offset_v::Real=0)

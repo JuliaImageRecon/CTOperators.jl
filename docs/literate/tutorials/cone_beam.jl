@@ -13,7 +13,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #
 #
 # A volume of 64³ voxels of 1 mm. The object is a stack of nine thin discs, 6 mm apart, of radius 24
 # mm (a Defrise phantom). Each disc is a flat ellipsoid, 3 mm thick at its center and thinner
-# towards its rim. The faces of the discs are planes parallel to the orbit, the structures a
+# toward its rim. The faces of the discs are planes parallel to the orbit, the structures a
 # circular scan sees worst.
 
 n = 64

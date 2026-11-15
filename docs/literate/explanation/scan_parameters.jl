@@ -99,3 +99,7 @@ nothing #hide
 # the parameters exactly, including curved detectors (`detector=:arc`) and detector offsets
 # (`offset_u`, `offset_v`), and [Set Up a Geometry](@ref) shows parallel-beam scans, arbitrary
 # trajectories and ray lists.
+#
+# The source is a point on this page. A real source has a size, the focal spot, which blurs the
+# projections by an amount that depends on the magnification: [Sampling the Beam](@ref) shows it, and
+# [Model the Focal Spot](@ref) how to include it.

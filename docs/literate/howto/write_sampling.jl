@@ -36,8 +36,8 @@ end
 
 # [`CTOperators.random_pair`](@ref) gives random numbers that are fixed by the seed, the cell, the
 # view and a number, usually the ray; here always 1, so that all rays of a cell share one rotation.
-# They are the same in the forward and the back projection and on every device; [Several Rays per
-# Cell](@ref) explains why a generator with state does not work here.
+# They are the same in the forward and the back projection and on every device; [Sampling the
+# Beam](@ref) explains why a generator with state does not work here.
 #
 # `point_offset` runs inside the kernels, so it must not allocate, and the fields of the type must be
 # plain values, not arrays. Since `RingPoints` stores a floating-point number, it also says how to
@@ -70,7 +70,8 @@ save("ring_points.png", fig) #hide
 nothing #hide
 # ![Ring points in one cell](ring_points.png)
 
-op = sampled(JosephProjector(image, geometry); detector=DetectorSampling(RingPoints(8, 0.3; seed=1); weights=LinearWeights()))
+ring = DetectorSampling(RingPoints(8, 0.3; seed=1); weights=LinearWeights())
+op = sampled(JosephProjector(image, geometry); detector=ring)
 x, y = rand(Float32, imagesize(op)), rand(Float32, datasize(op))
 dot(op * x, y) / dot(x, adjoint(op) * y)
 
@@ -129,21 +130,22 @@ function CTOperators.backward!(x, op::SamplingProjector, y)
   x
 end
 
-# Its kernels now sample the cells, which it declares with a method of
+# Its kernels sample the cells, which it declares with a method of
 # [`CTOperators.fuses_sampling`](@ref); [`sampled`](@ref) then hands it the geometry with several rays
 # per cell, instead of one projector per ray position (which needs points that are the same in every
 # cell, unlike `RingPoints`):
 
-CTOperators.fuses_sampling(::SamplingProjector, ::AbstractDetectorGeometry, ::DetectorSampling, ::CTOperators.Summed) = true
+CTOperators.fuses_sampling(::SamplingProjector, ::AbstractDetectorGeometry, ::DetectorSampling,
+                           ::CTOperators.Summed) = true
 
 # `SamplingProjector` takes every strategy, also the ones above, and its adjoint stays exact:
 
-op = sampled(SamplingProjector(image, geometry); detector=DetectorSampling(RingPoints(8, 0.3; seed=1); weights=LinearWeights()))
+op = sampled(SamplingProjector(image, geometry); detector=ring)
 dot(op * x, y) / dot(x, adjoint(op) * y)
 
 # On plain geometries it computes the same as the kernels of [Write a Projector](@ref), up to rounding.
-# For images with one layer of voxels along `z`, the constructor of a projector keeps the rays in the
-# image plane, as those of the package do:
+# For images one voxel thick in `z`, the constructor and `similar_projector` of a projector (`sampled`
+# calls the latter) keep the rays in the image plane, as those of the package do:
 #
 # ```julia
 # g = device_geometry(geometry, T, storage)

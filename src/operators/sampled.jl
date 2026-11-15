@@ -135,8 +135,8 @@ const SampledOperator = Union{SampleSum,SampleStack}
 The projector `op` averaged over the samples of a focal spot (`source`, a [`FocalSpot`](@ref)) and of
 the detector cells (`detector`, a [`DetectorSampling`](@ref)): the weighted mean of the line
 integrals along the rays from every source sample to every detector sample, `sum_k w_k A_k x`, with
-the data size of `op` and the exact adjoint. `op` keeps its element type, device, launch, image mask
-and ray mask.
+the data size of `op` and the exact adjoint. `op` keeps its element type, device, launch, image mask,
+ray mask and (for the voxel-driven projector) its scale.
 
 * `execution`: `:auto` (the default) samples in the projector's kernel where it can (detector
   sampling of Siddon and Joseph, see [`CTOperators.fuses_sampling`](@ref)) and sequentially
@@ -166,8 +166,9 @@ end
 
 The projections of `op` for every sample of `source` and `detector` (see [`sampled`](@ref)) side by
 side, a [`SampleStack`](@ref) with data of size `(datasize(op)..., K)`: `K` the number of source
-samples times that of the detector samples, or that of the source samples alone for a projector
-that samples the detector in its kernel. Their weights are [`sample_weights`](@ref).
+samples times that of the detector samples, each run by one projector. A projector that declares
+`fuses_sampling(…, ::CTOperators.Stacked) = true` keeps its detector samples in one term instead
+(none of this package does). Their weights are [`sample_weights`](@ref).
 """
 function stacked(op::AbstractProjector; source=nothing, detector=nothing, execution::Symbol=:auto)
   ops, weights = sample_terms(op, source, detector, execution, Stacked())

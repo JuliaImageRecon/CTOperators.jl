@@ -17,9 +17,16 @@ same derivative.
 derivative at `x`, [`CTOperators.gradient!`](@ref) the gradient of `|p(x) - y|^2 / 2`, and
 [`IntensityGradient`](@ref) that gradient as an operator for first-order solvers.
 
+The same model as the simulator of De Man et al. (1999) for the focal spot and the detector cells
+(the logarithm of the summed photon flux).
+
 The samples run sequentially, so a detector sampling needs points that do not vary per cell
 (`RegularPoints`, `DiskPoints`, `Points`; see [`CTOperators.varies_per_cell`](@ref)). Holds buffers,
 so it must not be evaluated by several tasks at once.
+
+References:
+* B. De Man, J. Nuyts, P. Dupont, G. Marchal, P. Suetens, "Metal streak artifacts in X-ray computed
+  tomography: a simulation study", IEEE Transactions on Nuclear Science 46(3), 691–696, 1999.
 """
 struct IntensityModel{T,B<:SampleStack{T},L,Q}
   stack::B
@@ -91,8 +98,8 @@ end
 The gradient of `|m(x) - y|^2 / 2` as an operator of the image: `mul!(g, G, x)` is
 [`CTOperators.gradient!`](@ref)`(g, m, x, y)`, of size `n × n` (`n` the number of voxels). For the
 solvers of RegularizedLeastSquares.jl that take only a normal operator, e.g. `FISTA(; AHA=G, rho)`
-with the right-hand side `b = 0`; the iteration `x -= rho * (G x - b)` is then a gradient step. Read
-from its code (FISTA):
+with the right-hand side `b = 0`; the iteration `x -= rho * (G x - b)` is then a gradient step. In
+`FISTA` of RegularizedLeastSquares.jl:
 
 * `rho` has to be given: its default comes from power iterations, which assume a linear operator.
 * The convergence test divides the residual by the norm of `b`; with `b = 0` it never stops early,

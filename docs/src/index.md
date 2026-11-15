@@ -59,15 +59,16 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   [ordered-subset methods](@ref "Ordered Subsets and Normalization"), how to
   [use masks](@ref "Use Masks") for the image and the rays, how to
   [use several rays per detector cell](@ref "Use Several Rays per Cell"), how to
+  [model the focal spot](@ref "Model the Focal Spot"), how to
   [differentiate through a projector](@ref "Differentiate through a Projector"), how to
   [use geometries of Sinograms.jl](@ref "Use Geometries of Sinograms.jl") and how to
   [write your own projector](@ref "Write a Projector") or [sampling strategy](@ref "Write a Sampling Strategy").
 - The explanation pages introduce [the parameters of a scan](@ref "Parameters of a Scan") step by step,
   describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
   what every projector computes (the [system matrix](@ref "System Matrix")), the projection methods
-  ([Siddon's Method](@ref), [Joseph's Method](@ref), [several rays per cell](@ref "Several Rays per Cell"),
-  the [Distance-Driven Method](@ref) and the [Voxel-Driven Method](@ref)), how they
-  [compare](@ref "Comparing Projectors"), and
+  ([Siddon's Method](@ref), [Joseph's Method](@ref), the [Distance-Driven Method](@ref) and the
+  [Voxel-Driven Method](@ref)), how they [compare](@ref "Comparing Projectors"),
+  [how the beam is sampled](@ref "Sampling the Beam") over detector cells and the focal spot, and
   [workgroups, ray order and runs of voxels](@ref "Workgroups, Ray Order and Runs of Voxels").
 - The reference lists all types and functions by domain: [Images](api/images.md), [Projection Geometries](api/geometries.md), [Operators](api/operators.md), [Projectors](api/projectors.md) and, for implementers, [Internals](api/internals.md).
 

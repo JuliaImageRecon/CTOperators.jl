@@ -4,7 +4,7 @@
 # ray per cell, through its center. When the cells are large compared to the voxels, the back
 # projection of such rays has gaps (Miao 2013, p. 29). This guide shows the effect on a small example
 # and how detector sampling ([`sampled`](@ref) with a [`DetectorSampling`](@ref)) traces several rays per
-# cell instead. [Several Rays per Cell](@ref) explains how the rays are placed and weighted,
+# cell instead. [Sampling the Beam](@ref) explains how the rays are placed and weighted,
 # and [Comparing Projectors](@ref) when it matters.
 
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
@@ -134,7 +134,7 @@ nothing #hide
 #
 # ## Ray weights
 #
-# The rays of a cell can also count differently, e.g. for a detector response that falls off towards
+# The rays of a cell can also count differently, e.g. for a detector response that falls off toward
 # the cell edges. The ray weights are normalized per cell:
 
 op_weighted = sampled(op; detector=DetectorSampling(RegularPoints(4, 1); weights=GaussianWeights(0.4)));
@@ -150,7 +150,7 @@ op_weighted = sampled(op; detector=DetectorSampling(RegularPoints(4, 1); weights
 # * Detector sampling works on every device (`storage=CuArray` etc.), and the random positions are the same
 #   on all of them, in the forward and the back projection, and for `subset(op, views)`.
 # * Masks work as on plain geometries: a masked data element skips all its rays.
-# * Only detector geometries have cells: a `RayList` cannot be wrapped.
+# * Only detector geometries have cells: `sampled` refuses detector sampling on a `RayList`.
 #
 # ## References
 #
