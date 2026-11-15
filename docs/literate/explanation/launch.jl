@@ -111,8 +111,8 @@ nothing #hide
 # Without `launch`, the voxel-driven projector takes runs of 8 voxels on the CPU and runs of 2 on
 # GPUs, in workgroups of the size KernelAbstractions.jl chooses (a run is work per thread, not a
 # number of threads). The run lengths were chosen on one CPU and on the GPU of our benchmarks (the
-# measurements are in `benchmark/README.md` of the repository, with the scripts
-# `benchmark/voxeldriven.jl` and `benchmark/fdk.jl`); on other devices they are a starting point.
+# measurements are in `benchmark/README.md` of the repository, made with `benchmark/tune_launch.jl`,
+# which also times them on other devices); on other devices they are a starting point.
 # Runs of 16 voxels, for the projector and for FDK:
 #
 # ```julia

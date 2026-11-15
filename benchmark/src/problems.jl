@@ -24,12 +24,20 @@ helix(n, nviews) = helical_cone_beam(; angles=range(0, 6pi, nviews), pitch=n / 2
 # Parallel beam over half a turn, one detector cell per voxel.
 parallel(n, nviews) = parallel_beam(; angles=range(0, pi, nviews + 1)[1:nviews], nu=n, nv=n, du=1.0)
 
+# The problem of the reconstruction suite (FDK): a full circular scan with a flat detector, 360 views,
+# 256 x 128 cells of 2 mm (1 mm at the axis), the source 500 mm from the axis, a volume of 128³ voxels
+# of 1 mm. Sinograms.jl's CtFanFlat(; ns=256, nt=128, ds=2, dt=2, na=360, dsd=1000, dod=500) is the
+# same geometry (checked by its adapter).
+fdk_volume() = ImageGeom(; dims=(128, 128, 128), deltas=(1.0f0, 1.0f0, 1.0f0))
+fdk_scan() = circular_cone_beam(; angles=range(0, 2pi, 361)[1:360], dso=500, dsd=1000, nu=256, nv=128, du=2.0)
+
 const PROBLEMS = Dict(
   "cone128" => () -> Problem("cone128", volume(128), cone(128, 180)),
   "cone256" => () -> Problem("cone256", volume(256), cone(256, 360)),
   "helix256" => () -> Problem("helix256", volume(256), helix(256, 540)),
   "parallel128" => () -> Problem("parallel128", volume(128), parallel(128, 180)),
   "parallel256" => () -> Problem("parallel256", volume(256), parallel(256, 360)),
+  "fdk128" => () -> Problem("fdk128", fdk_volume(), fdk_scan()),
 )
 
 include("suites.jl")
@@ -66,3 +74,8 @@ function error_rays(p::Problem; n=20_000)
   exact = [radon(objects)(line_coordinates(ray(p.geometry, i)...)...) for i in idx]
   idx, exact
 end
+
+# The data of a reconstruction: the forward projection of the phantom with Joseph's method, Float32,
+# on the CPU (the same for every library).
+projection_data(p::Problem) = JosephProjector(p.image, p.geometry) * phantom_image(p)
+
