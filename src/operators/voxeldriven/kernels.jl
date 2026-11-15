@@ -161,21 +161,20 @@ end
 function launch_voxels!(kernel, op::VoxelDrivenProjector, out, in)
   box = voxel_box(op.grid)
   backend = KA.get_backend(op)
-  config = voxel_launch(op.launch, backend)
-  run = Val(voxels_per_thread(config))
+  layout = launch_layout(op, op.launch, geometry(op), backend)
+  wg = launch_workgroupsize(op, op.launch, layout, backend)
+  run = Val(voxels_per_thread(layout))
   n = Int(run_count(box, run))
   n == 0 && return out
-  wg = config.workgroupsize
   k = isnothing(wg) ? kernel(backend) : kernel(backend, wg)
   k(out, in, op.grid, geometry(op), op.projection, box, ray_mask(op), op.scale, run, Val(op.grid.dims[3] == 1); ndrange=n)
   out
 end
 
-# the projector's launch or the defaults of the device: on the CPU runs of 8 voxels, on GPUs runs of 2
-# in workgroups of 64 (measured on one CPU and one GPU, benchmark/README.md)
-voxel_launch(launch::LaunchConfig, backend) = launch
-voxel_launch(::Nothing, backend) =
-  backend isa KA.CPU ? LaunchConfig(; layout=(8,)) : LaunchConfig(; workgroupsize=64, layout=(2,))
+# the defaults of the voxel-driven projector: runs of 8 voxels on the CPU, one voxel per thread on
+# GPUs, and KernelAbstractions' workgroups (a run is work per thread, not threads per workgroup)
+launch_layout(::VoxelDrivenProjector, geometry, backend) = backend isa KA.CPU ? (8,) : ()
+launch_workgroupsize(::VoxelDrivenProjector, layout) = nothing
 
-voxels_per_thread(::LaunchConfig{0}) = 1
-voxels_per_thread(c::LaunchConfig{1}) = c.layout[1]
+voxels_per_thread(::Tuple{}) = 1
+voxels_per_thread(layout::NTuple{1,Int}) = layout[1]

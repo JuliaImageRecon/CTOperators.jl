@@ -1,79 +1,91 @@
-# How the projection kernels are launched: the workgroup size and the order in which the threads
-# take the rays. Thread j (1-based) traces ray `ray_index(order, j)`, or none if that is 0
-# (padding). Both affect the speed on GPUs (rays of neighboring detector cells read neighboring
-# voxels), and the best values depend on the device, hence the configuration; the defaults are in
-# `default_launch`.
+# How the projection kernels are launched: the workgroup size and the layout of the work over the
+# threads (for the ray-driven projectors the order in which the threads take the rays: thread j
+# (1-based) traces ray `ray_index(order, j)`, or none if that is 0, padding). Both affect the speed,
+# and the best values depend on the device, hence the configuration. What it does not give is
+# derived per projector: the layout from the device (`launch_layout`), the workgroup size from the
+# layout if the device allows it, else KernelAbstractions.jl's choice (`launch_workgroupsize`). The
+# methods per projector are next to the projectors (operators.jl, voxeldriven/kernels.jl).
 
 """
-    LaunchConfig(; workgroupsize=nothing, layout=())
+    LaunchConfig(; workgroupsize=nothing, layout=nothing)
 
 How a projector launches its kernels (forward and back projection), for tuning on a particular
 device. Pass it to a projector (or to [`FDK`](@ref)) with the keyword `launch`.
 
-* `workgroupsize`: the number of threads per workgroup (threads that run together on one part of
-  the device), `nothing` for the choice of KernelAbstractions.jl.
 * `layout`: how the work is laid out over the threads, a tuple whose meaning depends on the
-  projector; `()` for the plain layout. Each projector checks the length it accepts:
+  projector; `nothing` for the default of the device. Each projector checks the length it accepts:
   * [`SiddonProjector`](@ref), [`JosephProjector`](@ref), [`DistanceDrivenProjector`](@ref): `()`
-    or `(tu, tv)`. Every thread traces one ray. With `(tu, tv)` the threads of a workgroup take the
-    rays of tiles of `tu × tv` detector cells instead of consecutive cells of a detector row
-    (detector geometries only; ray lists keep their order). Tiles at the edges of the detector are
-    padded with idle threads; a workgroup size of `tu * tv` gives one tile per workgroup.
+    or `(tu, tv)`. Every thread traces one ray. With `()` the threads take the rays in the order of
+    the data (consecutive cells of a detector row); with `(tu, tv)` the threads take the rays of
+    tiles of `tu × tv` detector cells (detector geometries only; ray lists keep their order). Tiles
+    at the edges of the detector are padded with idle threads.
   * [`VoxelDrivenProjector`](@ref) (and [`FDK`](@ref), which back projects with it): `()` or `(R,)`.
-    With `(R,)` every thread takes a run of `R` neighboring voxels along `x` instead of one voxel
-    (the last run of a row may be shorter); `()` is the same as `(1,)`.
+    With `(R,)` every thread takes a run of `R` neighboring voxels along `x` (the last run of a row
+    may be shorter); `()` is one voxel per thread, the same as `(1,)`.
+* `workgroupsize`: the number of threads per workgroup (threads that run together on one part of
+  the device). `nothing` derives it: for tiles `tu * tv`, one tile per workgroup, if the device
+  allows workgroups that large; otherwise the choice of KernelAbstractions.jl. A number is used as
+  given; one the device or the kernel does not allow gives an error when the projector runs.
 
-Without `launch` (or with `launch=nothing`) a projector takes the defaults of its device, also after
+The defaults (`launch=nothing` or `LaunchConfig()`) of the device the projector is on, also after
 `adapt` to another device:
 
-* ray-driven projectors: on GPUs workgroups of 64 and tiles of 8 × 8 cells, on the CPU the plain
-  layout and the backend's workgroups;
-* the voxel-driven projector: on GPUs workgroups of 64 and runs of 2 voxels, on the CPU runs of
-  8 voxels and the backend's workgroups.
+* ray-driven projectors: on GPUs tiles of 8 × 8 cells (in workgroups of 64), on the CPU the order
+  of the data;
+* the voxel-driven projector: on GPUs one voxel per thread, on the CPU runs of 8 voxels.
 
-The defaults were tuned on one AMD GPU and one AMD CPU; tune them for yours. See the explanation
+The layouts were chosen on one AMD GPU and one AMD CPU; tune them for yours. See the explanation
 page [Workgroups and Ray Order on GPUs](@ref) in the documentation.
 
 # Example
 
 ```julia
 using CUDA
-launch = LaunchConfig(; workgroupsize=128, layout=(16, 8))
+launch = LaunchConfig(; layout=(16, 8))        # workgroups of 128 threads, one tile each
 op = JosephProjector(image, geometry; storage=CuArray, launch)
 ```
 """
-struct LaunchConfig{N}
+struct LaunchConfig{L<:Union{Nothing,Tuple{Vararg{Int}}}}
   workgroupsize::Union{Nothing,Int}
-  layout::NTuple{N,Int}
-  function LaunchConfig{N}(workgroupsize, layout::NTuple{N,Integer}) where {N}
+  layout::L
+  function LaunchConfig(workgroupsize::Union{Nothing,Integer}, layout::Union{Nothing,Tuple{Vararg{Integer}}})
     isnothing(workgroupsize) || workgroupsize > 0 ||
       throw(ArgumentError("workgroupsize must be positive, got $workgroupsize"))
-    all(>(0), layout) || throw(ArgumentError("the entries of layout must be positive, got $layout"))
-    new{N}(workgroupsize, Int.(layout))
+    isnothing(layout) || all(>(0), layout) ||
+      throw(ArgumentError("the entries of layout must be positive, got $layout"))
+    l = isnothing(layout) ? nothing : Int.(layout)
+    new{typeof(l)}(isnothing(workgroupsize) ? nothing : Int(workgroupsize), l)
   end
 end
 
-LaunchConfig(; workgroupsize=nothing, layout::Tuple{Vararg{Integer}}=()) =
-  LaunchConfig{length(layout)}(workgroupsize, layout)
+LaunchConfig(; workgroupsize=nothing, layout=nothing) = LaunchConfig(workgroupsize, layout)
 
 # The layouts a projector accepts: `lengths` the accepted lengths of the layout, `meaning` what the
 # layout means for it (for the message).
 function check_layout(launch, name, lengths, meaning)
-  isnothing(launch) || length(launch.layout) in lengths ||
+  isnothing(launch) || isnothing(launch.layout) || length(launch.layout) in lengths ||
     throw(ArgumentError("$name: the layout of LaunchConfig must be $meaning, got $(launch.layout)"))
   launch
 end
 
 check_ray_layout(launch, name) = check_layout(launch, name, (0, 2), "() or (tu, tv), tiles of detector cells")
 
-# the configuration of a launch: the projector's own or the defaults of the device
-launch_config(launch::LaunchConfig, geometry, backend) = launch
-launch_config(::Nothing, geometry, backend) = default_launch(geometry, backend)
+# The layout of a launch of `op`: that of the configuration `launch` (`nothing`: LaunchConfig()), or
+# else the projector's default on the device, `launch_layout(op, geometry, backend)`.
+function launch_layout(op, launch, geometry, backend)
+  layout = isnothing(launch) ? nothing : launch.layout
+  isnothing(layout) ? launch_layout(op, geometry, backend) : layout
+end
 
-# (KA.GPU is no help: since KernelAbstractions 0.10 it is the same as KA.Backend, the CPU included)
-function default_launch(geometry, backend)
-  backend isa KA.CPU && return LaunchConfig()
-  LaunchConfig(; workgroupsize=64, layout=geometry isa Union{AbstractDetectorGeometry,MultiRay} ? (8, 8) : ())
+# The workgroup size of a launch of `op` with `layout`: that of the configuration `launch`, or else
+# the size the projector asks for, `launch_workgroupsize(op, layout)` (an Int, or `nothing` for none),
+# if the device allows workgroups that large; otherwise `nothing`, KernelAbstractions' choice. The
+# compiled kernel's own limit can be lower; KernelAbstractions checks it at the launch.
+function launch_workgroupsize(op, launch, layout, backend)
+  given = isnothing(launch) ? nothing : launch.workgroupsize
+  isnothing(given) || return given
+  wanted = launch_workgroupsize(op, layout)
+  isnothing(wanted) || wanted > KA.KernelInterface.max_work_group_size(backend) ? nothing : wanted
 end
 
 # the rays in data order
@@ -89,9 +101,9 @@ struct TileOrder
 end
 
 # tiles only for detector geometries (also with several rays per cell); ray lists keep their order
-ray_order(launch::LaunchConfig, geometry) = DataOrder()
-ray_order(launch::LaunchConfig{2}, geometry::Union{AbstractDetectorGeometry,MultiRay}) =
-  TileOrder(detectorsize(geometry)..., launch.layout...)
+ray_order(layout, geometry) = DataOrder()
+ray_order(layout::NTuple{2,Int}, geometry::Union{AbstractDetectorGeometry,MultiRay}) =
+  TileOrder(detectorsize(geometry)..., layout...)
 
 nthreads(::DataOrder, geometry) = nrays(geometry)
 nthreads(o::TileOrder, geometry) = cld(o.nu, o.tu) * o.tu * cld(o.nv, o.tv) * o.tv * nviews(geometry)
@@ -116,9 +128,9 @@ function launch_rays!(kernel, op, out, in, args...)
   g = geometry(op)
   nrays(g) == 0 && return out
   backend = KA.get_backend(op)
-  config = launch_config(op.launch, g, backend)
-  order = ray_order(config, g)
-  wg = config.workgroupsize
+  layout = launch_layout(op, op.launch, g, backend)
+  wg = launch_workgroupsize(op, op.launch, layout, backend)
+  order = ray_order(layout, g)
   k = isnothing(wg) ? kernel(backend) : kernel(backend, wg)
   k(out, in, op.grid, g, order, ray_mask(op), args...; ndrange=nthreads(order, g))
   out
