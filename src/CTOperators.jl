@@ -19,7 +19,7 @@ export circular_cone_beam, helical_cone_beam, parallel_beam
 export datasize, nrays, ray, raytype, nviews, detectorsize, subset, projection_geometry
 export AbstractProjector, AdjointCTOperator, SiddonProjector, JosephProjector, DistanceDrivenProjector, VoxelDrivenProjector, LaunchConfig
 export AbstractVoxelScale, LineIntegralScale, UnitScale
-export geometry, image_geometry, imagesize, rowsums, colsums
+export geometry, image_geometry, imagesize, rowsums, colsums, subset_blocks
 export FDK, AbstractRedundancy, FullScan, ParkerWeights, ArrayRedundancy
 
 # not exported, but part of the interface: for projectors, geometries and strategies of other packages
