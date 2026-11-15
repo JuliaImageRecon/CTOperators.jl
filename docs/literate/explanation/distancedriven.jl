@@ -144,7 +144,7 @@ nothing #hide
 # - **Exact adjoint.** The back projection uses the same weights.
 # - **Needs detector cells.** The method works with [`ConeBeam`](@ref), [`ArcConeBeam`](@ref) and
 #   [`ParallelBeam`](@ref) geometries, not with a [`RayList`](@ref), which has no cells, and it does
-#   not take a [`MultiRay`](@ref): the footprint already covers the whole cell.
+#   not take detector sampling ([`sampled`](@ref)): the footprint already covers the whole cell.
 #
 # ## Implementation
 #

@@ -157,7 +157,8 @@ nothing #hide
 #   precision collect the sums in that precision (see [Choose the Precision](@ref)).
 # - **Needs a detector.** The method works with [`ConeBeam`](@ref), [`ArcConeBeam`](@ref) and
 #   [`ParallelBeam`](@ref) geometries, not with a [`RayList`](@ref) and not with a
-#   [`MultiRay`](@ref).
+#   geometry with several rays per cell; detector sampling ([`sampled`](@ref)) runs one projector per
+#   sample.
 # - **No fused normal operator.** The [Normal Operator](@ref) is fused for the projectors that run
 #   one thread per data element; here a thread owns a run of voxels, and `normalOperator` returns the
 #   generic normal operator of LinearOperatorCollection.jl.

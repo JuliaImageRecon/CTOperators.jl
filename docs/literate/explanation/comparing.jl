@@ -11,11 +11,11 @@
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "comparison_figures.jl")) #hide
 
-models = [("Siddon", SiddonProjector, identity), ("Joseph", JosephProjector, identity),
-          ("Siddon, 4 rays", SiddonProjector, g -> MultiRay(g, RegularPoints(4, 1))),
-          ("Joseph, 4 rays", JosephProjector, g -> MultiRay(g, RegularPoints(4, 1))),
-          ("distance-driven", DistanceDrivenProjector, identity),
-          ("voxel-driven", VoxelDrivenProjector, identity)]
+models = [("Siddon", SiddonProjector, nothing), ("Joseph", JosephProjector, nothing),
+          ("Siddon, 4 rays", SiddonProjector, RegularPoints(4, 1)),
+          ("Joseph, 4 rays", JosephProjector, RegularPoints(4, 1)),
+          ("distance-driven", DistanceDrivenProjector, nothing),
+          ("voxel-driven", VoxelDrivenProjector, nothing)]
 ratios = (0.5, 1.0, 2.0);
 
 # ## One view
@@ -70,7 +70,8 @@ nothing #hide
 #
 # The variation for cells of 2 pixels and regular points, for several numbers of rays per cell:
 
-coverage(P, k) = 2 .* colsums(P(comparison_image(64), MultiRay(comparison_scan(64, 2.0, range(0, pi, 181)[1:180]), RegularPoints(k, 1)); eltype=Float64)) ./ 180
+coverage(P, k) = 2 .* colsums(sampled(P(comparison_image(64), comparison_scan(64, 2.0, range(0, pi, 181)[1:180]); eltype=Float64);
+                                       detector=DetectorSampling(RegularPoints(k, 1)))) ./ 180
 [(rays=k, Siddon=round(variation(coverage(SiddonProjector, k), 24); digits=2),
   Joseph=round(variation(coverage(JosephProjector, k), 24); digits=2)) for k in (1, 2, 3, 4, 8)]
 

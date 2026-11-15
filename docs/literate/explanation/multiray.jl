@@ -1,6 +1,7 @@
 # # Several Rays per Cell
 #
-# This page explains what a projector computes on a `MultiRay` geometry, how the rays are placed and
+# This page explains what a projector computes with detector sampling ([`sampled`](@ref) with a
+# [`DetectorSampling`](@ref)), how the rays are placed and
 # weighted, where the random positions come from, and how it is implemented.
 # [Use Several Rays per Cell](@ref) shows how to use it.
 
@@ -12,7 +13,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # A ray-driven projector such as [Siddon's Method](@ref) or [Joseph's Method](@ref) treats a
 # detector cell as a point: one ray from the source to the center of the cell. When the cells are
 # large compared to the voxels, the back projection of such rays has gaps (Miao 2013, p. 29). A real
-# cell integrates over its area. `MultiRay(geometry, points; weights)` replaces the one ray by `K` rays
+# cell integrates over its area. `sampled(op; detector=DetectorSampling(points; weights))` replaces the one ray by `K` rays
 # per cell, ending at the offsets given by `points`, and averages their line integrals with the ray
 # weights ``w_{ik}`` given by `weights`:
 #
@@ -26,7 +27,7 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 #
 # The ray weights average **line integrals**, which keeps the operator linear. A detector averages
 # intensities, ``\exp(-\int x)``, which for a cell that sees an edge of the object is not the same
-# (the partial-volume effect); modeling that would make the operator nonlinear.
+# (the partial-volume effect); that model is nonlinear: [`IntensityModel`](@ref).
 #
 # ## Positions on the detector
 #
@@ -84,8 +85,8 @@ nothing #hide
 # The view is numbered as in the full scan: `subset(op, views)` keeps these numbers, so the rays of
 # a subset are those of the same views of the full operator, as
 # [ordered-subset methods](@ref "Ordered Subsets and Normalization") require. A
-# different seed gives a different, again fixed, set of positions: `MultiRay(geometry,
-# JitteredPoints(4, 1; seed=2))`.
+# different seed gives a different, again fixed, set of positions: `DetectorSampling(JitteredPoints(4, 1;
+# seed=2))`.
 #
 # ## Implementation
 #
@@ -93,14 +94,14 @@ nothing #hide
 #   rays of a cell has a length known to the compiler. With `K = 1` the projector was as fast as on
 #   the plain geometry in our benchmark (128³ on a GPU, see below).
 # * The kernels are those of the plain projectors: each thread handles one data element. For a
-#   `MultiRay` it traces the `K` rays one after the other and adds them up (forward), or first sums
+#   cell with several rays it traces the `K` rays one after the other and adds them up (forward), or first sums
 #   the ray weights and then lets every ray add its share (back). No memory per ray is needed.
 # * The time is about `K` times that of one ray; jittered offsets and Gaussian ray weights added nothing
 #   measurable on a GPU (see the
 #   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#several-rays-per-cell-gpu)).
 # * The ray mask applies per data element (a masked element skips all its rays), the clipping to the
 #   bounding box of the image mask per ray.
-# * A `MultiRay` has no single ray per data element. A projector that traces only one ray per cell
+# * A geometry with several rays per cell has no single ray per data element. A projector that traces only one ray per cell
 #   fails with a `MethodError` for `ray` when applied, instead of silently ignoring the other rays.
 #
 # ## References

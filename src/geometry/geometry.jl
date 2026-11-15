@@ -95,7 +95,8 @@ function subset end
 """
     nrays(g::AbstractProjectionGeometry)
 
-Number of data elements, `prod(datasize(g))`: one ray each, several for a [`MultiRay`](@ref).
+Number of data elements, `prod(datasize(g))`: one ray each, or several rays per cell with detector
+sampling (see [`sampled`](@ref)).
 """
 nrays(g::AbstractProjectionGeometry) = prod(datasize(g))
 
@@ -129,7 +130,7 @@ The ray of view `k` that ends at position `(cu, cv)` on the detector, as two poi
 point and that point plus the direction. Positions are in cell units: integers are cell centers, so
 `cell_ray(g, iu, iv, k)` is the ray of cell `(iu, iv)`; half-integers are cell edges, e.g.
 `cell_ray(g, iu + 1/2, iv, k)` runs through the middle of the edge between cells `iu` and `iu + 1`.
-Callable inside kernels. A [`MultiRay`](@ref) needs it from its geometry.
+Callable inside kernels. Detector sampling in a projector's kernel needs it from the geometry.
 """
 function cell_ray end
 
@@ -221,6 +222,6 @@ include("arcconebeam.jl")
 include("parallelbeam.jl")
 include("trajectories.jl")
 include("pcg4d.jl")
-include("multiray.jl")
+include("cellsampled.jl")
 include("shifted.jl")
 include("sampling.jl")

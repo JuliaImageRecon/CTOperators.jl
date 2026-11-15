@@ -32,7 +32,7 @@ using CTOperators, LinearOperatorCollection, LinearAlgebra
 #
 # With LinearOperatorCollection.jl loaded, `normalOperator` of a [`SiddonProjector`](@ref), a
 # [`JosephProjector`](@ref) or a [`DistanceDrivenProjector`](@ref) returns such a fused operator.
-# It covers several rays per cell ([`MultiRay`](@ref): all rays of a cell are summed, then traced
+# It covers several rays per cell (detector sampling, [`sampled`](@ref): all rays of a cell are summed, then traced
 # back) and the masks, and takes the weights as a vector or as a `WeightingOp`:
 
 image = ImageGeom(; dims=(32, 32, 16))

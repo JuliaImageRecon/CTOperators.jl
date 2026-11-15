@@ -1,6 +1,6 @@
 # # Write a Sampling Strategy
 #
-# [`MultiRay`](@ref) places several rays in a detector cell according to a point strategy and weights
+# [`DetectorSampling`](@ref) places several rays in a detector cell according to a point strategy and weights
 # them with a weighting strategy. Both are ordinary types, and new ones do not have to be part of
 # CTOperators.jl: a script or a package of your own can define them, and they fit in through multiple
 # dispatch. This guide writes one of each, and then lets `SamplingProjector` from
@@ -58,7 +58,7 @@ CTOperators.subray_weight(::LinearWeights, du, dv) = max(1 - abs(du), 0) * max(1
 
 # ## Using them
 #
-# The new types work like those of the package, with every projector that supports `MultiRay`. In
+# The new types work like those of the package, in [`sampled`](@ref) and [`FocalSpot`](@ref). In
 # one cell, the blue square, with the marker area relative to the largest weight in the panel: the
 # ring with two seeds, which rotate it, as other cells do; and `LinearWeights` on regular points,
 # where the corners count less.
@@ -70,17 +70,17 @@ save("ring_points.png", fig) #hide
 nothing #hide
 # ![Ring points in one cell](ring_points.png)
 
-g = MultiRay(geometry, RingPoints(8, 0.3; seed=1); weights=LinearWeights())
-op = JosephProjector(image, g)
+op = sampled(JosephProjector(image, geometry); detector=DetectorSampling(RingPoints(8, 0.3; seed=1); weights=LinearWeights()))
 x, y = rand(Float32, imagesize(op)), rand(Float32, datasize(op))
 dot(op * x, y) / dot(x, adjoint(op) * y)
 
 # ## A projector with several rays per cell
 #
 # `SamplingProjector` asks every ray for its end points with `ray`, so it has one ray per data
-# element. A `MultiRay` has no such ray. To work on every geometry, a projector moves the code for one
-# ray into a function and traces through [`CTOperators.trace_element`](@ref), which calls it once for
-# a plain geometry and once per ray of the cell for a `MultiRay`.
+# element. A geometry with several rays per cell has no such ray. To work on every geometry, a
+# projector moves the code for one ray into a function and traces through
+# [`CTOperators.trace_element`](@ref), which calls it once for a plain geometry and once per ray of
+# the cell for the geometry that detector sampling builds.
 #
 # The function takes an action, the grid, the two end points and the ray type `rt` (see
 # [`raytype`](@ref)). [`CTOperators.visit`](@ref) does what the two kernels of
@@ -129,9 +129,16 @@ function CTOperators.backward!(x, op::SamplingProjector, y)
   x
 end
 
+# Its kernels now sample the cells, which it declares with a method of
+# [`CTOperators.fuses_sampling`](@ref); [`sampled`](@ref) then hands it the geometry with several rays
+# per cell, instead of one projector per ray position (which needs points that are the same in every
+# cell, unlike `RingPoints`):
+
+CTOperators.fuses_sampling(::SamplingProjector, ::AbstractDetectorGeometry, ::DetectorSampling, ::CTOperators.Summed) = true
+
 # `SamplingProjector` takes every strategy, also the ones above, and its adjoint stays exact:
 
-op = SamplingProjector(image, MultiRay(geometry, RingPoints(8, 0.3; seed=1); weights=LinearWeights()))
+op = sampled(SamplingProjector(image, geometry); detector=DetectorSampling(RingPoints(8, 0.3; seed=1); weights=LinearWeights()))
 dot(op * x, y) / dot(x, adjoint(op) * y)
 
 # On plain geometries it computes the same as the kernels of [Write a Projector](@ref), up to rounding.
@@ -152,5 +159,6 @@ dot(op * x, y) / dot(x, adjoint(op) * y)
 # | where the rays of a cell end | [`AbstractPoints`](@ref) | [`CTOperators.point_offset`](@ref), [`CTOperators.points_eltype`](@ref) if it stores floats |
 # | how they are weighted | [`AbstractWeights`](@ref) | [`CTOperators.subray_weight`](@ref), [`CTOperators.weights_eltype`](@ref) if it stores floats |
 # | how a ray meets the voxels | [`AbstractProjector`](@ref) | see [Write a Projector](@ref), tracing through [`CTOperators.trace_element`](@ref) |
+# | that the kernel samples the cells | [`AbstractProjector`](@ref) | [`CTOperators.fuses_sampling`](@ref) |
 #
 # These functions are declared `public`: they are not exported, but they are part of the interface.

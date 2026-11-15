@@ -3,7 +3,8 @@
 # A detector cell measures the radiation that falls onto its whole area. The projectors trace one
 # ray per cell, through its center. When the cells are large compared to the voxels, the back
 # projection of such rays has gaps (Miao 2013, p. 29). This guide shows the effect on a small example
-# and how `MultiRay` traces several rays per cell instead. [Several Rays per Cell](@ref) explains how the rays are placed and weighted,
+# and how detector sampling ([`sampled`](@ref) with a [`DetectorSampling`](@ref)) traces several rays per
+# cell instead. [Several Rays per Cell](@ref) explains how the rays are placed and weighted,
 # and [Comparing Projectors](@ref) when it matters.
 
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
@@ -29,7 +30,7 @@ geometry = parallel_beam(; angles=range(0, pi, 181)[1:180], nu=96, nv=1, du=2.0)
 
 fine = ImageGeom(; dims=(4n, 4n), deltas=(0.25, 0.25))
 x_fine = Float32.(phantom(axis(fine, 1), axis(fine, 2), shepp_logan(SheppLoganToft(); fovs=(n, n)), 2))
-y = JosephProjector(fine, MultiRay(geometry, RegularPoints(16, 1))) * x_fine;
+y = sampled(JosephProjector(fine, geometry); detector=DetectorSampling(RegularPoints(16, 1))) * x_fine;
 
 # The reconstructions use 40 iterations of CGNR (conjugate gradients on the normal equations):
 
@@ -40,7 +41,7 @@ end;
 
 # ## One ray per cell
 #
-# Without `MultiRay`, each data element (one number of the projection data: one cell in one view) is
+# Without detector sampling, each data element (one number of the projection data: one cell in one view) is
 # one ray, through the center of its cell. Positions on the detector are counted in cells: cell 2 has
 # its center at position 2 and its edges at 1.5 and 2.5. With cells twice as wide as the pixels, the
 # rays of a view miss every other line of pixels (left; gray: pixels, orange: rays, blue: cells):
@@ -59,11 +60,12 @@ x_center = reconstruct(op);
 
 # ## Several rays per cell
 #
-# `MultiRay` wraps the geometry and traces several rays per cell, here at the centers of 4 equal
-# subcells along `u` (right in the figure above). The value of a cell is the mean of the
+# `sampled(op; detector=DetectorSampling(points))` traces several rays per cell, here at the centers
+# of 4 equal subcells along `u` (right in the figure above); Siddon's and Joseph's methods do it in
+# their kernels. The value of a cell is the mean of the
 # line integrals of its rays; the data keep their size.
 
-op_multi = SiddonProjector(image, MultiRay(geometry, RegularPoints(4, 1)))
+op_multi = sampled(op; detector=DetectorSampling(RegularPoints(4, 1)))
 x_multi = reconstruct(op_multi);
 
 #-
@@ -96,7 +98,7 @@ nothing #hide
 # 0.27 as well, and the gap depends on when the iterations stop: with 10 iterations the errors are
 # 0.35 and 0.28, with 200 they are 0.33 and 0.32.
 #
-# `JosephProjector` takes a `MultiRay` the same way. The rays of a 2D image stay in the image plane,
+# `JosephProjector` is sampled the same way. The rays of a 2D image stay in the image plane,
 # so the points are spread along `u` only (`RegularPoints(4, 1)`; `RegularPoints(4)` would be an
 # error). For a 3D image, `RegularPoints(4)` places 4 × 4 = 16 rays per cell, and the time grows
 # accordingly.
@@ -114,8 +116,8 @@ nothing #hide
 # `Points(offsets)` takes given offsets, a `2 × K` matrix in cell units, the same in every cell. How
 # the strategies compare on the data above:
 
-op_jittered = SiddonProjector(image, MultiRay(geometry, JitteredPoints(4, 1; seed=1)))
-op_random = SiddonProjector(image, MultiRay(geometry, RandomPoints(4; seed=1)))
+op_jittered = sampled(op; detector=DetectorSampling(JitteredPoints(4, 1; seed=1)))
+op_random = sampled(op; detector=DetectorSampling(RandomPoints(4; seed=1)))
 x_jittered, x_random = reconstruct(op_jittered), reconstruct(op_random);
 
 #-
@@ -135,7 +137,7 @@ nothing #hide
 # The rays of a cell can also count differently, e.g. for a detector response that falls off towards
 # the cell edges. The ray weights are normalized per cell:
 
-op_weighted = SiddonProjector(image, MultiRay(geometry, RegularPoints(4, 1); weights=GaussianWeights(0.4)));
+op_weighted = sampled(op; detector=DetectorSampling(RegularPoints(4, 1); weights=GaussianWeights(0.4)));
 
 # On the data above the error is 0.27, as with uniform ray weights.
 #
@@ -145,7 +147,7 @@ op_weighted = SiddonProjector(image, MultiRay(geometry, RegularPoints(4, 1); wei
 #   points and Gaussian ray weights added nothing measurable on a GPU (see the
 #   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#several-rays-per-cell-gpu)).
 #   No extra memory is needed.
-# * `MultiRay` works on every device (`storage=CuArray` etc.), and the random positions are the same
+# * Detector sampling works on every device (`storage=CuArray` etc.), and the random positions are the same
 #   on all of them, in the forward and the back projection, and for `subset(op, views)`.
 # * Masks work as on plain geometries: a masked data element skips all its rays.
 # * Only detector geometries have cells: a `RayList` cannot be wrapped.

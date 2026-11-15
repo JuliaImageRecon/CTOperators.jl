@@ -17,9 +17,9 @@ end
   # the scale travels with subset and adapt
   unit = VoxelDrivenProjector(image, g; scale=UnitScale())
   @test subset(unit, [1]).scale === UnitScale() && adapt(Array{Float64}, unit).scale === UnitScale()
-  # ray lists have no detector, a MultiRay has no meaning here
+  # ray lists have no detector; detector sampling runs sequentially (sampled)
   @test_throws ArgumentError VoxelDrivenProjector(image, RayList(g))
-  @test_throws ArgumentError VoxelDrivenProjector(image, MultiRay(g, RegularPoints(2)))
+  @test_throws ArgumentError VoxelDrivenProjector(image, CTOperators.CellSampled(g, RegularPoints(2)))
   masked = VoxelDrivenProjector(ImageGeom(MaskCircle(); dims=(8, 8, 6)), g; raymask=trues(datasize(g)))
   @test CTOperators.handles_raymask(masked) && !isnothing(CTOperators.image_mask(masked))
   @test CTOperators.ray_mask(subset(masked, [2, 5])) == trues(12, 9, 2)

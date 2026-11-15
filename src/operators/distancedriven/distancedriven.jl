@@ -12,7 +12,7 @@ projection is the exact adjoint. See [Distance-Driven Method](@ref) and [System 
 
 Works with detector geometries ([`AbstractDetectorGeometry`](@ref): [`ConeBeam`](@ref),
 [`ArcConeBeam`](@ref), [`ParallelBeam`](@ref)), not with ray lists, which have no detector cells,
-nor with a [`MultiRay`](@ref): the footprint already covers the whole cell. For a 2D image the
+nor with detector sampling ([`sampled`](@ref)): the footprint already covers the whole cell. For a 2D image the
 footprint extends only within the image plane.
 
 Keywords:
@@ -63,9 +63,8 @@ function DistanceDrivenProjector(image::ImageGeom, geometry::AbstractDetectorGeo
   distance_driven_projector(image, device_geometry(geometry, T, storage), launch, raymask)
 end
 
-DistanceDrivenProjector(image::ImageGeom, geometry::MultiRay; kwargs...) =
-  throw(ArgumentError("DistanceDrivenProjector integrates over the whole detector cell; it takes the " *
-                      "geometry of the MultiRay, not the MultiRay"))
+DistanceDrivenProjector(image::ImageGeom, geometry::CellSampled; kwargs...) =
+  throw(ArgumentError("DistanceDrivenProjector integrates over the whole detector cell; it takes no detector sampling"))
 
 DistanceDrivenProjector(image::ImageGeom, geometry::AbstractProjectionGeometry; kwargs...) =
   throw(ArgumentError("DistanceDrivenProjector needs detector cells: a ConeBeam, ArcConeBeam or ParallelBeam, " *

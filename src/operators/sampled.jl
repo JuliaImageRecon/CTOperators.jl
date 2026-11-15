@@ -1,6 +1,6 @@
 # The sampling of the beam (geometry/sampling.jl) as operators. A projector either samples in its
 # kernel ("fused": the detector sampling of the ray-driven projectors, through the internal
-# MultiRay geometry) or the operator sums projectors on shifted geometries, one per sample
+# CellSampled geometry) or the operator sums projectors on shifted geometries, one per sample
 # ("sequential"). Which projector can do what is asked by dispatch (`supports_sampling`,
 # `fuses_sampling`), so that projectors of other packages opt in with a method.
 

@@ -14,9 +14,9 @@ end
   @test isapprox(subset(op, [2, 5]) * x, (op * x)[:, :, [2, 5]])
   op32 = adapt(Array{Float32}, op)
   @test op32 isa DistanceDrivenProjector{Float32} && image_geometry(op32) === image
-  # ray lists have no detector cells, and the footprint already covers the cell: no MultiRay
+  # ray lists have no detector cells, and the footprint already covers the cell: no detector sampling
   @test_throws ArgumentError DistanceDrivenProjector(image, RayList(g))
-  @test_throws ArgumentError DistanceDrivenProjector(image, MultiRay(g, RegularPoints(2)))
+  @test_throws ArgumentError DistanceDrivenProjector(image, CTOperators.CellSampled(g, RegularPoints(2)))
   # the masks and the index type of the grid, as for the other projectors
   masked = DistanceDrivenProjector(ImageGeom(MaskCircle(); dims=(8, 8, 6)), g; raymask=trues(datasize(g)))
   @test CTOperators.handles_raymask(masked) && !isnothing(CTOperators.image_mask(masked))

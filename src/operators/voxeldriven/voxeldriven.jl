@@ -88,7 +88,7 @@ within the thickness of the image at the position of a pixel gets two cells with
 
 Works with detector geometries ([`AbstractDetectorGeometry`](@ref): [`ConeBeam`](@ref),
 [`ArcConeBeam`](@ref), [`ParallelBeam`](@ref)), not with ray lists, which have no detector to
-project onto, nor with a [`MultiRay`](@ref).
+project onto. Detector sampling ([`sampled`](@ref)) runs one projector per sample.
 
 Keywords:
 
@@ -143,9 +143,9 @@ function VoxelDrivenProjector(image::ImageGeom, geometry::AbstractDetectorGeomet
   voxel_driven_projector(image, device_geometry(geometry, T, storage), launch, raymask, scale)
 end
 
-VoxelDrivenProjector(image::ImageGeom, geometry::MultiRay; kwargs...) =
-  throw(ArgumentError("VoxelDrivenProjector projects voxels onto the detector; it takes the geometry of the " *
-                      "MultiRay, not the MultiRay"))
+VoxelDrivenProjector(image::ImageGeom, geometry::CellSampled; kwargs...) =
+  throw(ArgumentError("VoxelDrivenProjector projects voxels onto the detector; detector sampling runs " *
+                      "one projector per sample (see sampled)"))
 
 VoxelDrivenProjector(image::ImageGeom, geometry::AbstractProjectionGeometry; kwargs...) =
   throw(ArgumentError("VoxelDrivenProjector needs a detector: a ConeBeam, ArcConeBeam or ParallelBeam, " *

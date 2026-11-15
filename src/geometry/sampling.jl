@@ -42,8 +42,7 @@ end
     DetectorSampling(points; weights=UniformWeights())
 
 Several rays per detector cell, ending at the offsets of `points` (in cell units, `±1/2` at the cell
-edges) and averaged with the ray weights of `weights`, normalized to sum 1 per cell, as for
-[`MultiRay`](@ref).
+edges) and averaged with the ray weights of `weights`, normalized to sum 1 per cell.
 """
 struct DetectorSampling{P<:AbstractPoints,W<:AbstractWeights} <: AbstractSampling
   points::P

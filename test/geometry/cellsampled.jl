@@ -1,12 +1,12 @@
-# MultiRay (src/geometry/multiray.jl): the subrays of a detector cell end inside the cell at the
+# CellSampled (src/geometry/cellsampled.jl), the internal geometry of detector sampling: the subrays of a detector cell end inside the cell at the
 # positions of the point strategy; random positions depend only on seed, cell, view (numbered as in
 # the full geometry) and subray, so subsets and other element types draw the same ones.
 
-@testitem "MultiRay: points and subrays" tags = [:geometry, :multiray] begin
-  using CTOperators: subray, nsubrays, point_offset, pixel_index
+@testitem "CellSampled: points and subrays" tags = [:geometry, :sampling] begin
+  using CTOperators: CellSampled, subray, nsubrays, point_offset, pixel_index
   g = circular_cone_beam(; angles=range(0, 2pi, 6)[1:5], dso=50, dsd=100, nu=7, nv=3, du=1.5, dv=2.0)
   # one subray at the cell center is the ray of the cell, with weight 1
-  m = MultiRay(g, RegularPoints(1))
+  m = CellSampled(g, RegularPoints(1))
   @test nsubrays(m) == 1 && datasize(m) == datasize(g)
   @test all(subray(m, i, 1) == (ray(g, i)..., 1.0) for i in 1:nrays(g))
   # offsets: regular points at the subcell centers, jittered ones inside their subcell, random ones
@@ -27,15 +27,15 @@
   offsets = [point_offset(RandomPoints(4; seed=s), Float64, iu, 1, 1, k) for s in 0:1, iu in 1:7, k in 1:4]
   @test allunique(offsets)
   # given points; Gaussian weights fall off from the center
-  m = MultiRay(g, Points([0.0 0.25; 0.0 0.0]); weights=GaussianWeights(0.5))
+  m = CellSampled(g, Points([0.0 0.25; 0.0 0.0]); weights=GaussianWeights(0.5))
   @test subray(m, 1, 1)[3] == 1 && isapprox(subray(m, 1, 2)[3], exp(-0.125))
 end
 
 # Gaussian points: normally distributed around the cell center with the given widths, identical
 # rays counting equally; the seed fixes them
-@testitem "MultiRay: Gaussian points" tags = [:geometry, :multiray] begin
+@testitem "CellSampled: Gaussian points" tags = [:geometry, :sampling] begin
   using Adapt
-  using CTOperators: point_offset
+  using CTOperators: CellSampled, point_offset
   mean(x) = sum(x) / length(x)
   std(x) = sqrt(mean((x .- mean(x)) .^ 2))
   sigma_u, sigma_v = 0.3, 0.6
@@ -52,16 +52,16 @@ end
   @test point_offset(p, Float64, 3, 2, 1, 5) == point_offset(GaussianPoints(16, sigma_u, sigma_v; seed=4), Float64, 3, 2, 1, 5)
   @test point_offset(p, Float64, 3, 2, 1, 5) != point_offset(GaussianPoints(16, sigma_u, sigma_v; seed=5), Float64, 3, 2, 1, 5)
   g = circular_cone_beam(; angles=range(0, 2pi, 5)[1:4], dso=50, dsd=100, nu=5, nv=3, du=1.5)
-  @test adapt(Array{Float32}, MultiRay(g, GaussianPoints(4, 0.3))).points isa GaussianPoints{4,Float32}
+  @test adapt(Array{Float32}, CellSampled(g, GaussianPoints(4, 0.3))).points isa GaussianPoints{4,Float32}
   @test_throws ArgumentError GaussianPoints(4, -0.1)
   @test_throws ArgumentError GaussianPoints(0, 0.1)
 end
 
-@testitem "MultiRay: subset, adapt, errors" tags = [:geometry, :multiray] begin
+@testitem "CellSampled: subset, adapt, errors" tags = [:geometry, :sampling] begin
   using Adapt
-  using CTOperators: subray
+  using CTOperators: CellSampled, subray
   g = helical_cone_beam(; angles=range(0, 4pi, 9), pitch=10, dso=50, dsd=100, nu=5, nv=4, du=1.5)
-  m = MultiRay(g, JitteredPoints(2, 3; seed=11); weights=GaussianWeights(0.3, 0.6))
+  m = CellSampled(g, JitteredPoints(2, 3; seed=11); weights=GaussianWeights(0.3, 0.6))
   # the subrays of a subset (also of a subset of a subset) are those of the same views of m
   views = [2, 5, 9]
   s = subset(subset(m, [1, 2, 5, 8, 9]), [2, 3, 5])
@@ -72,8 +72,8 @@ end
   s32 = adapt(Array{Float32}, s)
   @test eltype(s32) == Float32 && s32.weights isa GaussianWeights{Float32}
   @test all(isapprox.(subray(s32, 7, 4), subray(s, 7, 4); rtol=1e-5))
-  # ray lists have no cells; a MultiRay has no single ray per element
-  @test_throws ArgumentError MultiRay(RayList(g), RegularPoints(2))
+  # ray lists have no cells; a CellSampled geometry has no single ray per element
+  @test_throws ArgumentError CellSampled(RayList(g), RegularPoints(2))
   @test_throws MethodError ray(m, 1)
   @test_throws ArgumentError RegularPoints(0, 2)
   @test_throws ArgumentError RandomPoints(0)
