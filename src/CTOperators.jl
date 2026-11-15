@@ -22,6 +22,7 @@ export AbstractVoxelScale, LineIntegralScale, UnitScale
 export geometry, image_geometry, imagesize, rowsums, colsums
 export FDK, AbstractRedundancy, FullScan, ParkerWeights, ArrayRedundancy
 export AbstractSampling, FocalSpot, DetectorSampling, sampled, stacked, SampleSum, SampleStack
+export IntensityModel, IntensityGradient
 
 # not exported, but part of the interface: for projectors, geometries and strategies of other packages
 public forward!, backward!, similar_projector, storage_array, device_geometry
@@ -29,7 +30,7 @@ public point_offset, random_pair, points_eltype, subray_weight, weights_eltype
 public trace_element, in_plane, one_layer, cell_ray, project_point, DetectorHit, voxel_scale, is_masked, visit, Gather, Scatter, to_index, clip, VoxelGrid, index_type
 public CircularScan, redundancy_weights, redundancy_weight, fdk
 public image_mask, ray_mask, handles_raymask, projector_masks, ProjectorMasks
-public supports_sampling, fuses_sampling, varies_per_cell, sample_weights, Shifted
+public supports_sampling, fuses_sampling, varies_per_cell, sample_weights, Shifted, jacobian, gradient!
 
 """
     AbstractCTOperator{T}

@@ -92,12 +92,13 @@ end
     SampleSum
 
 The operator of [`sampled`](@ref) when it sums several projectors: `y = sum_k w_k .* (A_k x)` with
-a weight per view for every projector `A_k`, and the exact adjoint. Holds a data and an image
+a weight per view (or per data element, as in the Jacobian of an [`IntensityModel`](@ref)) for every
+projector `A_k`, and the exact adjoint. Holds a data and an image
 buffer, so it must not be applied by several tasks at once.
 """
 struct SampleSum{T,O<:AbstractCTOperator{T},V,D,I} <: AbstractCTOperator{T}
   ops::Vector{O}
-  weights::Vector{V}   # per projector, one weight per view, on the device
+  weights::Vector{V}   # per projector, one weight per view or per data element, on the device
   data::D
   image::I
 end
@@ -122,7 +123,7 @@ end
 function sample_operator(::Type{S}, ops, weights) where {S}
   op = first(ops)
   T, backend = eltype(op), KA.get_backend(op)
-  w = [copyto!(KA.allocate(backend, T, length(v)), T.(v)) for v in weights]
+  w = [copyto!(KA.allocate(backend, T, size(v)), T.(v)) for v in weights]
   S(collect(ops), w, KA.allocate(backend, T, datasize(op)), KA.allocate(backend, T, imagesize(op)))
 end
 
@@ -186,8 +187,14 @@ datasize(S::SampleStack) = (datasize(first(S.ops))..., length(S.ops))
 imagesize(S::SampledOperator) = imagesize(first(S.ops))
 KA.get_backend(S::SampledOperator) = KA.get_backend(first(S.ops))
 
-# the per-view weights as an array that broadcasts over the data of one projector
-view_weights(w) = reshape(w, 1, 1, :)
+# the weights as an array that broadcasts over the data of one projector: per view, or per data
+# element
+view_weights(w::AbstractVector) = reshape(w, 1, 1, :)
+view_weights(w::AbstractArray) = w
+
+# the weights of the views `views`, on the host
+weights_of_views(w::AbstractVector, views) = Array(w)[views]
+weights_of_views(w::AbstractArray, views) = Array(w)[:, :, views]
 
 function forward!(y, S::SampleSum, x)
   fill!(y, zero(eltype(y)))
@@ -226,9 +233,10 @@ function backward!(x, B::SampleStack, y)
   x
 end
 
-subset(S::SampleSum, views) = sample_operator(SampleSum, [subset(op, views) for op in S.ops], [Array(w)[views] for w in S.weights])
+subset(S::SampleSum, views) =
+  sample_operator(SampleSum, [subset(op, views) for op in S.ops], [weights_of_views(w, views) for w in S.weights])
 subset(B::SampleStack, views) =
-  sample_operator(SampleStack, [subset(op, views) for op in B.ops], [Array(w)[views] for w in B.weights])
+  sample_operator(SampleStack, [subset(op, views) for op in B.ops], [weights_of_views(w, views) for w in B.weights])
 
 Adapt.adapt_structure(to, S::SampleSum) = sample_operator(SampleSum, [adapt(to, op) for op in S.ops], [Array(w) for w in S.weights])
 Adapt.adapt_structure(to, B::SampleStack) =

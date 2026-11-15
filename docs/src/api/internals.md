@@ -36,7 +36,7 @@ Public = false
 
 ```@autodocs
 Modules = [CTOperators]
-Pages = ["operators/sampled.jl"]
+Pages = ["operators/sampled.jl", "operators/intensity.jl"]
 Public = false
 ```
 

@@ -149,6 +149,70 @@ end
       @test isapprox(Array(adjoint(A) * adapt(arrayType{T}, y)), adjoint(ref) * y; rtol=sqrt(eps(T)))
       B = stacked(P(image, g; eltype=T, storage=arrayType); source=spot)
       @test isapprox(Array(B * adapt(arrayType{T}, x)), stacked(P(image, g; eltype=Float64); source=spot) * x; rtol=sqrt(eps(T)))
+      # the intensity model on the device (log-sum-exp by broadcasts and reductions)
+      m = IntensityModel(P(image, g; eltype=T, storage=arrayType); source=spot)
+      mref = IntensityModel(P(image, g; eltype=Float64); source=spot)
+      xs = 0.05 .* x
+      pm = m(adapt(arrayType{T}, xs))
+      @test pm isa arrayType && isapprox(Array(pm), mref(xs); rtol=sqrt(eps(T)))
     end
   end
+end
+
+# The intensity model p(x) = -log sum_k w_k exp(-(A_k x)): never above the mean of the line
+# integrals (Jensen, up to rounding); its second-order term is half the weighted variance of the
+# samples; its Jacobian at 0 is the linear model, elsewhere the derivative of p (finite
+# differences); the gradient is J(x)ᵀ (p(x) - y).
+@testitem "Sampled: intensity model" tags = [:operators, :sampling] setup = [SamplingProblem] begin
+  using CTOperators: jacobian, gradient!, sample_weights
+  image = sampling_image()
+  op = JosephProjector(image, sampling_scan(:flat); eltype=Float64)
+  spot = FocalSpot(3.0; points=RegularPoints(2), weights=GaussianWeights(0.6))
+  cell = DetectorSampling(RegularPoints(2, 1))
+  m = IntensityModel(op; source=spot, detector=cell)
+  lin = sampled(op; source=spot, detector=cell, execution=:sequential)
+  x = 0.05 .* rand(image.dims...)       # line integrals of order 1
+  p = m(x)
+  @test size(p) == datasize(op) && all(p .<= lin * x .+ 1e-14 .* abs.(lin * x))
+  @test any(p .< lin * x .- 1e-6)        # the effect is there
+  @test vec(p) == m(vec(x))
+
+  # p_lin - p = Var/2 - kappa3/6 + O(eps^4) for the projections eps q of the samples, so
+  # (p_lin - p)/eps^2 - Var/2 is at most eps * max|q - mean|^3 / 6 in magnitude, plus rounding: the
+  # log-sum-exp forms p as -(M + log S) with M and log S of the size of |log w|, so p is off by a
+  # few eps(Float64) * (|log w| + 1), divided by eps^2
+  e = 1e-3
+  B = stacked(op; source=spot, detector=cell)
+  q = B * x
+  w = cat((reshape(v, 1, 1, :) for v in sample_weights(B))...; dims=4)
+  mean = sum(w .* q; dims=4)
+  var = dropdims(sum(w .* (q .- mean) .^ 2; dims=4); dims=4)
+  dev = dropdims(maximum(abs.(q .- mean); dims=4); dims=4)
+  lhs = (lin * (e .* x) .- m(e .* x)) ./ e^2
+  logw = maximum(abs, log.(w))
+  @test all(abs.(lhs .- var ./ 2) .<= e .* dev .^ 3 ./ 6 .+ 8 * eps() * (logw + 1) / e^2)
+
+  @test isapprox(jacobian(m, zero(x)) * x, lin * x; rtol=1e-14)
+  # central differences: truncation h^2/6 |p'''| with |p'''| <= max_k |A_k v|^3 (derivatives of a
+  # log-sum-exp of linear forms), rounding about 4 eps |p| / h
+  v = 0.05 .* randn(image.dims...)
+  h = 1e-4
+  Jv = jacobian(m, x) * v
+  av = maximum(abs, B * v)
+  fd = (m(x .+ h .* v) .- m(x .- h .* v)) ./ (2h)
+  @test maximum(abs.(fd .- Jv)) <= h^2 / 6 * av^3 + 4 * eps() * maximum(abs, p) / h
+  # the Jacobian is an exact adjoint pair; the gradient is its adjoint applied to the residual
+  J = jacobian(m, x)
+  yd = rand(datasize(op)...)
+  @test isapprox(dot(J * v, yd), dot(v, adjoint(J) * yd); rtol=1e-12)
+  y = lin * x
+  g = similar(x)
+  gradient!(g, m, x, y)
+  @test isapprox(g, adjoint(J) * (p .- y); rtol=1e-12)
+  G = IntensityGradient(m, y)
+  @test size(G) == (prod(image.dims), prod(image.dims)) && eltype(G) == Float64
+  @test isapprox(G * vec(x), vec(g); rtol=1e-14)
+  # the detector alone; jittered points need a projector that stacks them in its kernel
+  @test IntensityModel(op; detector=DetectorSampling(DiskPoints(1, 4)))(x) isa Array{Float64,3}
+  @test_throws ArgumentError IntensityModel(op; detector=DetectorSampling(JitteredPoints(2)))
 end
