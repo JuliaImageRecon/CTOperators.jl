@@ -33,7 +33,7 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   detector cell sees, for detector geometries; see [Distance-Driven Method](@ref).
 - **A voxel-driven projector**, which projects each voxel center onto the detector and interpolates
   between the cells, for detector geometries: its back projection writes each voxel once, its
-  forward projection shows a pattern when the cells are smaller than the voxels; see
+  forward projection shows a pattern when the cells are smaller than the projected voxels; see
   [Voxel-Driven Method](@ref).
 - **Generic geometries**: arbitrary rays given by start and end points, and cone-beam (flat or
   curved detector) and parallel-beam scanners described view by view, with any source trajectory
@@ -43,6 +43,11 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl): data as `Array`,
   `CuArray` (CUDA.jl), `ROCArray` (AMDGPU.jl) or `MtlArray` (Metal.jl).
 - **Differentiable** with respect to image and projection data (ChainRulesCore rules).
+- **Analytic reconstruction**: FDK for circular cone-beam scans and filtered back projection for
+  parallel beams, with full-scan or Parker weights; see [Reconstruct with FDK](@ref).
+- **Several rays per detector cell**: detector sampling with regular, jittered or random points and
+  weights, in the kernels of Siddon's and Joseph's methods; see
+  [Use Several Rays per Cell](@ref).
 
 ## Where to go next
 
@@ -55,22 +60,28 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   [tomosynthesis](@ref "Tomosynthesis").
 - The how-to guides show how to [set up a geometry](@ref "Set Up a Geometry"), including an object
   that moves during the scan, how to [run on a GPU](@ref "Run on a GPU") and
-  [choose the precision](@ref "Choose the Precision"), how to build
-  [ordered-subset methods](@ref "Ordered Subsets and Normalization"), how to
+  [choose the precision](@ref "Choose the Precision"), how to
+  [reconstruct with FDK](@ref "Reconstruct with FDK"), how to build
+  [ordered-subset methods](@ref "Use Ordered Subsets and Normalizations"), how to
   [use masks](@ref "Use Masks") for the image and the rays, how to
   [use several rays per detector cell](@ref "Use Several Rays per Cell"), how to
   [model the focal spot](@ref "Model the Focal Spot"), how to
   [differentiate through a projector](@ref "Differentiate through a Projector"), how to
-  [use geometries of Sinograms.jl](@ref "Use Geometries of Sinograms.jl") and how to
-  [write your own projector](@ref "Write a Projector") or [sampling strategy](@ref "Write a Sampling Strategy").
-- The explanation pages introduce [the parameters of a scan](@ref "Parameters of a Scan") step by step,
-  describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
+  [use geometries of Sinograms.jl](@ref "Use Geometries of Sinograms.jl") and how to write your own
+  [projector](@ref "Write a Projector"), [sampling strategy](@ref "Write a Sampling Strategy") or
+  [FDK windows and weights](@ref "Write FDK Windows and Weights").
+- The explanation pages introduce [the parameters of a scan](@ref "Parameters of a Scan") step by
+  step, describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
   what every projector computes (the [system matrix](@ref "System Matrix")), the projection methods
   ([Siddon's Method](@ref), [Joseph's Method](@ref), the [Distance-Driven Method](@ref) and the
   [Voxel-Driven Method](@ref)), how they [compare](@ref "Comparing Projectors"),
-  [how the beam is sampled](@ref "Sampling the Beam") over detector cells and the focal spot, and
-  [workgroups, ray order and runs of voxels](@ref "Workgroups, Ray Order and Runs of Voxels").
-- The reference lists all types and functions by domain: [Images](api/images.md), [Projection Geometries](api/geometries.md), [Operators](api/operators.md), [Projectors](api/projectors.md) and, for implementers, [Internals](api/internals.md).
+  [how the beam is sampled](@ref "Sampling the Beam") over detector cells and the focal spot,
+  [masks](@ref "Masks"), the [normal operator](@ref "Normal Operator"),
+  [workgroups, ray order and runs of voxels](@ref "Workgroups, Ray Order and Runs of Voxels"), and
+  [filtered back projection](@ref "Filtered Back Projection").
+- The reference lists all types and functions by domain: [Images](api/images.md),
+  [Projection Geometries](api/geometries.md), [Operators](api/operators.md),
+  [Projectors](api/projectors.md) and, for implementers, [Internals](api/internals.md).
 
 ## Related packages
 

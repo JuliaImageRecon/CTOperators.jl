@@ -93,8 +93,16 @@ end
 
 The operator of [`sampled`](@ref) when it sums several projectors: `y = sum_k w_k .* (A_k x)` with
 a weight per view (or per data element, as in the Jacobian of an [`IntensityModel`](@ref)) for every
-projector `A_k`, and the exact adjoint. Holds a data and an image
-buffer, so it must not be applied by several tasks at once.
+projector `A_k`, and the exact adjoint. Holds a data and an image buffer, so it must not be applied
+by several tasks at once.
+
+# Example
+```julia
+op = JosephProjector(image, geometry)
+A = sampled(op; source=FocalSpot(0.6; points=RegularPoints(3, 3)))   # a SampleSum of 9 projectors
+y = A * x
+z = adjoint(A) * y
+```
 """
 struct SampleSum{T,O<:AbstractCTOperator{T},V,D,I} <: AbstractCTOperator{T}
   ops::Vector{O}
@@ -110,6 +118,13 @@ The operator of [`stacked`](@ref): the projections `A_k x` of the samples side b
 `(datasize(op)..., K)`, and the exact adjoint `sum_k A_kᵀ y[…, k]`. The weights of the samples are
 [`sample_weights`](@ref); the product does not apply them. Holds buffers, so it must not be applied
 by several tasks at once.
+
+# Example
+```julia
+B = stacked(JosephProjector(image, geometry); source=FocalSpot(0.6; points=RegularPoints(3, 1)))
+P = B * x                     # size (datasize(op)..., 3)
+w = CTOperators.sample_weights(B)   # 3 vectors with a weight per view
+```
 """
 struct SampleStack{T,O<:AbstractCTOperator{T},V,D,I} <: AbstractCTOperator{T}
   ops::Vector{O}
@@ -169,6 +184,13 @@ side, a [`SampleStack`](@ref) with data of size `(datasize(op)..., K)`: `K` the 
 samples times that of the detector samples, each run by one projector. A projector that declares
 `fuses_sampling(…, ::CTOperators.Stacked) = true` keeps its detector samples in one term instead
 (none of this package does). Their weights are [`sample_weights`](@ref).
+
+# Example
+```julia
+op = SiddonProjector(image, geometry)
+B = stacked(op; detector=DetectorSampling(RegularPoints(2)))   # 4 ray positions per cell
+size(B * x) == (datasize(op)..., 4)
+```
 """
 function stacked(op::AbstractProjector; source=nothing, detector=nothing, execution::Symbol=:auto)
   ops, weights = sample_terms(op, source, detector, execution, Stacked())

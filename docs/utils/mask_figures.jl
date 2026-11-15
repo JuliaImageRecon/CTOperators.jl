@@ -19,7 +19,7 @@ function mask_box_figure(; n=12)
   # the box around the mask
   lo, hi = (first(rows) - 0.5, first(cols) - 0.5), (last(rows) + 0.5, last(cols) + 0.5)
   poly!(ax, Rect2f(lo..., (hi .- lo)...); color=:transparent, strokecolor=:steelblue, strokewidth=2)
-  text!(ax, hi[1], hi[2]; text="bounding box of the image mask", align=(:left, :bottom), offset=(4, 2), fontsize=13, color=:steelblue)
+  text!(ax, lo[1], hi[2]; text="bounding box of the image mask", align=(:left, :bottom), offset=(0, 2), fontsize=13, color=:steelblue)
   # rays: dashed where they are not traced, solid inside the box
   for (a, b) in (((-0.5, 2.0), (13.5, 9.0)), ((-0.5, 7.5), (13.5, 11.0)), ((2.0, -0.5), (11.0, 13.5)), ((-0.5, 1.0), (13.5, 2.5)))
     lines!(ax, [Point2f(a), Point2f(b)]; color=(:darkorange, 0.5), linestyle=:dash)

@@ -10,12 +10,13 @@ using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollect
 using ImageGeoms: axis
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #hide
+nothing #hide
 
 # ## The scan
 #
 # A 2D image of 128 × 128 pixels of 0.5 mm and a fan beam with a flat detector: 360 views over one
-# turn, the source 100 mm from the axis, the detector 300 mm from the source, 256 cells of 1 mm.
-# A point at distance `r` from the source is magnified by `M = 300 / r` onto the detector. In an image
+# turn, the source 100 mm from the axis, the detector 300 mm from the source, 256 cells of 1 mm. A
+# point at distance `r` from the source is magnified by `M = 300 / r` onto the detector. In an image
 # one voxel thick in `z` the rays stay in the image plane, so the spot is sampled along the detector
 # rows (`u`) only: it needs one row of points (`RegularPoints(n, 1)`); several rows and `DiskPoints`
 # are rejected. [Sampling the Beam](@ref) shows why the spot blurs the projections.
@@ -52,11 +53,11 @@ save("focalspot_profiles.png", fig) #hide
 nothing #hide
 # ![Detector profiles of a pixel for a point source and two spot sizes](focalspot_profiles.png)
 
-# Each source sample shifts the image of the pixel on the detector by `-(M - 1)` times its offset, so
-# the profile with the spot is that of the point source, convolved with the positions of the samples
-# scaled by `M - 1`. Variances add under convolution: the variance of the profile (in cells²) grows
-# by that of the 15 regular points over the width `f`, `f² (15² - 1) / (12 · 15²)`, times
-# `(M - 1)²`, divided by the cell size squared. Measured against this prediction, with
+# Each source sample shifts the shadow of the pixel on the detector by `-(M - 1)` times its offset,
+# so the profile with the spot is that of the point source, convolved with the positions of the
+# samples scaled by `M - 1`. Variances add under convolution: the variance of the profile (in
+# cells²) grows by that of the 15 regular points over the width `f`, `f² (15² - 1) / (12 · 15²)`,
+# times `(M - 1)²`, divided by the cell size squared. Measured against this prediction, with
 # `M = 300 / (100 - y)` for the pixel at `y`:
 
 centroid_var(p) = (c = sum((1:256) .* p) / sum(p); sum(((1:256) .- c) .^ 2 .* p) / sum(p))
@@ -66,22 +67,22 @@ spot_var(f, y) = f^2 * (15^2 - 1) / (12 * 15^2) * (magnification(y) - 1)^2 / 1.0
   predicted=round(sqrt(centroid_var(profiles[(y, 0.0)]) + spot_var(f, y)); digits=3))
  for y in (30, -30) for f in sizes]
 
-# `measured` and `predicted` are standard deviations of the profiles in cells. The blur grows with the
-# spot size and
-# is larger for the pixel near the source: with the same spot, the two pixels are blurred by
-# different amounts, the depth-dependent blur of the source (Tilley et al. 2016). Measurement and prediction differ by up to 0.024 cells: the prediction treats the
-# profile as shifted copies of a continuous one, while the cells of 1 mm sample each shifted copy at
-# other positions.
+# `measured` and `predicted` are standard deviations of the profiles in cells. The blur grows with
+# the spot size and is larger for the pixel near the source: with the same spot, the two pixels are
+# blurred by different amounts, the depth-dependent blur of the source (Tilley et al. 2016).
+# Measurement and prediction differ by up to 0.024 cells: the prediction treats the profile as
+# shifted copies of a continuous one, while the cells of 1 mm sample each shifted copy at other
+# positions.
 #
 # ## Shapes of the spot
 #
 # The points of a spot are given in units of its size, `±1/2` at its edges, by a point strategy, and
 # weighted by a weighting strategy, as for the detector cells ([Use Several Rays per Cell](@ref)): a
-# rectangle (`RegularPoints`), a circle or ellipse (`DiskPoints`), or a profile with Gaussian weights.
-# In the figure the blue square spans the offsets `±1/2` (for `DiskPoints` the spot is the inscribed
-# disk), the dotted lines divide it into the subcells of `RegularPoints`, and the orange points are
-# the samples, with the marker area relative to the largest weight. These shapes have several rows of
-# points: they are for 3D images.
+# rectangle (`RegularPoints`), a circle or ellipse (`DiskPoints`), or a profile with Gaussian
+# weights. In the figure the blue square spans the offsets `±1/2` (for `DiskPoints` the spot is the
+# inscribed disk), the dotted lines divide it into the subcells of `RegularPoints`, and the orange
+# points are the samples, with the marker area relative to the largest weight. These shapes have
+# several rows of points: they are for 3D images.
 
 fig = points_figure([("RegularPoints(5, 5)", RegularPoints(5, 5), UniformWeights()), #hide
                      ("DiskPoints(3, 8)", DiskPoints(3, 8), UniformWeights()), #hide
@@ -96,8 +97,9 @@ nothing #hide
 # spot = FocalSpot(0.4; points=DiskPoints(3, 8))
 # ```
 #
-# No projector samples a spot in its kernel: `sampled` builds one projector per sample, on a geometry
-# whose source is shifted, and sums them in a [`SampleSum`](@ref) of 7 projectors here. Its cost is
+# No projector samples a spot in its kernel, so the spot is sampled sequentially (see [Sampling the
+# Beam](@ref)): `sampled` builds one projector per sample, on a geometry whose source is shifted, and
+# sums them in a [`SampleSum`](@ref) of 7 projectors here. Its cost is
 # the number of samples times that of one projection; that works for every projector:
 
 A = sampled(op; source=FocalSpot(0.6; points=RegularPoints(7, 1)));
@@ -153,14 +155,14 @@ nothing #hide
 # ## Averaging intensities
 #
 # A detector cell averages intensities `exp(-p_k)` over its rays, not line integrals `p_k`.
-# [`IntensityModel`](@ref) models that: `p = -log(sum_k w_k exp(-p_k))`, as the simulator of De Man et
-# al. (1999) does for the focal spot and the detector cells. Where the rays of one
-# data element see different line integrals, at edges, it is smaller than the mean of the `p_k`. The
-# data are simulated with the intensity model on the fine image, and reconstructed with the linear
-# model (the mean of the line integrals) and with three Gauss–Newton steps on the intensity model: in
-# each step, the Jacobian [`CTOperators.jacobian`](@ref) at the current image, and 15 iterations of
-# CGNR for the correction. The largest line integral of the data and the largest difference between
-# the two models on them:
+# [`IntensityModel`](@ref) models that: `p = -log(sum_k w_k exp(-p_k))`, as the simulator of De Man
+# et al. (1999) does for the focal spot and the detector cells. Where the rays of one data element
+# see different line integrals, at edges, it is smaller than the mean of the `p_k`. The data are
+# simulated with the intensity model on the fine image, and reconstructed with the linear model (the
+# mean of the line integrals) and with three Gauss–Newton steps on the intensity model: in each
+# step, the Jacobian [`CTOperators.jacobian`](@ref) at the current image, and 15 iterations of CGNR
+# for the correction. The largest line integral of the data and the largest difference between the
+# two models on them:
 
 fine_spot = FocalSpot(1.5; points=RegularPoints(15, 1))
 y_int = IntensityModel(JosephProjector(fine, geometry); source=fine_spot)(x_fine)
@@ -187,14 +189,15 @@ nothing #hide
 
 # The values of the phantom, read as attenuation per mm, give line integrals up to 16.5, and the two
 # models differ by up to 6.2 on these data. The linear model reconstructs them with a relative error
-# of 0.48, with a double edge at the skull and rings inside; the three Gauss–Newton steps, which start
-# from it, reach 0.21, with one edge (the titles). This is one example, with data free of noise.
+# of 0.48, with a double edge at the skull and rings inside; the three Gauss–Newton steps, which
+# start from it, reach 0.21, with one edge (the titles). This is one example, with data free of
+# noise.
 #
 # ## Notes
 #
-# * A focal spot works with every projector on `ConeBeam` and `ArcConeBeam` geometries; detector
-#   sampling also on `ParallelBeam`, except for the distance-driven projector. Both also on a GPU
-#   (`storage=CuArray` etc. when building the projector).
+# * A focal spot works with every projector on `ConeBeam` and `ArcConeBeam`. Detector sampling works
+#   on every detector geometry (`ParallelBeam` too) with every projector except the distance-driven
+#   one. Both also run on a GPU (`storage=CuArray` etc. when building the projector).
 # * The intensity model builds on [`stacked`](@ref), one projector per sample; a detector sampling in
 #   it needs points that are the same in every cell (`RegularPoints`, `DiskPoints`, `Points`).
 # * [`IntensityGradient`](@ref) gives the gradient of `|p(x) - y|² / 2` as an operator, for solvers
@@ -204,6 +207,6 @@ nothing #hide
 #
 # - B. De Man, J. Nuyts, P. Dupont, G. Marchal, P. Suetens, "Metal streak artifacts in X-ray computed
 #   tomography: a simulation study", IEEE Transactions on Nuclear Science 46(3), 691–696, 1999.
-# - S. Tilley II, J. H. Siewerdsen, J. W. Stayman, "Model-based iterative reconstruction for flat-panel
-#   cone-beam CT with focal spot blur, detector blur, and correlated noise", Physics in Medicine and
-#   Biology 61(1), 296–319, 2016.
+# - S. Tilley II, J. H. Siewerdsen, J. W. Stayman, "Model-based iterative reconstruction for
+#   flat-panel cone-beam CT with focal spot blur, detector blur, and correlated noise", Physics in
+#   Medicine and Biology 61(1), 296–319, 2016.

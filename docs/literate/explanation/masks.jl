@@ -6,6 +6,7 @@
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "mask_figures.jl")) #hide
+nothing #hide
 
 # ## What a mask means
 #
@@ -34,8 +35,8 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "mask_figures.jl")) #hide
 #
 # * **Masked rays are not traced.** The kernel checks the ray mask before it sets up a ray: a masked
 #   ray writes 0 in the forward projection and returns at once in the back projection. With 20 % of
-#   the rays masked, the back projection got 17 to 20 % faster and the forward projection 4 to 14 %
-#   (256³ volume, AMD Radeon RX 7900 XT).
+#   the rays masked, the back projection got 16 to 20 % faster and the forward projection 4 to 15 %
+#   (256³ volume, with and without a box mask, AMD Radeon RX 7900 XT).
 # * **Rays are clipped to the bounding box of the image mask.** Every ray is clipped to a box before
 #   it is traced; without a mask the box is the volume, with a mask it is the smallest box that
 #   contains the mask (for Joseph widened by half a voxel across the ray, for the interpolation).
@@ -64,8 +65,8 @@ nothing #hide
 #
 # * `CTOperators.image_mask(op)` and `CTOperators.ray_mask(op)` return the masks of `op` on its
 #   device, or `nothing`. A subtype of `AbstractProjector` from another package has the mask of its
-#   `ImageGeom` and no ray mask (there is no way to give it one from outside); other operators have
-#   no masks.
+#   `ImageGeom` and no ray mask, unless it defines `CTOperators.projector_masks`; other operators
+#   have no masks.
 # * `CTOperators.handles_raymask(op)` states whether `op` applies its ray mask itself, as the
 #   projectors of this package do in their kernels. If it does not, the generic layer multiplies the
 #   data by the ray mask.

@@ -85,11 +85,11 @@ plan = FDK(image, geometry)
 x = plan * y               # y: line integrals of size (256, 128, 360)
 ```
 
-References:
-* L. A. Feldkamp, L. C. Davis, J. W. Kress, "Practical cone-beam algorithm", J. Opt. Soc. Am. A
-  1(6), 612–619, 1984.
+# References
+* L. A. Feldkamp, L. C. Davis, J. W. Kress, "Practical cone-beam algorithm", Journal of the Optical
+  Society of America A 1(6), 612–619, 1984.
 
-See also:
+# See also
 * A. C. Kak, M. Slaney, "Principles of Computerized Tomographic Imaging", IEEE Press, 1988,
   chapter 3.
 """

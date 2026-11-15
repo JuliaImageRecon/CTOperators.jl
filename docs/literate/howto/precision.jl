@@ -64,13 +64,13 @@ rows = Any[]
 for S in (Float16, BFloat16)
   ys = similar(y, S)
   mul!(ys, op, S.(x))
-  push!(rows, (setting="Float32 operator, $S image and data", forward=reldiff(ys, y),
+  push!(rows, (setting="Float32 operator, $(nameof(S)) image and data", forward=reldiff(ys, y),
                back=reldiff(adjoint(op) * S.(y), b64)))
 end
 for S in (Float16, BFloat16)
   bs = zeros(S, image.dims)
   mul!(bs, adjoint(op), Float32.(y))
-  push!(rows, (setting="Float32 operator, back projection into a $S image", forward=missing,
+  push!(rows, (setting="Float32 operator, back projection into a $(nameof(S)) image", forward=missing,
                back=reldiff(bs, b64)))
 end
 for T in (Float16, BFloat16)

@@ -162,7 +162,7 @@ the rays masked at random.
 | box 64³ | 20 % masked | 2.2 / 5.5 ms | 2.9 / 15.0 ms |
 
 Rays are clipped to the bounding box of the image mask: a small region of interest makes the
-projections 30 to 40× faster; the circle fills its box and gains nothing.
+projections 30 to 43× faster; the circle fills its box and gains nothing.
 Masked rays are not traced: the back projection gets faster by about the masked fraction.
 
 

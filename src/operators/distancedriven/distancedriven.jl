@@ -43,11 +43,11 @@ y = op * x                 # forward projection, size (256, 128, 360)
 z = adjoint(op) * y        # back projection
 ```
 
-References:
-* B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
-  Med. Biol. 49(11), 2463–2475, 2004.
+# References
+* B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Physics
+  in Medicine and Biology 49(11), 2463–2475, 2004.
 * R. Liu, L. Fu, B. De Man, H. Yu, "GPU-based branchless distance-driven projection and
-  backprojection", IEEE Trans. Comput. Imaging 3(4), 617–632, 2017.
+  backprojection", IEEE Transactions on Computational Imaging 3(4), 617–632, 2017.
 """
 struct DistanceDrivenProjector{T,G<:AbstractDetectorGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T}} <: AbstractProjector{T,G}
   image::I

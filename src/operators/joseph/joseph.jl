@@ -7,8 +7,9 @@ line integral is the sum over the layers of the interpolated value times the len
 the layer. Compared with [`SiddonProjector`](@ref):
 
 * the image model is smooth, so the projection changes continuously when a ray moves;
-* for one parallel-beam view with cells as wide as the voxels, the rays cover the voxels more evenly, except near
-  45°, where the two methods give similar weights;
+* for one parallel-beam view at 17° with cells as wide as the voxels, the rays cover the voxels more
+  evenly (see [Joseph's Method](@ref)); at exactly 45° both methods give the same weights (Joseph
+  1982);
 * the projection is exact for images that are linear functions of the position rather than for
   voxel images.
 
@@ -46,9 +47,9 @@ y = op * x                 # forward projection, size (256, 128, 360)
 z = adjoint(op) * y        # back projection
 ```
 
-Reference:
-* P. M. Joseph, "An improved algorithm for reprojecting rays through pixel images", IEEE Trans.
-  Med. Imaging 1(3), 192–196, 1982.
+# References
+* P. M. Joseph, "An improved algorithm for reprojecting rays through pixel images", IEEE
+  Transactions on Medical Imaging 1(3), 192–196, 1982.
 """
 struct JosephProjector{T,G<:AbstractProjectionGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T}} <: AbstractProjector{T,G}
   image::I

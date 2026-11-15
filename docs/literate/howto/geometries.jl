@@ -7,6 +7,7 @@
 
 using CTOperators, CairoMakie
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "geometry_figures.jl")) #hide
+nothing #hide
 
 # ## The image
 #
@@ -15,10 +16,11 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "geometry_figures.jl")) #
 # and an offset of the center (in voxels). Lengths are in arbitrary units, the same as those of the
 # projection geometry (mm in these examples).
 
-image = ImageGeom(; dims=(128, 128, 96), deltas=(0.5, 0.5, 0.8), offsets=(0, 0, 0.5))
+image = ImageGeom(; dims=(128, 128, 96), deltas=(0.5, 0.5, 0.8), offsets=(0, 0, 0.5));
 
-# A 2D `ImageGeom` is treated as one slice at `z = 0` that is 1 length unit thick, for 2D problems
-# with rays in that plane (for example a geometry with one detector row, `nv = 1`, at `z = 0`).
+# A 2D `ImageGeom` is treated as an image one voxel thick in `z` (1 length unit, centered at
+# `z = 0`), for 2D problems with rays in that plane (for example a geometry with one detector row,
+# `nv = 1`, at `z = 0`).
 
 image2d = ImageGeom(; dims=(112, 112), deltas=(1.0, 1.0));
 
@@ -55,6 +57,11 @@ save("cone_beam.png", fig) #hide
 nothing #hide
 # ![One view of the circular and of the helical cone beam](cone_beam.png)
 
+# An object that moves along the rotation axis during a circular scan, as on a table or a conveyor,
+# sees a helical geometry: only the relative position of object and scanner matters. An object that
+# moves by `+s` per turn corresponds to `pitch = -s`.
+#
+
 # ## Curved detectors
 #
 # Clinical CT scanners have detectors curved on a cylinder about the source. `detector=:arc` gives
@@ -63,11 +70,6 @@ nothing #hide
 clinical = helical_cone_beam(; angles=range(0, 6pi, 1081)[1:1080], pitch=20, z0=-30, dso=200, dsd=400,
                              nu=400, nv=64, du=0.4, dv=0.4, detector=:arc);
 
-#
-# An object that moves along the rotation axis during a circular scan, as on a table or a conveyor,
-# sees a helical geometry: only the relative position of object and scanner matters. An object that
-# moves by `+s` per turn corresponds to `pitch = -s`.
-#
 # ## Any trajectory, for example a moving object
 #
 # A [`ConeBeam`](@ref) takes the source position, the detector center and the two detector
@@ -109,14 +111,13 @@ parallel = parallel_beam(; angles=range(0, pi, 181)[1:180], nu=256, nv=96, du=0.
 datasize(parallel)
 
 # Parallel-beam rays are infinite lines, not segments: they cross the whole volume whatever the
-# position of the detector. The detector only defines where the rays lie; its plane passes through
-# the origin:
+# position of the detector. The detector only defines where the rays lie; its plane (blue) passes
+# through the origin. The figure shows some rays (orange), their direction and the volume (gray box):
 
 fig = parallel_beam_figure(parallel, image) #hide
 save("parallel_beam.png", fig) #hide
 nothing #hide
 # ![One view of the parallel beam](parallel_beam.png)
-#
 #
 # ## Arbitrary rays
 #
@@ -132,7 +133,8 @@ ends = reduce(hcat, [ring[j] for (i, j) in pairs])
 lors = RayList(starts, ends)
 nrays(lors)
 
-# Every seventh line of response, with the 2D image `image2d` inside the ring:
+# Every seventh line of response (orange) between the detectors (blue), with the 2D image `image2d`
+# (gray square) inside the ring:
 
 fig = raylist_figure(lors, image2d) #hide
 save("raylist.png", fig) #hide
@@ -143,7 +145,8 @@ nothing #hide
 # a shape (the rays in column-major order), for example `RayList(starts, ends; datasize=(n1, n2))`.
 #
 # `RayList(g)` returns the rays of a cone-beam geometry, to inspect them or to pass them to other
-# software; `ray(g, i)` gives start and end point of the ray `i`:
+# software (for a parallel beam it throws an `ArgumentError`: its rays are lines, not segments);
+# `ray(g, i)` gives start and end point of the ray `i`:
 
 a, b = ray(circular, 1)
 
@@ -151,7 +154,7 @@ a, b = ray(circular, 1)
 #
 # `subset(g, views)` keeps some views of a detector geometry, and `subset(op, views)` the
 # corresponding projector, as used by ordered-subset methods (see
-# [Ordered Subsets and Normalization](@ref)):
+# [Use Ordered Subsets and Normalizations](@ref)):
 
 every_tenth = subset(circular, 1:10:360)
 datasize(every_tenth)
@@ -160,6 +163,8 @@ fig = subset_figure(circular, 1:10:360) #hide
 save("subset.png", fig) #hide
 nothing #hide
 # ![Source positions of a subset of the views](subset.png)
+
+# The 36 views of the subset (orange) are spread evenly over the circle.
 
 # ## Projectors
 #

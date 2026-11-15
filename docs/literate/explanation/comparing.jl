@@ -1,15 +1,15 @@
 # # Comparing Projectors
 #
 # How evenly a ray-driven projector covers the image depends on the ratio of detector cell size to
-# voxel size (Miao 2013). This page compares
-# [Siddon's Method](@ref) and [Joseph's Method](@ref) with one and with several rays per cell (see
-# [Use Several Rays per Cell](@ref)), the [Distance-Driven Method](@ref) and the
-# [Voxel-Driven Method](@ref), for cells smaller than,
-# equal to and larger than the pixels of a 2D image, with two checks from Miao (2013): the back projection of one view and of all views of
-# ones. It compares coverage, not accuracy on real data or speed.
+# voxel size (Miao 2013). This page compares [Siddon's Method](@ref) and [Joseph's Method](@ref)
+# with one and with several rays per cell (see [Use Several Rays per Cell](@ref)), the
+# [Distance-Driven Method](@ref) and the [Voxel-Driven Method](@ref), for cells smaller than, equal
+# to and larger than the pixels of a 2D image, with two checks from Miao (2013): the back projection
+# of one view and of all views of ones. It compares coverage, not accuracy on real data or speed.
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "comparison_figures.jl")) #hide
+nothing #hide
 
 models = [("Siddon", SiddonProjector, nothing), ("Joseph", JosephProjector, nothing),
           ("Siddon, 4 rays", SiddonProjector, RegularPoints(4, 1)),
@@ -38,14 +38,14 @@ nothing #hide
 # ![Back projection of one view](comparison_view.png)
 
 # With cells as large as the pixels or smaller, every method covers the pixels nearly evenly. With
-# cells of 2 pixels, one ray per cell misses pixels: Siddon's method leaves many pixels with little or
-# no weight, and Joseph's interpolation softens the pattern without removing it. Four rays per cell
-# fill the gaps: their spacing is then that of cells of 0.5 pixels. The distance-driven method gives
-# 1 for every cell size: in a parallel beam, its footprints cover each layer evenly (see
+# cells of 2 pixels, one ray per cell misses pixels: Siddon's method leaves many pixels with little
+# or no weight, and Joseph's interpolation softens the pattern without removing it. Four rays per
+# cell fill the gaps: their spacing is then that of cells of 0.5 pixels. The distance-driven method
+# gives 1 for every cell size: in a parallel beam, its footprints cover each layer evenly (see
 # [Distance-Driven Method](@ref)). So does the voxel-driven method: its back projection reads the
-# view at the projected center of every pixel, and a view of ones has the same value everywhere.
-# Its weak point is the forward projection with cells smaller than the pixels, which these checks
-# do not show (see [Voxel-Driven Method](@ref)).
+# view at the projected center of every pixel, and a view of ones has the same value everywhere. Its
+# weak point is the forward projection with cells smaller than the pixels, which these checks do not
+# show (see [Voxel-Driven Method](@ref)).
 #
 # ## All views
 #
@@ -60,11 +60,10 @@ save("comparison_support.png", fig) #hide
 nothing #hide
 # ![Back projection of all views](comparison_support.png)
 
-# With cells of 2 pixels, the coverage varies
-# by 11 % for Siddon's method and 8.5 % for Joseph's, in a cross and a checker pattern around the center; four rays per cell reduce that
-# to a fraction of a percent, and for the distance-driven and the voxel-driven method it is below
-# 0.05 % at all three cell sizes. [Use Several Rays per Cell](@ref) shows a reconstruction with this kind
-# of pattern.
+# With cells of 2 pixels, the coverage varies by 11 % for Siddon's method and 8.5 % for Joseph's, in
+# a cross and a checker pattern around the center; four rays per cell reduce that to a fraction of a
+# percent, and for the distance-driven and the voxel-driven method it is below 0.05 % at all three
+# cell sizes. [Use Several Rays per Cell](@ref) shows a reconstruction with this kind of pattern.
 #
 # ## How many rays
 #
@@ -75,8 +74,8 @@ coverage(P, k) = 2 .* colsums(sampled(P(comparison_image(64), comparison_scan(64
 [(rays=k, Siddon=round(variation(coverage(SiddonProjector, k), 24); digits=2),
   Joseph=round(variation(coverage(JosephProjector, k), 24); digits=2)) for k in (1, 2, 3, 4, 8)]
 
-# On this example the variation does not fall steadily with the number of rays: for Siddon's method, 3
-# rays give more than 2.
+# On this example the variation does not fall steadily with the number of rays: for Siddon's method,
+# 3 rays give more than 2.
 #
 # ## Summary of the example
 #

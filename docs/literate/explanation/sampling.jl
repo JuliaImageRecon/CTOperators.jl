@@ -11,6 +11,7 @@
 
 using CTOperators, CairoMakie
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #hide
+nothing #hide
 
 # ## What is computed
 #
@@ -36,7 +37,8 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # ### Averaging intensities
 #
 # The weights above average **line integrals** ``p_k``, which keeps the operator linear. A detector
-# measures intensities, ``\exp(-p_k)``, and averages those. [`IntensityModel`](@ref) computes
+# measures intensities, ``\exp(-p_k)``, and averages those. [`IntensityModel`](@ref) computes, with
+# the same normalized weights,
 #
 # ```math
 # p_i = -\log \sum_k w_{ik} \exp(-p_{ik}).
@@ -47,11 +49,11 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # procedure"; the mean of the line integrals over the same samples removes the exponential
 # edge-gradient effect (EEGE), which they identify as an important cause of metal streak artifacts.
 #
-# By Jensen's inequality ``p_i`` is never larger than the mean ``\sum_k w_{ik} p_{ik}``; for small
-# differences between the ``p_{ik}`` the gap is half their weighted variance. The two differ where the
-# rays of one data element see different line integrals, at edges. For a cell whose rays see ``0`` and
-# ``P`` in equal parts, computed from the two formulas and rounded; the relative difference is
-# (mean − intensity model) / mean:
+# By Jensen's inequality ``p_i`` is never larger than the mean ``\sum_k w_{ik} p_{ik}`` ; for small
+# differences between the ``p_{ik}`` the gap is half their weighted variance. The two differ where
+# the rays of one data element see different line integrals, at edges. For a cell whose rays see
+# ``0`` and ``P`` in equal parts, computed from the two formulas and rounded; the relative
+# difference is (mean − intensity model) / mean:
 #
 # | P | mean | intensity model | relative difference |
 # |:---|:---|:---|:---|
@@ -74,9 +76,9 @@ include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #
 # detectors.
 #
 # The point strategies give the offsets of the rays from the cell center, where ±1/2 are the cell
-# edges; some go beyond them. The weighting strategies give a ray weight for every offset. In the figure
-# the blue square is one cell, the dotted lines its subcells, and the orange points the rays, with
-# the marker area relative to the largest ray weight in the panel:
+# edges; some go beyond them. The weighting strategies give a ray weight for every offset. In the
+# figure the blue square is one cell, the dotted lines its subcells, and the orange points the rays,
+# with the marker area relative to the largest ray weight in the panel:
 
 fig = points_figure([("RegularPoints(3, 3)", RegularPoints(3, 3), UniformWeights()), #hide
                      ("JitteredPoints(3, 3)", JitteredPoints(3, 3; seed=1), UniformWeights()), #hide
@@ -91,10 +93,11 @@ nothing #hide
 # * **Regular points** sit at the centers of `su × sv` subcells: the midpoint rule for the integral
 #   over the cell, a sum at equal distances.
 # * **Jittered points** move each regular point to a random position within its subcell ("jittered
-#   sampling", Cook 1986, also called stratified sampling). They keep the even spread, and neighboring
-#   cells do not share the same pattern.
-# * **Random points** are spread anywhere in the cell, so their mean differs from the average over the
-#   cell by a random amount. [Use Several Rays per Cell](@ref) shows an example with 4 rays per cell.
+#   sampling", Cook 1986, also called stratified sampling). They keep the even spread, and
+#   neighboring cells do not share the same pattern.
+# * **Random points** are spread anywhere in the cell, so their mean differs from the average over
+#   the cell by a random amount. [Use Several Rays per Cell](@ref) shows an example with 4 rays per
+#   cell.
 # * **Gaussian points** are normally distributed around the cell center, and all rays count equally:
 #   the distribution of the positions is the weighting. Points may land outside the cell, which
 #   models blur across neighboring cells.
@@ -106,8 +109,9 @@ nothing #hide
 #
 # For images one voxel thick in `z` (2D images, or 3D images with `nz = 1`) the projectors keep all
 # rays in the image plane: `RegularPoints` and `JitteredPoints` with several subcells along `v`, and
-# `DiskPoints`, are rejected, and the other strategies get offsets along `v` of 0. Joseph's method interpolates along `z` between voxel centers, so a ray away
-# from the plane through the voxel centers is weighted down, and a tilted ray may leave the image.
+# `DiskPoints`, are rejected, and the other strategies get offsets along `v` of 0. Joseph's method
+# interpolates along `z` between voxel centers, so a ray away from the plane through the voxel
+# centers is weighted down, and a tilted ray may leave the image.
 #
 # ## The focal spot
 #
@@ -120,25 +124,25 @@ nothing #hide
 # With the spot parallel to a flat detector, the rays from all its points through a point `p` meet
 # the detector at the same magnification `M` (the distance from the spot plane to the detector over
 # that to `p`). A source sample at offset `δ` moves the image of `p` by `-(M - 1) δ`: the shadow of
-# the spot is the spot scaled by `M - 1`, and it depends on where `p` lies. For an object, the edge of
-# its shadow spreads over a band of width `f (M - 1)` on the detector, the penumbra. Tilley et al.
-# (2016) call this the depth-dependent blur of the source: modeled ideally by integrating the
-# transmission over a fine sampling of rays across the spot, which they describe as expensive, and
-# approximated in their work by one convolution in the plane of the object. `sampled` does the
-# sampling.
+# the spot is the spot scaled by `M - 1`, and it depends on where `p` lies. For an object, the edge
+# of its shadow spreads over a band of width `f (M - 1)` on the detector, with `f` the size of the
+# spot: the penumbra. Tilley et al. (2016) call this the depth-dependent blur of the source: modeled
+# ideally by integrating the transmission over a fine sampling of rays across the spot, which they
+# describe as expensive, and approximated in their work by one convolution in the plane of the
+# object. `sampled` does the sampling.
 #
-# The figures below are computed with the package: a disk of radius 8 mm and thickness 4 mm that faces
-# the source, with attenuation `μ` per mm, in a volume of 48³ voxels of 1 mm (each voxel holds the
-# fraction of it inside the disk); one view of a flat detector of 96 × 96 cells of 1 mm, 300 mm from
-# the source; Joseph's method. Every line through the disk along the beam has the same length, so
-# its projection has a sharp edge. The source is 150 mm or 60 mm from the disk, which is magnified by
-# `M = 2` or `M = 5`. The spot is a disk of 3 mm (`DiskPoints(4, 12)`, 48 samples).
+# The figures below are computed with the package: a disk of radius 8 mm and thickness 4 mm that
+# faces the source, with attenuation `μ` per mm, in a volume of 48³ voxels of 1 mm (each voxel holds
+# the fraction of it inside the disk); one view of a flat detector of 96 × 96 cells of 1 mm, 300 mm
+# from the source; Joseph's method. Every line through the disk along the beam has the same length,
+# so its projection has a sharp edge. The source is 150 mm or 60 mm from the disk, which is
+# magnified by `M = 2` or `M = 5`. The spot is a disk of 3 mm (`DiskPoints(4, 12)`, 48 samples).
 # Three projections of each scan: the point source (`op`), the spot with the mean of the line
 # integrals (`sampled(op; source=spot)`, the linear model), and the spot with the intensity model
 # (`IntensityModel(op; source=spot)`).
 
-volume = ImageGeom(; dims=(48, 48, 48), deltas=(1.0, 1.0, 1.0))
-# the disk: radius 8 in x and z, thickness 4 along y (the beam), the fraction of each voxel inside it
+volume = ImageGeom(; dims=(48, 48, 48), deltas=(1.0, 1.0, 1.0));
+## the disk: radius 8 in x and z, thickness 4 along y (the beam); voxels hold their fraction inside
 function disk(mu; n=4)
   x = zeros(Float32, 48, 48, 48)
   subs = ((1:n) .- (n + 1) / 2) ./ n
@@ -160,9 +164,10 @@ end
 scans = Dict((dso, mu) => projections(dso, mu) for dso in (150, 60), mu in (0.25, 1.0));
 
 # The scan with `M = 5`: the spot (its samples in orange) on the right, the disk, and the detector
-# showing the projection with the spot (the linear model, `μ = 0.25`; dark for large line integrals).
-# The lines run in the plane of the orbit from the edges of the spot past the rim of the disk: the red
-# ones end at the edge of the full shadow, the orange ones at the outer edge of the penumbra.
+# showing the projection with the spot (the linear model, `μ = 0.25`; dark for large line
+# integrals). The lines run in the plane of the orbit from the edges of the spot past the rim of the
+# disk: the red ones end at the edge of the full shadow, the orange ones at the outer edge of the
+# penumbra.
 
 fig = Figure(size=(820, 440)) #hide
 ax = Axis3(fig[1, 1]; aspect=:data, azimuth=-0.35pi, elevation=0.12pi, xlabel="y", ylabel="x", zlabel="z", #hide
@@ -227,10 +232,9 @@ save("sampling_shadows.png", fig) #hide
 nothing #hide
 # ![The shadows of the single spot samples on the detector](sampling_shadows.png)
 
-# Profiles
-# through the center of the detector for `M = 5`, at `μ = 0.25` and `μ = 1`, where the line integral
-# through the disk is 1 and 4, with the band `f (M - 1)` around the edge of the point-source shadow
-# shaded:
+# Profiles through the center of the detector for `M = 5`, at `μ = 0.25` and `μ = 1`, where the line
+# integral through the disk is 1 and 4, with the band `f (M - 1)` around the edge of the point-source
+# shadow shaded:
 
 fig = Figure(size=(820, 320)) #hide
 for (j, mu) in enumerate((0.25, 1.0)) #hide
@@ -249,17 +253,18 @@ for (j, mu) in enumerate((0.25, 1.0)) #hide
 end #hide
 save("sampling_profiles.png", fig) #hide
 nothing #hide
-# ![Profiles through the shadow of the sphere](sampling_profiles.png)
+# ![Profiles through the shadow of the disk](sampling_profiles.png)
 
-# In the band the profiles with the spot fall off over its whole width, that of the point source over a
-# few cells. At `μ = 0.25` (a line integral of 1 through the disk) the intensity model lies slightly
-# below the linear one in the band; at `μ = 1` (a line integral of 4) clearly below: there some rays of
-# a cell pass through the disk and others miss it, as in the half-edge table above.
+# In the band the profiles with the spot fall off over its whole width, that of the point source
+# over a few cells. At `μ = 0.25` (a line integral of 1 through the disk) the intensity model lies
+# slightly below the linear one in the band; at `μ = 1` (a line integral of 4) clearly below: there
+# some rays of a cell pass through the disk and others miss it, as in the table above.
 
 # A detector on an arc is a cylinder about the source. Moving the source of the geometry would move
 # the detector with it, so a source sample is added only to the start of the rays: a
-# [`CTOperators.Shifted`](@ref) geometry, whose detector stays where it is. For a flat detector and a
-# parallel beam the shifted samples are plain geometries of their type.
+# [`CTOperators.Shifted`](@ref) geometry, whose detector stays where it is. For a flat detector the
+# shifted samples are plain `ConeBeam`s, and the detector samples of a parallel beam plain
+# `ParallelBeam`s.
 #
 # ## Fused and sequential
 #
@@ -298,21 +303,21 @@ nothing #hide
 # give the offsets.
 #
 # The view is numbered as in the full scan: `subset` of a sampled operator keeps these numbers, so
-# the rays of a subset are those of the same views of the full operator, as
-# [ordered-subset methods](@ref "Ordered Subsets and Normalization") require. A
-# different seed gives a different, again fixed, set of positions: `DetectorSampling(JitteredPoints(4, 1;
-# seed=2))`.
+# the rays of a subset are those of the same views of the full operator, as [ordered-subset
+# methods](@ref "Use Ordered Subsets and Normalizations") require. A different seed gives a
+# different, again fixed, set of positions: `DetectorSampling(JitteredPoints(4, 1; seed=2))`.
 #
 # ## Implementation
 #
 # * The number of rays per cell `K` is a type parameter of the point strategy. The loop over the
 #   rays of a cell has a length known to the compiler. With `K = 1` the projector is as fast as on
 #   the plain geometry in our benchmark (128³ on a GPU, see below).
-# * The kernels are those of the plain projectors: each thread handles one data element. For a
-#   cell with several rays it traces the `K` rays one after the other and adds them up (forward), or first sums
-#   the ray weights and then lets every ray add its share (back). No memory per ray is needed.
-# * The time is about `K` times that of one ray; jittered offsets and Gaussian ray weights added nothing
-#   measurable on a GPU (see the
+# * The kernels are those of the plain projectors: each thread handles one data element. For a cell
+#   with several rays it traces the `K` rays one after the other and adds them up (forward), or
+#   first sums the ray weights and then lets every ray add its share (back). No memory per ray is
+#   needed.
+# * The time is about `K` times that of one ray; jittered offsets and Gaussian ray weights added
+#   nothing measurable on a GPU (see the
 #   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#several-rays-per-cell-gpu)).
 # * The ray mask applies per data element (a masked element skips all its rays), the clipping to the
 #   bounding box of the image mask per ray.
@@ -322,8 +327,9 @@ nothing #hide
 #   sample; on an arc
 #   detector it finds where the ray from a shifted source through a voxel meets the cylinder by a
 #   quadratic equation.
-# * A geometry with several rays per cell has no single ray per data element. A projector that traces only one ray per cell
-#   fails with a `MethodError` for `ray` when applied, instead of silently ignoring the other rays.
+# * A geometry with several rays per cell has no single ray per data element. A projector that
+#   traces only one ray per cell fails with a `MethodError` for `ray` when applied, instead of
+#   silently ignoring the other rays.
 #
 # ## References
 #
@@ -335,6 +341,6 @@ nothing #hide
 #   Techniques 9(3), 21–38, 2020.
 # - C. Miao, "Comparative studies of different system models for iterative CT image
 #   reconstruction", master's thesis, Wake Forest University, 2013.
-# - S. Tilley II, J. H. Siewerdsen, J. W. Stayman, "Model-based iterative reconstruction for flat-panel
-#   cone-beam CT with focal spot blur, detector blur, and correlated noise", Physics in Medicine and
-#   Biology 61(1), 296–319, 2016.
+# - S. Tilley II, J. H. Siewerdsen, J. W. Stayman, "Model-based iterative reconstruction for
+#   flat-panel cone-beam CT with focal spot blur, detector blur, and correlated noise", Physics in
+#   Medicine and Biology 61(1), 296–319, 2016.

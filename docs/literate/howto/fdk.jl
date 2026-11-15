@@ -4,8 +4,8 @@
 # iterations: weight the data, filter each detector row with a ramp filter, back project. For
 # parallel beams the same steps are filtered back projection (FBP); [Filtered Back Projection](@ref)
 # explains why they recover the image. This guide reconstructs a 3D Shepp-Logan phantom with
-# [`FDK`](@ref), compares the windows of the filter, reconstructs a short scan, and uses the result as
-# the start image of an iterative method.
+# [`FDK`](@ref), compares the windows of the filter, reconstructs a short scan, and uses the result
+# as the start image of an iterative method.
 
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie, LinearAlgebra
 using ImageGeoms: axis
@@ -115,6 +115,7 @@ nothing #hide
 [(scan=name, views=n, error=round(norm(x - x_true) / norm(x_true); sigdigits=3))
  for (name, n, x) in (("short", 121, x_short), ("full", 180, x_fdk))]
 
+# The short scan, with 121 instead of 180 views, has the somewhat larger error.
 
 # ## Start image for an iterative method
 #
@@ -172,9 +173,9 @@ nothing #hide
 # The back projection is that of the [`VoxelDrivenProjector`](@ref), with the weights of FDK; on a
 # GPU, pass `storage` as for the projectors (see [Run on a GPU](@ref)).
 #
-# References:
+# ## References
 #
-# - L. A. Feldkamp, L. C. Davis, J. W. Kress, "Practical cone-beam algorithm", J. Opt. Soc. Am. A
-#   1(6), 612–619, 1984.
-# - D. L. Parker, "Optimal short scan convolution reconstruction for fanbeam CT", Med. Phys. 9(2),
-#   254–257, 1982.
+# - L. A. Feldkamp, L. C. Davis, J. W. Kress, "Practical cone-beam algorithm", Journal of the
+#   Optical Society of America A 1(6), 612–619, 1984.
+# - D. L. Parker, "Optimal short scan convolution reconstruction for fanbeam CT", Medical Physics
+#   9(2), 254–257, 1982.

@@ -2,16 +2,18 @@
 #
 # A detector cell measures the radiation that falls onto its whole area. The projectors trace one
 # ray per cell, through its center. When the cells are large compared to the voxels, the back
-# projection of such rays has gaps (Miao 2013, p. 29). This guide shows the effect on a small example
-# and how detector sampling ([`sampled`](@ref) with a [`DetectorSampling`](@ref)) traces several rays per
-# cell instead. [Sampling the Beam](@ref) explains how the rays are placed and weighted,
-# and [Comparing Projectors](@ref) when it matters.
+# projection of such rays has gaps (Miao 2013, p. 29). This guide shows the effect on a small
+# example and how detector sampling ([`sampled`](@ref) with a [`DetectorSampling`](@ref)) traces
+# several rays per cell instead. [Sampling the Beam](@ref) explains how the rays are placed and
+# weighted, and [Comparing Projectors](@ref) when it matters.
 
-using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
+using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, LinearAlgebra
+using CairoMakie
 using ImageGeoms: axis
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #hide
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "comparison_figures.jl")) #hide
+nothing #hide
 
 # ## The example
 #
@@ -32,19 +34,22 @@ fine = ImageGeom(; dims=(4n, 4n), deltas=(0.25, 0.25))
 x_fine = Float32.(phantom(axis(fine, 1), axis(fine, 2), shepp_logan(SheppLoganToft(); fovs=(n, n)), 2))
 y = sampled(JosephProjector(fine, geometry); detector=DetectorSampling(RegularPoints(16, 1))) * x_fine;
 
-# The reconstructions use 40 iterations of CGNR (conjugate gradients on the normal equations):
+# The reconstructions use 40 iterations of CGNR (conjugate gradients on the normal equations), and
+# `relerr` is their relative error ``\|x - x_\text{true}\| / \|x_\text{true}\|``:
 
-function reconstruct(op)
-  solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations=40)
+function reconstruct(op; iterations=40)
+  solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations)
   reshape(solve!(solver, vec(y)), n, n)
-end;
+end
+relerr(x) = round(norm(x - x_true) / norm(x_true); digits=3);
 
 # ## One ray per cell
 #
-# Without detector sampling, each data element (one number of the projection data: one cell in one view) is
-# one ray, through the center of its cell. Positions on the detector are counted in cells: cell 2 has
-# its center at position 2 and its edges at 1.5 and 2.5. With cells twice as wide as the pixels, the
-# rays of a view miss every other line of pixels (left; gray: pixels, orange: rays, blue: cells):
+# Without detector sampling, each data element (one number of the projection data: one cell in one
+# view) is one ray, through the center of its cell. Positions on the detector are counted in cells:
+# cell 2 has its center at position 2 and its edges at 1.5 and 2.5. With cells twice as wide as the
+# pixels, the rays of a view miss every other line of pixels (left; gray: pixels, orange: rays,
+# blue: cells):
 
 fig = rays_figure() #hide
 save("multiray_rays.png", fig) #hide
@@ -62,8 +67,8 @@ x_center = reconstruct(op);
 #
 # `sampled(op; detector=DetectorSampling(points))` traces several rays per cell, here at the centers
 # of 4 equal subcells along `u` (right in the figure above); Siddon's and Joseph's methods do it in
-# their kernels. The value of a cell is the mean of the
-# line integrals of its rays; the data keep their size.
+# their kernels. The value of a cell is the mean of the line integrals of its rays; the data keep
+# their size.
 
 op_multi = sampled(op; detector=DetectorSampling(RegularPoints(4, 1)))
 x_multi = reconstruct(op_multi);
@@ -79,13 +84,13 @@ save("multiray_colsums.png", fig) #hide
 nothing #hide
 # ![Column sums with one and with four rays per cell](multiray_colsums.png)
 
-# The titles give the variation, the standard deviation relative to the mean inside a circle of radius
-# 60 pixels; the window is ±20 % around the mean. With one ray per cell the column sums show rings and
-# a cross around the center, with peaks of about ±30 %. With 4 rays per cell the variation drops by a
-# factor of about 30, and the peaks to about ±1 %.
+# The titles give the variation, the standard deviation relative to the mean inside a circle of
+# radius 60 pixels; the window is ±20 % around the mean. With one ray per cell the column sums show
+# rings and a cross around the center. With 4 rays per cell the variation drops by a factor of about
+# 30.
 #
 # The reconstructions, in the color window 0 to 0.4, which shows the soft tissue and clips the skull,
-# with the relative error ``\|x - x_\text{true}\| / \|x_\text{true}\|``:
+# with the relative error in the titles:
 
 fig = images_figure([("phantom", x_true), ("1 ray per cell", x_center), ("4 rays per cell", x_multi)]; #hide
                     colorrange=(0, 0.4), truth=x_true) #hide
@@ -94,9 +99,15 @@ nothing #hide
 # ![Reconstructions with one and with four rays per cell](multiray_reconstructions.png)
 
 # With 4 rays per cell the grainy pattern inside the head and between the ellipses goes away, and the
-# error drops from 0.33 to 0.27. The streaks outside the head remain. On this example, 16 rays give
-# 0.27 as well, and the gap depends on when the iterations stop: with 10 iterations the errors are
-# 0.35 and 0.28, with 200 they are 0.33 and 0.32.
+# error drops from 0.33 to 0.27. The streaks outside the head remain. The errors for 16 rays per
+# cell, and after 10 and 200 iterations:
+
+op_16 = sampled(op; detector=DetectorSampling(RegularPoints(16, 1)))
+[(rays=K, iterations=k, error=relerr(reconstruct(o; iterations=k)))
+ for (K, o, k) in ((1, op, 10), (4, op_multi, 10), (16, op_16, 40), (1, op, 200), (4, op_multi, 200))]
+
+# On this example 16 rays are no better than 4, and the gap between one and 4 rays depends on when
+# the iterations stop: it is largest after 10 iterations and nearly closed after 200.
 #
 # `JosephProjector` is sampled the same way. The rays of a 2D image stay in the image plane,
 # so the points are spread along `u` only (`RegularPoints(4, 1)`; `RegularPoints(4)` would be an
@@ -129,26 +140,33 @@ nothing #hide
 # ![Regular, jittered and random rays](multiray_jittered.png)
 
 # On these data, whose cells average evenly over their width, regular points give the smallest error
-# of the three, 4 jittered rays lie close to one ray per cell, and 4 random rays above it. This is one
-# example; other detectors and data can behave differently.
+# of the three, 4 jittered rays lie close to one ray per cell, and 4 random rays above it. This is
+# one example; other detectors and data can behave differently.
 #
 # ## Ray weights
 #
 # The rays of a cell can also count differently, e.g. for a detector response that falls off toward
 # the cell edges. The ray weights are normalized per cell:
 
-op_weighted = sampled(op; detector=DetectorSampling(RegularPoints(4, 1); weights=GaussianWeights(0.4)));
+op_weighted = sampled(op; detector=DetectorSampling(RegularPoints(4, 1); weights=GaussianWeights(0.4)))
+relerr(reconstruct(op_weighted))
 
-# On the data above the error is 0.27, as with uniform ray weights.
+# On the data above the error is that of uniform ray weights.
 #
 # ## Cost and devices
 #
 # * The time grows with the number of rays per cell: 4 rays take about 4 times as long. Jittered
 #   points and Gaussian ray weights added nothing measurable on a GPU (see the
 #   [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md#several-rays-per-cell-gpu)).
-#   No extra memory is needed.
-# * Detector sampling works on every device (`storage=CuArray` etc.), and the random positions are the same
-#   on all of them, in the forward and the back projection, and for `subset(op, views)`.
+#   For Siddon's and Joseph's methods, which sample in their kernels (fused), no extra memory is
+#   needed.
+# * The distance-driven projector refuses detector sampling: its footprint already covers the cell.
+#   The voxel-driven projector samples sequentially, one projector per ray position, held in a
+#   [`SampleSum`](@ref) with a data and an image buffer; its points must be the same in every cell,
+#   so `JitteredPoints`, `RandomPoints` and `GaussianPoints` are refused there (see [Sampling the
+#   Beam](@ref)).
+# * Detector sampling works on every device (`storage=CuArray` etc.), and the random positions are
+#   the same on all of them, in the forward and the back projection, and for `subset(op, views)`.
 # * Masks work as on plain geometries: a masked data element skips all its rays.
 # * Only detector geometries have cells: `sampled` refuses detector sampling on a `RayList`.
 #

@@ -46,11 +46,11 @@ function smoothed_tv(x; epsilon=0.03f0)
   sum(sqrt.(dx .^ 2 .+ dy .^ 2 .+ epsilon^2))
 end
 
-objective(x, lambda) = data_term(x) + lambda * smoothed_tv(x)
+objective(x, lambda) = data_term(x) + lambda * smoothed_tv(x);
 
-# The step size must stay below the inverse Lipschitz constant of the gradient: the largest
-# eigenvalue of `adjoint(op) * op`, estimated by power iterations, plus `8 lambda / epsilon` for the
-# penalty.
+# A step of `1 / L`, with `L` the Lipschitz constant of the gradient, guarantees descent. `L` is at
+# most the largest eigenvalue of `adjoint(op) * op`, estimated by power iterations, plus
+# `8 lambda / epsilon` for the penalty.
 
 function largest_eigenvalue(op; iterations=30)
   v = rand(Float32, imagesize(op))
@@ -83,6 +83,7 @@ save("differentiation.png", fig) #hide
 nothing #hide
 # ![Reconstructions by gradient descent](differentiation.png)
 
-# The relative errors of the two reconstructions:
+# In the gray scale from 0 to 0.4, which clips the skull: the least-squares image is noisy, and the
+# smoothed TV penalty reduces the noise. The relative errors of the two reconstructions:
 
 norm(x_ls - x_true) / norm(x_true), norm(x_tv - x_true) / norm(x_true)

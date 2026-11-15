@@ -22,7 +22,7 @@ projection is the exact adjoint of its forward projection.
   detector cell sees, for detector geometries.
 - **A voxel-driven projector**, which projects each voxel center onto the detector and interpolates
   between the cells, for detector geometries: its back projection writes each voxel once, its
-  forward projection shows a pattern when the cells are smaller than the voxels.
+  forward projection shows a pattern when the cells are smaller than the projected voxels.
 - **Generic geometries**: arbitrary rays given by start and end points, and cone-beam (flat or
   curved detector) and parallel-beam scanners described view by view, with any source trajectory
   (circular, helical, ...), including objects that move during the scan. Geometries of
@@ -31,6 +31,10 @@ projection is the exact adjoint of its forward projection.
   [KernelAbstractions.jl](https://github.com/JuliaGPU/KernelAbstractions.jl): data as `Array`,
   `CuArray` (CUDA.jl), `ROCArray` (AMDGPU.jl) or `MtlArray` (Metal.jl).
 - **Differentiable** with respect to image and projection data (ChainRulesCore rules).
+- **Analytic reconstruction**: FDK for circular cone-beam scans and filtered back projection for
+  parallel beams, with full-scan or Parker weights.
+- **Several rays per detector cell**: detector sampling with regular, jittered or random points and
+  weights, in the kernels of Siddon's and Joseph's methods.
 - Part of the [JuliaImageRecon](https://github.com/JuliaImageRecon) family: images are described by
   [ImageGeoms.jl](https://github.com/JuliaImageRecon/ImageGeoms.jl), reconstructions run with
   [RegularizedLeastSquares.jl](https://github.com/JuliaImageRecon/RegularizedLeastSquares.jl).
@@ -43,13 +47,13 @@ using CTOperators
 image = ImageGeom(; dims=(128, 128, 128), deltas=(1.0, 1.0, 1.0))
 geometry = helical_cone_beam(; angles=range(0, 4pi, 360), pitch=64, z0=-64, dso=256,
                              dsd=512, nu=256, nv=128, du=1.0, dv=1.0)
-op = SiddonProjector(image, geometry)        # Float32 on the CPU
+op = JosephProjector(image, geometry)        # Float32 on the CPU
 x = rand(Float32, 128, 128, 128)
 y = op * x                                   # projections, size (256, 128, 360)
 z = adjoint(op) * y                          # back projection
 ```
 
-On a GPU, create the projector with the GPU's array type, e.g. `SiddonProjector(image, geometry;
+On a GPU, create the projector with the GPU's array type, e.g. `JosephProjector(image, geometry;
 storage=CuArray)`, and pass data that lives on the GPU.
 
 ## Installation
@@ -62,7 +66,8 @@ Pkg.add("CTOperators")
 ## Benchmarks
 
 `benchmark/` compares CTOperators.jl with [parallelproj](https://github.com/gschramm/parallelproj)
-and [RadonKA.jl](https://github.com/roflmaostc/RadonKA.jl) on the CPU and the GPU; its
+and [RadonKA.jl](https://github.com/roflmaostc/RadonKA.jl), and its FDK with that of
+[Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl), on the CPU and the GPU; its
 [README](benchmark/README.md) describes how to run the benchmarks and lists the results.
 
 ## Community Standards

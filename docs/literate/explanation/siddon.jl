@@ -26,11 +26,11 @@ bonito_page("siddon") #hide
 # lengths are the distances between consecutive crossings, the voxels follow from the order of the
 # crossings.
 #
-# Siddon computed all crossings, sorted them and then found the voxel of every piece of the ray between two crossings. Jacobs et
-# al. (1998) avoid both: starting from the voxel where the ray enters, they take the nearest next
-# crossing of the three axes, which says which axis the ray crosses next, and step that axis's voxel
-# index by one. Every step costs a few additions and comparisons, and a ray through a volume of n³
-# voxels takes at most about 3n steps.
+# Siddon computed all crossings, sorted them and then found the voxel of every piece of the ray
+# between two crossings. Jacobs et al. (1998) avoid both: starting from the voxel where the ray
+# enters, they take the nearest next crossing of the three axes, which says which axis the ray
+# crosses next, and step that axis's voxel index by one. Every step costs a few additions and
+# comparisons, and a ray through a volume of n³ voxels takes at most about 3n steps.
 #
 # In the figure a ray crosses a 2D image. Orange circles mark where the ray crosses the lines `x =
 # const` between pixels, red diamonds the lines `y = const`; the pixels are colored by the length of
@@ -64,8 +64,7 @@ round.(weights; digits=2)
 # Whether a voxel is hit by many or by few rays then depends on how the rays fall onto the voxel
 # grid. The figure shows, for one parallel-beam view at 45°, the summed lengths of all rays in every
 # pixel, the coverage (see [System Matrix](@ref)). With cells of 1 pixel the coverage varies between
-# about 0.83 and 1.38, in a regular pattern; smaller cells, and so more rays per pixel width, even it
-# out here.
+# about 0.83 and 1.38, in a regular pattern; a smaller spacing of the cells evens it out here.
 
 fig = coverage_figure(16) #hide
 save("coverage.png", fig) #hide
@@ -73,17 +72,17 @@ nothing #hide
 # ![Coverage of the pixels by the rays of one view](coverage.png)
 
 # Ray-driven back projection tends to Moiré patterns, and an iterative reconstruction can show such
-# artifacts (De Man & Basu 2004). More rays than voxels reduce them (finer detector sampling, or several
-# rays per cell, see [Use Several Rays per Cell](@ref)), as do projectors that integrate over the
-# detector cells, such as distance-driven ones (De Man & Basu 2004; Miao 2013).
+# artifacts (De Man & Basu 2004). More rays than voxels reduce them (Miao 2013, p. 29: finer
+# detector sampling, or several rays per cell, see [Use Several Rays per Cell](@ref)), as do projectors that integrate
+# over the detector cells, such as distance-driven ones (De Man & Basu 2004; Miao 2013).
 #
 # ## Implementation
 #
 # - The ray is traced in voxel coordinates (see [Coordinates and Conventions](@ref)), so voxels
 #   of any size, also anisotropic or with flipped axes, need no special cases.
-# - The forward projection runs one thread per data element and sums the weighted voxel values. The back
-#   projection follows the same rays and adds the weighted value of the ray to every voxel it visits
-#   with an atomic addition, because rays of different threads meet in the same voxels.
+# - The forward projection runs one thread per data element and sums the weighted voxel values. The
+#   back projection follows the same rays and adds the weighted value of the ray to every voxel it
+#   visits with an atomic addition, because rays of different threads meet in the same voxels.
 # - A ray that lies exactly in a plane between two voxels is ambiguous: its line integral could be
 #   taken from either side. Siddon's method takes the side that the rounding gives, which may differ
 #   between Float32 and Float64 or between devices.
@@ -93,11 +92,11 @@ nothing #hide
 # ## References
 #
 # - R. L. Siddon, "Fast calculation of the exact radiological path for a three-dimensional CT
-#   array", Med. Phys. 12(2), 252–255, 1985.
+#   array", Medical Physics 12(2), 252–255, 1985.
 # - F. Jacobs, E. Sundermann, B. De Sutter, M. Christiaens, I. Lemahieu, "A fast algorithm to
 #   calculate the exact radiological path through a pixel or voxel space", J. Comput. Inf. Technol.
 #   6(1), 89–94, 1998.
-# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
-#   Med. Biol. 49(11), 2463–2475, 2004.
+# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Physics
+#   in Medicine and Biology 49(11), 2463–2475, 2004.
 # - C. Miao, "Comparative studies of different system models for iterative CT image
 #   reconstruction", master's thesis, Wake Forest University, 2013.

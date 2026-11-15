@@ -15,7 +15,8 @@
 # where ``F_{il}`` is the footprint of cell ``i`` in layer ``l``, ``|F_{il}|`` its length (2D) or
 # area (3D), and ``\ell_i`` the length per layer of the ray of the cell, the ray through its center.
 # The result is again a weighted sum of the voxel values: the weight of a voxel is the part of the
-# footprint that lies in it, relative to the whole footprint, times ``\ell_i``.
+# footprint that lies in it, relative to the whole footprint, times ``\ell_i``. [Use Several Rays per
+# Cell](@ref) shows the other way to average over a cell, several rays per cell.
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "distancedriven_figures.jl")) #hide
@@ -53,8 +54,8 @@ fan_app() #hide
 # mapping all these boundaries onto a common line and taking weights proportional to the distances
 # between neighboring boundaries; this gave the method its name. The figure shows all cells of one
 # view (left, alternating colors) and one layer as a line (right): above it the pixels of the layer,
-# below it the footprints of the cells, and the dashed pixel edges cut the footprints into the pieces
-# that give the weights.
+# below it the footprints of the cells, numbered by their cell, and the dashed pixel edges cut the
+# footprints into the pieces that give the weights.
 
 fig = tiling_figure() #hide
 save("distancedriven_tiling.png", fig) #hide
@@ -63,8 +64,8 @@ nothing #hide
 
 # Neighboring cells share an edge, and so do their beams: the right edge of one footprint is the left
 # edge of the next. Since all cells of a view use the same layers, every point of a layer that the
-# beams of the view reach lies in exactly one footprint. The rays of a ray-driven method are lines without width; the
-# rays of a view can pass between pixels (see [Comparing Projectors](@ref)).
+# beams of the view reach lies in exactly one footprint. The rays of a ray-driven method are lines
+# without width; the rays of a view can pass between pixels (see [Comparing Projectors](@ref)).
 #
 # ## In 3D
 #
@@ -94,8 +95,8 @@ nothing #hide
 # footprint is about 1.26 × 1.15 voxels; the voxel with the weight 0.76 holds a piece of 1 × 1, and
 # the length per layer is about 1.10: 1 / (1.26 · 1.15) · 1.10 ≈ 0.76.
 #
-# All three projectors of this package use the length per layer of a ray for every layer it crosses
-# completely; they differ in how they share it among the voxels of the layer:
+# Siddon's, Joseph's and the distance-driven method use the length per layer of a ray for every
+# layer it crosses completely; they differ in how they share it among the voxels of the layer:
 #
 # | method | the length per layer is shared among the voxels |
 # |:-------|:------------------------------------------------|
@@ -114,7 +115,8 @@ nothing #hide
 # ![Coverage of the pixels by the cells of one view](distancedriven_coverage.png)
 
 # For a parallel beam all footprints of a view have the same size and all cells the same length per
-# layer, so every pixel of a layer gets the same summed weight: 1 everywhere in both panels.
+# layer, so every pixel of a layer gets the same summed weight: 1 everywhere in both distance-driven
+# panels.
 # [Comparing Projectors](@ref) shows the same for other cell sizes and for all views of a scan. In a
 # fan or cone beam, footprint sizes and lengths per layer vary from cell to cell.
 #
@@ -148,25 +150,26 @@ nothing #hide
 #
 # ## Implementation
 #
-# - One thread per data element, as for the other projectors. The central ray of the view gives the
-#   principal axis of the view; the edge rays come from the same geometry function that
+# - One thread per data element, as for Siddon's and Joseph's methods. The central ray of the view
+#   gives the principal axis of the view; the edge rays come from the same geometry function that
 #   [Sampling the Beam](@ref) uses ([`CTOperators.cell_ray`](@ref)), so flat and curved detectors
 #   and parallel beams need no special case.
 # - The crossings of the four edge rays with the center plane of a layer are linear in the position
 #   of the layer, so they are computed once per cell; per layer only the overlaps remain. Footprints
 #   of at most 2 × 2 voxels read four voxels without a loop.
 # - The back projection follows the same cells and layers and adds the weighted values with atomic
-#   additions; with an image mask, only the layers inside the bounding box of the image mask are
-#   visited.
+#   additions.
+# - With an image mask, the forward and the back projection visit only the layers inside the
+#   bounding box of the image mask.
 # - Liu et al. (2017) compute the integral over a footprint from integral images of the layers
-#   ("branchless" distance-driven projection, Basu & De Man 2006), which in their measurements on GPUs
-#   with texture memory was faster than computing the overlaps; this package computes the overlaps.
+#   ("branchless" distance-driven projection, Basu & De Man 2006), which they implemented on GPUs
+#   with texture memory and compared with CPU implementations; this package computes the overlaps.
 #
 # ## References
 #
-# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
-#   Med. Biol. 49(11), 2463–2475, 2004.
-# - S. Basu, B. De Man, "Branchless distance driven projection and backprojection", Proc. SPIE 6065,
-#   2006.
+# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Physics
+#   in Medicine and Biology 49(11), 2463–2475, 2004.
+# - S. Basu, B. De Man, "Branchless distance driven projection and backprojection", Proceedings of
+#   SPIE 6065, 2006.
 # - R. Liu, L. Fu, B. De Man, H. Yu, "GPU-based branchless distance-driven projection and
-#   backprojection", IEEE Trans. Comput. Imaging 3(4), 617–632, 2017.
+#   backprojection", IEEE Transactions on Computational Imaging 3(4), 617–632, 2017.

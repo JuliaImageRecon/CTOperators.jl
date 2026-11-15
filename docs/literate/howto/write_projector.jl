@@ -11,6 +11,7 @@ using CTOperators, KernelAbstractions, Atomix, LinearAlgebra, ImagePhantoms
 using ImageGeoms: axis
 using CTOperators: VoxelGrid, to_index, clip, device_geometry, storage_array
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "sampling_figures.jl")) #hide
+nothing #hide
 
 # ## The method
 #
@@ -66,6 +67,7 @@ struct SamplingProjector{T,G<:AbstractProjectionGeometry{T},B,I<:ImageGeom,V<:Vo
   backend::B
   samples::T
 end
+nothing #hide
 
 # The constructor follows those of the package: keywords `eltype` and `storage` choose the precision
 # and the device, and [`CTOperators.device_geometry`](@ref) converts and moves the geometry
@@ -77,6 +79,7 @@ function SamplingProjector(image::ImageGeom, geometry::AbstractProjectionGeometr
   g = device_geometry(geometry, T, storage)
   SamplingProjector(image, VoxelGrid{T}(image), g, get_backend(storage_array(g)), T(samples))
 end
+nothing #hide
 
 # ## The interface
 #
@@ -91,6 +94,7 @@ function CTOperators.similar_projector(op::SamplingProjector, geometry::Abstract
   backend = get_backend(storage_array(geometry))
   SamplingProjector(op.image, VoxelGrid{T}(op.image), geometry, backend, T(op.samples))
 end
+nothing #hide
 
 # ## The kernels
 #
@@ -114,7 +118,7 @@ end
   p, d, amin, dalpha, n, norm(b - a) * dalpha
 end
 
-# the linear index of the voxel nearest to the voxel coordinate q
+## the linear index of the voxel nearest to the voxel coordinate q
 @inline function nearest_voxel(grid, q)
   nx, ny, nz = grid.dims
   ix = clamp(round(Int, q[1]), 1, nx)
@@ -122,6 +126,7 @@ end
   iz = clamp(round(Int, q[3]), 1, nz)
   ix + (iy - 1) * nx + (iz - 1) * nx * ny
 end
+nothing #hide
 
 # The forward projection sums the sampled values along the ray. The back projection is its
 # transpose: every ray adds its value, times the same weights, to the same voxels. Many rays reach
@@ -145,6 +150,7 @@ end
     Atomix.@atomic :monotonic x[nearest_voxel(grid, p + (amin + (k - eltype(y)(0.5)) * dalpha) * d)] += v
   end
 end
+nothing #hide
 
 # Code in kernels has to compile for GPUs: no allocations, no dynamic dispatch, and no closures that
 # capture a variable which is reassigned (the loop state of a ray), since Julia boxes such
@@ -164,6 +170,7 @@ function CTOperators.backward!(x, op::SamplingProjector, y)
   sampling_backward!(op.backend)(vec(x), y, op.grid, op.geometry, op.samples; ndrange=nrays(op.geometry))
   x
 end
+nothing #hide
 
 # ## Using it
 #

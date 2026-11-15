@@ -11,7 +11,7 @@ axes, allowed by ImageGeoms) are kept.
 `lo` and `hi` are the corners of the bounding box of the mask of the `ImageGeom` (the smallest box
 containing its voxels), in voxel coordinates (see [`to_index`](@ref CTOperators.to_index)):
 `[1/2, n + 1/2]` per dimension without a mask. Projectors clip their rays to this box (Joseph widens
-it by half a voxel across the ray, for the interpolation), so that they do not traverse voxels that
+it by half a voxel across the ray, for the interpolation), so that they do not trace voxels that
 the mask sets to zero.
 
 `I` is the integer type of the voxel indices in the kernels: `Int32` if the indices fit, `Int64` for

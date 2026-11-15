@@ -24,7 +24,14 @@ The samples run sequentially, so a detector sampling needs points that do not va
 (`RegularPoints`, `DiskPoints`, `Points`; see [`CTOperators.varies_per_cell`](@ref)). Holds buffers,
 so it must not be evaluated by several tasks at once.
 
-References:
+# Example
+```julia
+m = IntensityModel(JosephProjector(image, geometry); source=FocalSpot(0.6; points=RegularPoints(5, 1)))
+p = m(x)                                  # line integrals of the averaged intensities
+J = CTOperators.jacobian(m, x)            # its derivative at x, a SampleSum
+```
+
+# References
 * B. De Man, J. Nuyts, P. Dupont, G. Marchal, P. Suetens, "Metal streak artifacts in X-ray computed
   tomography: a simulation study", IEEE Transactions on Nuclear Science 46(3), 691–696, 1999.
 """
@@ -106,6 +113,14 @@ with the right-hand side `b = 0`; the iteration `x -= rho * (G x - b)` is then a
   and the solver runs the given number of iterations.
 
 The objective is in general not convex: the result depends on the start (`x0`).
+
+# Example
+```julia
+using RegularizedLeastSquares
+G = IntensityGradient(m, vec(y))          # m an IntensityModel, y the measured line integrals
+solver = FISTA(; AHA=G, rho=1.0f-3, iterations=50)
+x = solve!(solver, zeros(Float32, size(G, 1)))
+```
 """
 struct IntensityGradient{T,M<:IntensityModel{T},Y}
   model::M

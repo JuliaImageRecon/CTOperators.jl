@@ -1,9 +1,9 @@
 # # Write a Sampling Strategy
 #
-# [`DetectorSampling`](@ref) places several rays in a detector cell according to a point strategy and weights
-# them with a weighting strategy. Both are ordinary types, and new ones do not have to be part of
-# CTOperators.jl: a script or a package of your own can define them, and they fit in through multiple
-# dispatch. This guide writes one of each, and then lets `SamplingProjector` from
+# [`DetectorSampling`](@ref) places several rays in a detector cell according to a point strategy
+# and weights them with a weighting strategy. Both are ordinary types, and new ones do not have to
+# be part of CTOperators.jl: a script or a package of your own can define them, and they fit in
+# through multiple dispatch. This guide writes one of each, and then lets `SamplingProjector` from
 # [Write a Projector](@ref) use them. It continues that page: to run this one, run the code there
 # first; `image`, `geometry`, `SamplingProjector` and `nearest_voxel` come from there.
 
@@ -11,15 +11,16 @@ using CTOperators, KernelAbstractions, LinearAlgebra
 using CTOperators: Gather, Scatter, VoxelGrid, clip, to_index, trace_element, visit
 include(joinpath(pkgdir(CTOperators), "docs", "literate", "howto", "write_projector.jl")) #hide
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "multiray_figures.jl")) #hide
+nothing #hide
 
 # ## A point strategy
 #
 # A point strategy is a subtype of [`AbstractPoints`](@ref)`{K}`, with `K` the number of rays per
 # cell. It implements [`CTOperators.point_offset`](@ref). This function gets the element type `T` of
-# the projector, the cell `(iu, iv)`, the `view` (numbered as in the full scan) and the ray `k` from 1
-# to `K`, and returns the offset `(du, dv)` from the cell center in cell units, where ±1/2 are the
-# cell edges. As an example, `K` points on a circle around the cell center, rotated by a random angle
-# in every cell:
+# the projector, the cell `(iu, iv)`, the `view` (numbered as in the full scan) and the ray `k` from
+# 1 to `K`, and returns the offset `(du, dv)` from the cell center in cell units, where ±1/2 are the
+# cell edges. As an example, `K` points on a circle around the cell center, rotated by a random
+# angle in every cell:
 
 struct RingPoints{K,T} <: AbstractPoints{K}
   radius::T
@@ -48,9 +49,9 @@ CTOperators.points_eltype(p::RingPoints{K}, ::Type{T}) where {K,T} = RingPoints{
 # ## A weighting strategy
 #
 # A weighting strategy is a subtype of [`AbstractWeights`](@ref) and implements
-# [`CTOperators.subray_weight`](@ref), the weight of a ray at an offset. The kernel divides by the sum
-# of the weights of a cell, which must not be zero. A response that falls off linearly from the cell
-# center:
+# [`CTOperators.subray_weight`](@ref), the weight of a ray at an offset. The kernel divides by the
+# sum of the weights of a cell, which must not be zero. A response that falls off linearly from the
+# cell center:
 
 struct LinearWeights <: AbstractWeights end
 
@@ -131,9 +132,9 @@ function CTOperators.backward!(x, op::SamplingProjector, y)
 end
 
 # Its kernels sample the cells, which it declares with a method of
-# [`CTOperators.fuses_sampling`](@ref); [`sampled`](@ref) then hands it the geometry with several rays
-# per cell, instead of one projector per ray position (which needs points that are the same in every
-# cell, unlike `RingPoints`):
+# [`CTOperators.fuses_sampling`](@ref); [`sampled`](@ref) then hands it the geometry with several
+# rays per cell, instead of one projector per ray position (which needs points that are the same in
+# every cell, unlike `RingPoints`):
 
 CTOperators.fuses_sampling(::SamplingProjector, ::AbstractDetectorGeometry, ::DetectorSampling,
                            ::CTOperators.Summed) = true
@@ -143,9 +144,10 @@ CTOperators.fuses_sampling(::SamplingProjector, ::AbstractDetectorGeometry, ::De
 op = sampled(SamplingProjector(image, geometry); detector=ring)
 dot(op * x, y) / dot(x, adjoint(op) * y)
 
-# On plain geometries it computes the same as the kernels of [Write a Projector](@ref), up to rounding.
-# For images one voxel thick in `z`, the constructor and `similar_projector` of a projector (`sampled`
-# calls the latter) keep the rays in the image plane, as those of the package do:
+# On plain geometries it computes the same as the kernels of [Write a Projector](@ref), up to
+# rounding. For images one voxel thick in `z`, the constructor and `similar_projector` of a
+# projector (`sampled` calls the latter) keep the rays in the image plane, as those of the package
+# do:
 #
 # ```julia
 # g = device_geometry(geometry, T, storage)

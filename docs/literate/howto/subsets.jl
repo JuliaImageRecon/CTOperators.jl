@@ -1,4 +1,4 @@
-# # Ordered Subsets and Normalization
+# # Use Ordered Subsets and Normalizations
 #
 # Algebraic methods such as SIRT and SART, and the ordered-subset variants of statistical methods,
 # normalize each update by the sums of the rows and columns of the system matrix, and many of them
@@ -19,11 +19,12 @@ y = op * x_true;
 
 # ## Row and column sums
 #
-# `rowsums(op)` is `op * ones`: for a projector the length of every ray inside the image (exactly
-# for Siddon's method; for Joseph's method approximately, since its image fades to zero just outside
-# the volume). `colsums(op)` is `adjoint(op) * ones`: for every voxel the summed weights of all
-# data elements, the column sums of the [System Matrix](@ref) (in OS-EM called the sensitivity). `r` has the shape of the projection data, `c` that of the image; both live
-# on the device of the projector.
+# `rowsums(op)` is `op * ones`: for the ray-driven projectors the length of every ray inside the
+# image (exactly for Siddon's method; for Joseph's method approximately, since its image fades to
+# zero just outside the volume). `colsums(op)` is `adjoint(op) * ones`: for every voxel the summed
+# weights of all data elements, the column sums of the [System Matrix](@ref) (in OS-EM called the
+# sensitivity). `r` has the shape of the projection data, `c` that of the image; both live on the
+# device of the projector.
 
 r = rowsums(op)
 c = colsums(op)
@@ -69,7 +70,9 @@ end
 x_os, err_os = os_sart(ops, ys, rs, cs, 10)
 x_sirt, err_sirt = os_sart([op], [y], [max.(r, 1.0f-6)], [max.(c, 1.0f-6)], 10);
 
-# Ten subsets reach in a few passes through the data what SIRT reaches only after many more:
+# The relative error per pass, and both images after 10 passes in the gray scale from 0 to 0.4,
+# which clips the skull. After one pass OS-SART has the error that SIRT reaches after 10, and its
+# image is sharper:
 
 fig = Figure(size=(900, 300))
 ax = Axis(fig[1, 1]; xlabel="pass through all views", ylabel="relative error", title="convergence")

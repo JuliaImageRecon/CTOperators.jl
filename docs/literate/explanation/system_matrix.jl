@@ -9,7 +9,8 @@
 #
 # This page describes what the rows, columns and entries of this matrix are, what all projectors
 # have in common, and the two choices in which they differ. The pages on the methods describe how
-# each of them computes the entries.
+# each of them computes the entries; [Write a Projector](@ref) shows how to implement a projector of
+# your own.
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "system_matrix_figures.jl")) #hide

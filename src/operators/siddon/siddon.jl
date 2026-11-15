@@ -33,9 +33,9 @@ y = op * x                 # forward projection, size (256, 128, 360)
 z = adjoint(op) * y        # back projection
 ```
 
-References:
-* R. L. Siddon, "Fast calculation of the exact radiological path for a three-dimensional CT
-  array", Med. Phys. 12(2), 252–255, 1985.
+# References
+* R. L. Siddon, "Fast calculation of the exact radiological path for a three-dimensional CT array",
+  Medical Physics 12(2), 252–255, 1985.
 * F. Jacobs, E. Sundermann, B. De Sutter, M. Christiaens, I. Lemahieu, "A fast algorithm to
   calculate the exact radiological path through a pixel or voxel space", J. Comput. Inf.
   Technol. 6(1), 89–94, 1998.

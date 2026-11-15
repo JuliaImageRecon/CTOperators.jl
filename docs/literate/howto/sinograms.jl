@@ -29,7 +29,8 @@ projection_geometry(rg)
 
 # Both packages describe the same rays: the projection of the voxelized Shepp-Logan phantom agrees
 # with Sinograms' analytic projection along its rays, up to the error of representing the phantom
-# by voxels (largest at the thin skull):
+# by voxels (largest at the thin skull). In the figure the difference is shown from -2 to 2
+# (clipped):
 
 objects = ellipsoid(ellipsoid_parameters(; fovs=(64, 64, 24)))
 x = Float32.(phantom(axis(image, 1), axis(image, 2), axis(image, 3), objects, 2))
@@ -64,7 +65,7 @@ image = ImageGeom(; dims=(64, 64, 64), deltas=(1.0, 1.0, 1.0))
 objects = ellipsoid(ellipsoid_parameters(; fovs=(64, 64, 64)))
 x_true = Float32.(phantom(axis(image, 1), axis(image, 2), axis(image, 3), objects, 2));
 
-# Sinograms' `rays` handles only circular orbits, so we simulate the data with the projector
+# Sinograms' `rays` handles only circular orbits, so the data are simulated with the projector
 # instead. To avoid using the same model for data and reconstruction, it projects the phantom on a
 # grid twice as fine:
 
@@ -80,9 +81,9 @@ solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations=20)
 x_cg = reshape(solve!(solver, vec(y)), size(x_true))
 x_fdk = Float32.(fdk(plan_fbp(rg_helix, image), y));
 
-# Axial (top) and sagittal (bottom, `z` from bottom to top) slices: CGNR recovers the whole volume,
-# with ringing visible in the figure; FDK sees only a band of slices, smeared by the motion of the
-# source.
+# Axial (top) and sagittal (bottom, `z` from bottom to top) slices, in the gray scale from 0 to 1.2:
+# CGNR recovers the whole volume, with ringing visible in the figure; FDK sees only a band of
+# slices, smeared by the motion of the source.
 
 fig = Figure(size=(900, 600))
 for (j, (name, img)) in enumerate((("phantom", x_true), ("CGNR, helix", x_cg), ("FDK, circle assumed", x_fdk)))
@@ -102,8 +103,8 @@ nothing #hide
 # | `CtPar` | [`ParallelBeam`](@ref) |
 # | `SinoFanFlat`, `SinoFanArc`, `SinoPar` (2D) | the same, with one detector row at `z = 0` |
 #
-# 2D data has the shape `(nb, 1, na)`, Sinograms' `(nb, na)` with a detector row in the middle. The
-# Mojette geometries are not supported.
+# 2D data has the shape `(nb, 1, na)`: Sinograms' `(nb, na)` with a singleton dimension (the one
+# detector row) inserted in the middle. The Mojette geometries are not supported.
 #
 # !!! warning
 #     With Sinograms.jl 0.5, analytic projections `radon(rays(rg), objects)` of a `CtFanFlat`

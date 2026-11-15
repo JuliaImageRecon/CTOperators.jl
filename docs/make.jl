@@ -46,7 +46,7 @@ makedocs(;
       ],
       "Reconstruction" => [
         "Reconstruct with FDK" => "generated/howto/fdk.md",
-        "Ordered Subsets and Normalization" => "generated/howto/subsets.md",
+        "Use Ordered Subsets and Normalizations" => "generated/howto/subsets.md",
         "Use Masks" => "generated/howto/masks.md",
         "Use Several Rays per Cell" => "generated/howto/multiray.md",
         "Model the Focal Spot" => "generated/howto/focalspot.md",

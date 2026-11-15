@@ -9,6 +9,7 @@
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "convention_figures.jl")) #hide
+nothing #hide
 
 # ## World coordinates
 #

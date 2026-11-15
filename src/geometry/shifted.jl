@@ -8,7 +8,8 @@
 """
     Shifted(geometry, source, detector)
 
-`geometry` (an [`ArcConeBeam`](@ref)) with the rays starting at `source[:, k]` added to its source
+`geometry` (an [`ArcConeBeam`](@ref), or another detector geometry without a method of
+`shift` of its own) with the rays starting at `source[:, k]` added to its source
 in view `k` (a `3 × nviews` matrix of lengths, or `nothing`) and ending at the detector position
 shifted by `detector[:, k]` cells along `u` and `v` (a `2 × nviews` matrix, or `nothing`). The
 detector does not move with the source. Built by [`sampled`](@ref) for the samples of a focal spot

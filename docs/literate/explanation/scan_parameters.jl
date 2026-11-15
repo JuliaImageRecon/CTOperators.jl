@@ -8,6 +8,7 @@
 using CTOperators, CairoMakie
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "scan_steps.jl")) #hide
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
+nothing #hide
 
 # ## One ray
 #

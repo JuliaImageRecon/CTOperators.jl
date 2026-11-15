@@ -120,11 +120,12 @@ y = op * x                 # forward projection, size (256, 128, 360)
 z = adjoint(op) * y        # back projection
 ```
 
-References:
-* B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
-  Med. Biol. 49(11), 2463–2475, 2004 (the pixel-driven method, its weight factors and artifacts).
+# References
+* B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Physics
+  in Medicine and Biology 49(11), 2463–2475, 2004 (the pixel-driven method, its weight factors and
+  artifacts).
 * W. Zhuang, S. S. Gopal, T. J. Hebert, "Numerical evaluation of methods for computing tomographic
-  projections", IEEE Trans. Nucl. Sci. 41(4), 1660–1665, 1994.
+  projections", IEEE Transactions on Nuclear Science 41(4), 1660–1665, 1994.
 """
 struct VoxelDrivenProjector{T,G<:AbstractDetectorGeometry{T},Q,B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T},S<:AbstractVoxelScale} <: AbstractProjector{T,G}
   image::I

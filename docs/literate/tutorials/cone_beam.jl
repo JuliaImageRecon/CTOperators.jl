@@ -8,6 +8,7 @@
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
 using ImageGeoms: axis
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
+nothing #hide
 
 # ## The object
 #
@@ -57,7 +58,8 @@ nothing #hide
 #
 # 20 CGNR iterations. The axial slice through the middle disc and the sagittal slice through the
 # axis (the `z` axis points up). The gray rim of the discs in the axial slices of the phantom is
-# their thinner edge.
+# their thinner edge. The gray scale runs from 0 to 1.2, and the titles give the relative error
+# `‖x − x_true‖ / ‖x_true‖`.
 
 solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations=20)
 x_circle = reshape(solve!(solver, vec(y)), n, n, n);
@@ -71,11 +73,9 @@ nothing #hide
 # ![Phantom and reconstruction of the circular scan](cone_circle.png)
 
 # The middle disc is reconstructed well. Away from the middle the discs lose their edges and blur
-# into each other along `z`, although every disc was in every view. The reason is what a circular
-# orbit measures: the data determines the object only in the plane of the orbit. Above and below,
-# no ray runs parallel to the discs, and an iterative method cannot recover what no measurement
-# contains (Tuy's condition: every plane that cuts the object has to meet the path of the source;
-# the planes of the discs above and below the orbit never do).
+# into each other along `z`, although every disc was in every view. Only in the plane of the orbit
+# do rays run parallel to the discs; above and below, every ray crosses them at an angle, and on
+# this example the reconstruction does not recover their edges along `z`.
 #
 # ## A smaller cone angle
 #
@@ -97,5 +97,5 @@ nothing #hide
 # ![Large and small cone angle](cone_angles.png)
 
 # With nearly parallel rays every slice is measured almost as in a fan-beam scan, and the discs come
-# back. A helical scan moves the source along `z` as well: [Helical Cone-Beam CT](@ref) continues with
-# the same phantom.
+# back. A helical scan moves the source along `z` as well: [Helical Cone-Beam CT](@ref) continues
+# with the same phantom.
