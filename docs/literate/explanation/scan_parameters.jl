@@ -15,7 +15,8 @@ nothing #hide
 # An X-ray source sends a ray through the object to a detector cell. The cell measures how much the
 # ray was attenuated; after taking the logarithm, this is the line integral of the attenuation
 # coefficient along the ray: the sum of the image values along the ray, weighted by the length of
-# the ray in each voxel. Computing these line integrals for all rays is the forward projection.
+# the ray in each voxel ([From Intensities to Line Integrals](@ref)). Computing these line integrals
+# for all rays is the forward projection.
 
 fig = step_ray_figure() #hide
 save("steps_ray.png", fig) #hide

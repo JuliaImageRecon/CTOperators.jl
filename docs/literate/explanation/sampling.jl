@@ -37,35 +37,17 @@ nothing #hide
 # ### Averaging intensities
 #
 # The weights above average **line integrals** ``p_k``, which keeps the operator linear. A detector
-# measures intensities, ``\exp(-p_k)``, and averages those. [`IntensityModel`](@ref) computes, with
-# the same normalized weights,
+# counts the photons of all rays of a cell, ``\exp(-p_k)`` each, and the logarithm is taken after
+# that sum. [`IntensityModel`](@ref) computes this with the same samples and normalized weights,
 #
 # ```math
 # p_i = -\log \sum_k w_{ik} \exp(-p_{ik}).
 # ```
 #
-# De Man et al. (1999) model the finite focal spot and detector cells this way in a simulator: they
-# sample both finely and take the logarithm of the summed photon flux, "the correct simulation
-# procedure"; the mean of the line integrals over the same samples removes the exponential
-# edge-gradient effect (EEGE), which they identify as an important cause of metal streak artifacts.
-#
-# By Jensen's inequality ``p_i`` is never larger than the mean ``\sum_k w_{ik} p_{ik}`` ; for small
-# differences between the ``p_{ik}`` the gap is half their weighted variance. The two differ where
-# the rays of one data element see different line integrals, at edges. For a cell whose rays see
-# ``0`` and ``P`` in equal parts, computed from the two formulas and rounded; the relative
-# difference is (mean − intensity model) / mean:
-#
-# | P | mean | intensity model | relative difference |
-# |:---|:---|:---|:---|
-# | 0.1 | 0.0500 | 0.0488 | 2.5 % |
-# | 1 | 0.500 | 0.380 | 24 % |
-# | 4 | 2.00 | 0.675 | 66 % |
-#
-# The model is nonlinear. Its derivative ([`CTOperators.jacobian`](@ref)) is a weighted sum of the
-# projectors of the samples, ``J = \sum_k \mathrm{diag}(\pi_k) A_k``, with weights
-# ``\pi_{ik} = w_{ik} \exp(-p_{ik}) / \sum_l w_{il} \exp(-p_{il})`` per data element; at ``x = 0`` it
-# is the linear model.
-#
+# It is never larger than the mean of the ``p_{ik}``, and differs from it where the rays of one data
+# element see different line integrals, at edges. [From Intensities to Line Integrals](@ref)
+# explains the model, and [Use the Intensity Model](@ref) reconstructs with it.
+
 # ## Positions on the detector
 #
 # Positions are counted in cells: cell `(iu, iv)` has its center at `(iu, iv)` and its edges at
@@ -258,7 +240,8 @@ nothing #hide
 # In the band the profiles with the spot fall off over its whole width, that of the point source
 # over a few cells. At `μ = 0.25` (a line integral of 1 through the disk) the intensity model lies
 # slightly below the linear one in the band; at `μ = 1` (a line integral of 4) clearly below: there
-# some rays of a cell pass through the disk and others miss it, as in the table above.
+# some rays of a cell pass through the disk and others miss it (see
+# [From Intensities to Line Integrals](@ref)).
 
 # A detector on an arc is a cylinder about the source. Moving the source of the geometry would move
 # the detector with it, so a source sample is added only to the start of the rays: a
@@ -335,8 +318,6 @@ nothing #hide
 #
 # - R. L. Cook, "Stochastic sampling in computer graphics", ACM Transactions on Graphics 5(1),
 #   51–72, 1986.
-# - B. De Man, J. Nuyts, P. Dupont, G. Marchal, P. Suetens, "Metal streak artifacts in X-ray computed
-#   tomography: a simulation study", IEEE Transactions on Nuclear Science 46(3), 691–696, 1999.
 # - M. Jarzynski, M. Olano, "Hash functions for GPU rendering", Journal of Computer Graphics
 #   Techniques 9(3), 21–38, 2020.
 # - C. Miao, "Comparative studies of different system models for iterative CT image

@@ -50,6 +50,7 @@ makedocs(;
         "Use Masks" => "generated/howto/masks.md",
         "Use Several Rays per Cell" => "generated/howto/multiray.md",
         "Model the Focal Spot" => "generated/howto/focalspot.md",
+        "Use the Intensity Model" => "generated/howto/intensity.md",
         "Differentiate through a Projector" => "generated/howto/differentiation.md",
       ],
       "Devices" => [
@@ -66,6 +67,7 @@ makedocs(;
       "Scans" => [
         "Parameters of a Scan" => "generated/explanation/scan_parameters.md",
         "Coordinates and Conventions" => "generated/explanation/conventions.md",
+        "From Intensities to Line Integrals" => "generated/explanation/intensities.md",
       ],
       "Projection Methods" => [
         "System Matrix" => "generated/explanation/system_matrix.md",

@@ -66,12 +66,14 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
   [use masks](@ref "Use Masks") for the image and the rays, how to
   [use several rays per detector cell](@ref "Use Several Rays per Cell"), how to
   [model the focal spot](@ref "Model the Focal Spot"), how to
+  [use the intensity model](@ref "Use the Intensity Model"), how to
   [differentiate through a projector](@ref "Differentiate through a Projector"), how to
   [use geometries of Sinograms.jl](@ref "Use Geometries of Sinograms.jl") and how to write your own
   [projector](@ref "Write a Projector"), [sampling strategy](@ref "Write a Sampling Strategy") or
   [FDK windows and weights](@ref "Write FDK Windows and Weights").
 - The explanation pages introduce [the parameters of a scan](@ref "Parameters of a Scan") step by
   step, describe the [coordinates and conventions](@ref "Coordinates and Conventions"),
+  [how the measured intensities relate to line integrals](@ref "From Intensities to Line Integrals"),
   what every projector computes (the [system matrix](@ref "System Matrix")), the projection methods
   ([Siddon's Method](@ref), [Joseph's Method](@ref), the [Distance-Driven Method](@ref) and the
   [Voxel-Driven Method](@ref)), how they [compare](@ref "Comparing Projectors"),

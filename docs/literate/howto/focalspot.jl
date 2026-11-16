@@ -2,9 +2,8 @@
 #
 # The X-ray source is not a point: the rays start from a focal spot of some size. This guide models
 # it with [`FocalSpot`](@ref) and [`sampled`](@ref): it shows the blur of a point at two
-# magnifications, the shapes of a spot, a reconstruction with and without the spot in the model, and
-# the model that averages intensities, [`IntensityModel`](@ref). [Sampling the Beam](@ref) explains
-# what is computed.
+# magnifications, the shapes of a spot, and a reconstruction with and without the spot in the model.
+# [Sampling the Beam](@ref) explains what is computed.
 
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie, LinearAlgebra
 using ImageGeoms: axis
@@ -152,61 +151,17 @@ nothing #hide
 # With the spot in the model the skull reaches the value of the phantom (1.0, against 0.87 with a
 # point source), and next to it the profile over- and undershoots.
 
-# ## Averaging intensities
-#
-# A detector cell averages intensities `exp(-p_k)` over its rays, not line integrals `p_k`.
-# [`IntensityModel`](@ref) models that: `p = -log(sum_k w_k exp(-p_k))`, as the simulator of De Man
-# et al. (1999) does for the focal spot and the detector cells. Where the rays of one data element
-# see different line integrals, at edges, it is smaller than the mean of the `p_k`. The data are
-# simulated with the intensity model on the fine image, and reconstructed with the linear model (the
-# mean of the line integrals) and with three Gauss–Newton steps on the intensity model: in each
-# step, the Jacobian [`CTOperators.jacobian`](@ref) at the current image, and 15 iterations of CGNR
-# for the correction. The largest line integral of the data and the largest difference between the
-# two models on them:
-
-fine_spot = FocalSpot(1.5; points=RegularPoints(15, 1))
-y_int = IntensityModel(JosephProjector(fine, geometry); source=fine_spot)(x_fine)
-y_mean = sampled(JosephProjector(fine, geometry); source=fine_spot) * x_fine
-(largest=maximum(y_int), difference=maximum(y_mean .- y_int))
-
-#-
-
-m = IntensityModel(op; source=spot)
-x_lin = reconstruct(sampled(op; source=spot), y_int)
-x_gn = copy(x_lin)
-for step in 1:3
-  J = CTOperators.jacobian(m, x_gn)
-  x_gn .+= reconstruct(J, y_int .- m(x_gn); iterations=15)
-end
-
-#-
-
-fig = images_figure([("phantom", x_true), ("linear model", x_lin), ("intensity model", x_gn)]; #hide
-                    colorrange=(0, 0.4), truth=x_true) #hide
-save("focalspot_intensity.png", fig) #hide
-nothing #hide
-# ![Reconstructions of intensity data with the linear and with the intensity model](focalspot_intensity.png)
-
-# The values of the phantom, read as attenuation per mm, give line integrals up to 16.5, and the two
-# models differ by up to 6.2 on these data. The linear model reconstructs them with a relative error
-# of 0.48, with a double edge at the skull and rings inside; the three Gauss–Newton steps, which
-# start from it, reach 0.21, with one edge (the titles). This is one example, with data free of
-# noise.
-#
 # ## Notes
 #
 # * A focal spot works with every projector on `ConeBeam` and `ArcConeBeam`. Detector sampling works
 #   on every detector geometry (`ParallelBeam` too) with every projector except the distance-driven
 #   one. Both also run on a GPU (`storage=CuArray` etc. when building the projector).
-# * The intensity model builds on [`stacked`](@ref), one projector per sample; a detector sampling in
-#   it needs points that are the same in every cell (`RegularPoints`, `DiskPoints`, `Points`).
-# * [`IntensityGradient`](@ref) gives the gradient of `|p(x) - y|² / 2` as an operator, for solvers
-#   that take only a normal operator; its docstring lists what such a solver needs.
+# * A detector cell counts the photons of all rays from the spot before the logarithm is taken:
+#   `IntensityModel(op; source=spot)` models that ([From Intensities to Line Integrals](@ref),
+#   [Use the Intensity Model](@ref)).
 #
 # ## References
 #
-# - B. De Man, J. Nuyts, P. Dupont, G. Marchal, P. Suetens, "Metal streak artifacts in X-ray computed
-#   tomography: a simulation study", IEEE Transactions on Nuclear Science 46(3), 691–696, 1999.
 # - S. Tilley II, J. H. Siewerdsen, J. W. Stayman, "Model-based iterative reconstruction for
 #   flat-panel cone-beam CT with focal spot blur, detector blur, and correlated noise", Physics in
 #   Medicine and Biology 61(1), 296–319, 2016.
