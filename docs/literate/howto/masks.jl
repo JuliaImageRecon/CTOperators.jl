@@ -8,12 +8,15 @@
 # and trace rays only through the bounding box of the image mask. [Masks](@ref) explains what
 # happens inside.
 
-using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
+using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, LinearAlgebra
+using CairoMakie
 using ImageGeoms: axis
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
+nothing #hide
 
 # The examples use the 2D Shepp-Logan phantom on 128 × 128 pixels and a parallel-beam scan with 180
-# views, reconstructed with 30 CGNR iterations:
+# views, reconstructed with 30 CGNR iterations; `relerr` is the relative error
+# ``\|x - x_\text{true}\| / \|x_\text{true}\|``:
 
 n = 128
 x_true = Float32.(phantom(axis(ImageGeom(; dims=(n, n)), 1), axis(ImageGeom(; dims=(n, n)), 2),
@@ -23,21 +26,26 @@ geometry = parallel_beam(; angles=range(0, pi, 181)[1:180], nu=192, nv=1, du=1.0
 function reconstruct(op, y)
   solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations=30)
   reshape(solve!(solver, vec(y)), n, n)
-end;
+end
+relerr(x) = round(norm(x - x_true) / norm(x_true); digits=3);
 
 # ## The circular field of view
 #
 # A rotating scanner sees the full object only within the circle that all views cover. The image
-# mask `MaskCircle()` of ImageGeoms.jl restricts the image to the circle inscribed in it (a cylinder in
-# 3D), which here lies inside the circle all views cover:
+# mask `MaskCircle()` of ImageGeoms.jl restricts the image to the circle inscribed in it (a cylinder
+# in 3D), which here lies inside the circle all views cover:
 
 image = ImageGeom(MaskCircle(); dims=(n, n), deltas=(1.0, 1.0))
 op = JosephProjector(image, geometry)
 x = reconstruct(op, op * x_true);
 
 # The reconstruction is zero outside the circle. The phantom lies inside it, so the data are the same
-# as without the mask, but fewer voxels are unknown: after 30 iterations the error is 0.062 with the
-# mask and 0.075 without it.
+# as without the mask, but fewer voxels are unknown. The errors with and without the mask:
+
+op_full = JosephProjector(ImageGeom(; dims=(n, n), deltas=(1.0, 1.0)), geometry)
+relerr(x), relerr(reconstruct(op_full, op * x_true))
+
+# The image mask and the reconstruction with it, in the color window 0 to 0.4:
 
 fig = images_figure([("image mask", Float32.(image.mask), (0, 1)), ("reconstruction", x)]; #hide
                     colorrange=(0, 0.4)) #hide
@@ -46,7 +54,7 @@ nothing #hide
 # ![The circular image mask and the reconstruction](masks_circle.png)
 
 # Any `Bool` array of the image size is a mask: `ImageGeom(; dims, deltas, mask)`. ImageGeoms.jl also
-# offers `MaskEllipse()` and `MaskAllButEdge()`.
+# offers `MaskEllipse()` and `MaskAllButEdge()` (see its documentation).
 #
 # ## Defective detector cells
 #
@@ -78,8 +86,8 @@ nothing #hide
 # ![Defective detector cells, without and with the ray mask](masks_rings.png)
 
 # The figure shows the reconstructions in the color window 0 to 0.4, where the soft tissue of the
-# phantom is visible, and the relative error ``\|x - x_\text{true}\| / \|x_\text{true}\|``. With the
-# ray mask the rings almost disappear (error 0.08; 1.15 without the ray mask, 0.075 with intact data):
+# phantom is visible, and the relative error in the titles. With the ray mask the rings almost
+# disappear (error 0.08; 1.15 without the ray mask, 0.075 with intact data, as above):
 # the lines of the defective cells are not measured, but their wrong values no longer enter the fit.
 # The ray mask works the same way for any rays whose data cannot be used, e.g. truncated or
 # saturated ones.
@@ -87,8 +95,8 @@ nothing #hide
 # ## A region of interest
 #
 # If only part of the object matters, the image mask can be a box around it, here deliberately off
-# center. The rays are then only traced through this box: a centered mask of 64³ voxels in a 256³ volume, on an
-# AMD Radeon RX 7900 XT, made the projections 30 to 43 times faster in our
+# center. The rays are then only traced through this box: a centered mask of 64³ voxels in a 256³
+# volume, on an AMD Radeon RX 7900 XT, made the projections 30 to 43 times faster in our
 # [benchmarks](https://github.com/JuliaImageRecon/CTOperators.jl/blob/main/benchmark/README.md).
 
 roi = falses(n, n)
@@ -114,8 +122,8 @@ nothing #hide
 # * `subset(op, views)` keeps the part of the ray mask for these views; `adapt` moves both masks to
 #   the device.
 # * The masks are `Bool` arrays on the device of the operator, whatever its element type; a ray mask
-#   from any device is copied there. The ray mask takes one byte per data element, and the forward projection
-#   with an image mask allocates the masked image on every call.
+#   from any device is copied there. The ray mask takes one byte per data element, and the forward
+#   projection with an image mask allocates the masked image on every call.
 # * `rowsums` and `colsums` include the masks, and so do the normalizations of ordered-subset methods
 #   built on them.
 # * The masks are part of the operator in every solver and in automatic differentiation.

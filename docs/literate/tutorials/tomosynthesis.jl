@@ -9,6 +9,7 @@
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
 using ImageGeoms: axis
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
+nothing #hide
 
 # ## The object
 #
@@ -85,5 +86,4 @@ nothing #hide
 #
 # The same construction, per view source, detector center and directions, covers any other scanner
 # whose source does not follow a circle or helix: robotic C-arms, inverse geometries with several
-# sources, or
-# a moving object in front of a fixed scanner (see [Set Up a Geometry](@ref)).
+# sources, or a moving object in front of a fixed scanner (see [Set Up a Geometry](@ref)).

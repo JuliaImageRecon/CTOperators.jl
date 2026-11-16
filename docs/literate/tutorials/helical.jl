@@ -9,6 +9,7 @@
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
 using ImageGeoms: axis
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
+nothing #hide
 
 # The object: nine discs, 3 mm thick at their center and 6 mm apart, in a volume of 64³ voxels of
 # 1 mm.
@@ -42,7 +43,9 @@ nothing #hide
 
 # ## Reconstruction
 #
-# 20 CGNR iterations, for the helix and, for comparison, for the circular scan:
+# 20 CGNR iterations, for the helix and, for comparison, for the circular scan. As in
+# [Circular Cone-Beam CT](@ref), the gray scale runs from 0 to 1.2, and the titles give the relative
+# error `‖x − x_true‖ / ‖x_true‖`:
 
 function reconstruct(geometry)
   op = JosephProjector(image, geometry)
@@ -60,7 +63,7 @@ save("helical_reconstruction.png", fig) #hide
 nothing #hide
 # ![Circular and helical scan](helical_reconstruction.png)
 
-# Every disc is reconstructed: each plane through the object now meets the path of the source.
+# With the helix every disc is reconstructed.
 #
 # ## The pitch
 #
@@ -79,10 +82,10 @@ save("helical_pitch.png", fig) #hide
 nothing #hide
 # ![Three pitches](helical_pitch.png)
 
-# A voxel near the axis stays in the cone while the source rises by the detector height: for one
-# turn at a pitch of 96 mm, for half a turn at 192 mm. At 192 mm the error is 0.064, against 0.026 at
-# 48 mm and 0.033 at 96 mm, and the axial slice shows shading. Clinical scanners quote the pitch
-# relative to the detector height.
+# A voxel near the axis stays in the cone while the source rises by the height the detector covers
+# at the axis (96 mm): for one turn at a pitch of 96 mm, for half a turn at 192 mm. At 192 mm the
+# error is 0.064, against 0.027 at 48 mm and 0.033 at 96 mm, and the axial slice shows shading.
+# Clinical scanners quote the pitch relative to the detector height.
 #
 # An object moving along the rotation axis during a circular scan, on a table or a conveyor belt,
 # sees the same helix: only the relative motion counts. [Getting Started](@ref) reconstructs such a

@@ -9,7 +9,7 @@
   image = ImageGeom(MaskCircle(); dims=(12, 10, 6), deltas=(1.0, 1.1, 0.9))
   g = circular_cone_beam(; angles=range(0, 2pi, 7)[1:6], dso=40, dsd=70, nu=14, nv=8, du=1.6)
   raymask = rand(datasize(g)...) .> 0.2
-  multi = MultiRay(g, JitteredPoints(2; seed=1))
+  multi = CTOperators.CellSampled(g, JitteredPoints(2; seed=1))
   cases = ((SiddonProjector, g), (SiddonProjector, multi), (JosephProjector, g), (JosephProjector, multi),
            (DistanceDrivenProjector, g))
   for (P, geometry) in cases, arrayType in arrayTypes, T in floatTypes

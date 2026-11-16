@@ -103,7 +103,7 @@ end
 
 # tiles only for detector geometries (also with several rays per cell); ray lists keep their order
 ray_order(layout, geometry) = DataOrder()
-ray_order(layout::NTuple{2,Int}, geometry::Union{AbstractDetectorGeometry,MultiRay}) =
+ray_order(layout::NTuple{2,Int}, geometry::Union{AbstractDetectorGeometry,CellSampled}) =
   TileOrder(detectorsize(geometry)..., layout...)
 
 nthreads(::DataOrder, geometry) = nrays(geometry)

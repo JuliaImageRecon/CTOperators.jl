@@ -33,9 +33,9 @@ y = op * x                 # forward projection, size (256, 128, 360)
 z = adjoint(op) * y        # back projection
 ```
 
-References:
-* R. L. Siddon, "Fast calculation of the exact radiological path for a three-dimensional CT
-  array", Med. Phys. 12(2), 252–255, 1985.
+# References
+* R. L. Siddon, "Fast calculation of the exact radiological path for a three-dimensional CT array",
+  Medical Physics 12(2), 252–255, 1985.
 * F. Jacobs, E. Sundermann, B. De Sutter, M. Christiaens, I. Lemahieu, "A fast algorithm to
   calculate the exact radiological path through a pixel or voxel space", J. Comput. Inf.
   Technol. 6(1), 89–94, 1998.
@@ -58,7 +58,7 @@ SiddonProjector(image::ImageGeom, geometry; kwargs...) =
   SiddonProjector(image, projection_geometry(geometry); kwargs...)
 
 # from a geometry already in the operator's element type and on its device; for images of one layer
-# the rays of a MultiRay stay in the image plane
+# the rays of a CellSampled geometry stay in the image plane
 function siddon_projector(image::ImageGeom, geometry::AbstractProjectionGeometry{T}, launch, raymask) where {T}
   check_ray_layout(launch, "SiddonProjector")
   g = one_layer(image) ? in_plane(geometry) : geometry

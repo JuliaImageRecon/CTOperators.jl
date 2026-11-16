@@ -7,7 +7,8 @@
 # onto the detector, and the voxel contributes to the cells next to that point, with weights from
 # linear interpolation between the cells. De Man & Basu (2004) and Miao (2013) call it the
 # pixel-driven method, Zhuang et al. (1994) bilinear interpolation. Implementations of filtered back
-# projection usually back project this way (De Man & Basu 2004).
+# projection usually back project this way (De Man & Basu 2004), as does [`FDK`](@ref) (see
+# [Reconstruct with FDK](@ref)).
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "voxeldriven_figures.jl")) #hide
@@ -29,12 +30,12 @@ bonito_page("voxeldriven") #hide
 pixel_app() #hide
 
 # Each weight is the product of two factors, shown along the detector in the next figure for the
-# first view of the slider (weights 0.61 and 0.09). The first
-# is the interpolation (left): every cell has a tent function that is 1 at its own center and falls
-# to 0 at the centers of its neighbors. Read off at the cross, the two tents give 0.87 for the
-# nearer cell and 0.13 for the other one; away from the edges of the detector they add up to 1. The second factor is a scale
-# that is the same for both cells, here 0.70 (right): it turns the interpolation into weights that
-# model line integrals, and the section on the weights below derives it.
+# first view of the slider (weights 0.61 and 0.09). The first is the interpolation (left): every
+# cell has a tent function that is 1 at its own center and falls to 0 at the centers of its
+# neighbors. Read off at the cross, the two tents give 0.87 for the nearer cell and 0.13 for the
+# other one; away from the edges of the detector they add up to 1. The second factor is a scale that
+# is the same for both cells, here 0.70 (right): it turns the interpolation into weights that model
+# line integrals, and the section on the weights below derives it.
 
 fig = weights_figure() #hide
 save("voxeldriven_weights.png", fig) #hide
@@ -129,8 +130,9 @@ save("voxeldriven_disk.png", fig) #hide
 nothing #hide
 # ![Projection of a uniform disk](voxeldriven_disk.png)
 
-# The relative difference between the voxel-driven and the distance-driven projection in this
-# example (the distance-driven projection is itself an approximation, not the exact answer):
+# The relative difference `‖y_voxel - y_dd‖ / ‖y_dd‖` between the voxel-driven and the
+# distance-driven projection in this example (the distance-driven projection is itself an
+# approximation, not the exact answer):
 
 [(cell=du, difference=round(disk_difference(du); sigdigits=2)) for du in (0.25, 0.5, 1.0, 2.0)]
 
@@ -157,7 +159,8 @@ nothing #hide
 #   precision collect the sums in that precision (see [Choose the Precision](@ref)).
 # - **Needs a detector.** The method works with [`ConeBeam`](@ref), [`ArcConeBeam`](@ref) and
 #   [`ParallelBeam`](@ref) geometries, not with a [`RayList`](@ref) and not with a
-#   [`MultiRay`](@ref).
+#   geometry with several rays per cell; detector sampling ([`sampled`](@ref)) runs one projector per
+#   sample.
 # - **No fused normal operator.** The [Normal Operator](@ref) is fused for the projectors that run
 #   one thread per data element; here a thread owns a run of voxels, and `normalOperator` returns the
 #   generic normal operator of LinearOperatorCollection.jl.
@@ -183,9 +186,10 @@ nothing #hide
 #
 # ## References
 #
-# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
-#   Med. Biol. 49(11), 2463–2475, 2004 (the pixel-driven method, its weight factors and artifacts).
+# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Physics
+#   in Medicine and Biology 49(11), 2463–2475, 2004 (the pixel-driven method, its weight factors and
+#   artifacts).
 # - C. Miao, "Comparative studies of different system models for iterative CT image
 #   reconstruction", master's thesis, Wake Forest University, 2013.
 # - W. Zhuang, S. S. Gopal, T. J. Hebert, "Numerical evaluation of methods for computing tomographic
-#   projections", IEEE Trans. Nucl. Sci. 41(4), 1660–1665, 1994.
+#   projections", IEEE Transactions on Nuclear Science 41(4), 1660–1665, 1994.

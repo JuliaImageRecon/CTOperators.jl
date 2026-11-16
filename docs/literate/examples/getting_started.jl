@@ -55,9 +55,9 @@ x_true = Float32.(phantom(axis(image, 1), axis(image, 2), axis(image, 3), object
 
 # In our scan the source is 128 mm from the rotation axis and 256 mm from the detector, so the
 # object is magnified by 2 on the detector. The detector has 192 × 96 cells of 1 mm; at the rotation
-# axis a cell covers 0.5 mm, so two rays pass through each voxel per direction. (With one ray per
-# voxel, the rays of a view cover the voxels unevenly; see [Siddon's Method](@ref).) The object moves
-# by 32 mm, half the volume height, per turn. In the object's frame, source and detector therefore
+# axis a cell covers 0.5 mm, half a voxel. (With cells as wide as the voxels, the rays of a view
+# cover the voxels unevenly; see [Siddon's Method](@ref).) The object moves down by 32 mm, half the
+# volume height, per turn. In the object's frame, source and detector therefore
 # move on a helix: two turns, 240 views, starting 32 mm below the center.
 
 geometry = helical_cone_beam(; angles=range(0, 4pi, 240), pitch=n / 2, z0=-n / 2, dso=2n, dsd=4n,
@@ -65,7 +65,7 @@ geometry = helical_cone_beam(; angles=range(0, 4pi, 240), pitch=n / 2, z0=-n / 2
 
 # The projector holds the geometry and is created once; it is then applied many times. `op * x`
 # computes the line integrals of the image `x` along all rays, `adjoint(op) * y` the back
-# projection. Siddon's method computes a line integral by walking along the ray from voxel to voxel
+# projection. Siddon's method computes a line integral by tracing the ray from voxel to voxel
 # and adding each voxel's value times the length of the ray inside it.
 
 op = SiddonProjector(image, geometry);
@@ -102,17 +102,18 @@ motion_app(geometry, params, y, n) #hide
 # forward and back projections. It also needs the normal operator `adjoint(op) * op`, which
 # `normalOperator` of
 # [LinearOperatorCollection.jl](https://github.com/JuliaImageRecon/LinearOperatorCollection.jl)
-# provides; it computes a forward and a back projection without allocating new arrays. The solvers
-# work on vectors, hence `vec(y)` and the `reshape` of the result.
+# provides; for this projector it applies `AᵀA` in one pass over the rays, without an array for the
+# projection data (see [Normal Operator](@ref)). The solvers work on vectors, hence `vec(y)` and the
+# `reshape` of the result.
 
 solver = createLinearSolver(CGNR, op; AHA=normalOperator(op), iterations=40);
 x = reshape(solve!(solver, vec(y)), size(x_true));
 
 # Slices through the small structures of the phantom: axial (x–y plane) at z = −8.5 mm and sagittal
 # (y–z plane) at x = −0.5 mm. The axes are voxel indices. The window from 0.98 to 1.06 shows the
-# contrasts of 1–2 % against the background of 1. Without regularization, the noise of the data is
-# amplified in the reconstruction; the tutorial [Sparse Views and Limited Angles](@ref) adds a
-# regularization term.
+# contrasts of 1–2 % against the background of 1; the skull and the outside are clipped. Without
+# regularization, the noise of the data is amplified in the reconstruction; the tutorial [Sparse
+# Views and Limited Angles](@ref) adds a regularization term.
 
 fig = Figure(size=(700, 560))
 window = (0.98, 1.06)

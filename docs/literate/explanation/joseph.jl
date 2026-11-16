@@ -10,7 +10,8 @@
 # y_i = \sum_j a_{ij} x_j,
 # ```
 #
-# but the weights ``a_{ij}`` are now interpolation weights instead of intersection lengths.
+# but the weights ``a_{ij}`` are interpolation weights instead of intersection lengths.
+# [Use Several Rays per Cell](@ref) shows how to trace several rays per detector cell with it.
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "joseph_figures.jl")) #hide
@@ -60,8 +61,8 @@ round.(weights; digits=2)
 # ## Properties
 #
 # - **Smooth.** The projection changes continuously when a ray moves. Siddon's does too, except for
-#   rays parallel to the voxel planes, where it jumps as the ray crosses a plane. Rays that lie exactly
-#   between two voxels, ambiguous for Siddon, take the mean of both.
+#   rays parallel to the voxel planes, where it jumps as the ray crosses a plane. Rays that lie
+#   exactly between two voxels, ambiguous for Siddon, take the mean of both.
 # - **Exact for linear images.** If the voxel values are samples of a linear function of the
 #   position, the interpolation reproduces it, and the sum per layer integrates it exactly, for rays
 #   that cross the volume from face to face and stay within the outermost voxel centers across the
@@ -102,14 +103,14 @@ nothing #hide
 # - The ray is clipped to the region where the interpolated image can be nonzero. This gives the
 #   first and last layer, and the loop visits every layer from one to the other. Neighbors outside
 #   the volume count as zero.
-# - The forward projection runs one thread per data element; the back projection adds the weighted values of
-#   every sample (four in 3D, two in 2D) with atomic additions.
+# - The forward projection runs one thread per data element; the back projection adds the weighted
+#   values of every sample (four in 3D, two in 2D) with atomic additions.
 # - How the rays are distributed over the threads of a GPU is not part of the method; see
 #   [Workgroups, Ray Order and Runs of Voxels](@ref).
 #
 # ## References
 #
-# - P. M. Joseph, "An improved algorithm for reprojecting rays through pixel images", IEEE Trans.
-#   Med. Imaging 1(3), 192–196, 1982.
-# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
-#   Med. Biol. 49(11), 2463–2475, 2004.
+# - P. M. Joseph, "An improved algorithm for reprojecting rays through pixel images", IEEE
+#   Transactions on Medical Imaging 1(3), 192–196, 1982.
+# - B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Physics
+#   in Medicine and Biology 49(11), 2463–2475, 2004.

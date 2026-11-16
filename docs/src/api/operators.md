@@ -16,6 +16,25 @@ Pages = ["operators/operators.jl"]
 Private = false
 ```
 
+## Sampled operators
+
+A projector averaged over the samples of a focal spot and of the detector cells, or its samples side
+by side.
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["operators/sampled.jl"]
+Private = false
+```
+
+The model of a measurement that averages intensities over its samples before the log.
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["operators/intensity.jl"]
+Private = false
+```
+
 ## Image and ray masks
 
 The image mask comes from the `ImageGeom`, the ray mask from the keyword `raymask` of a projector

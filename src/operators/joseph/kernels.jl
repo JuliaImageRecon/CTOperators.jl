@@ -77,7 +77,7 @@ end
   lo, hi
 end
 
-# The rays of data element i of the geometry through the grid (one, or the subrays of a MultiRay);
+# The rays of data element i of the geometry through the grid (one, or the subrays of a CellSampled geometry);
 # returns the accumulated value of the action.
 @inline joseph_ray(action, grid, geometry, i) = trace_element(joseph_segment, action, grid, geometry, i)
 

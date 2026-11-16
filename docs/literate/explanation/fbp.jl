@@ -4,9 +4,9 @@
 # back to an image: every data element adds its value to the voxels along its ray, with the weights
 # of its row of the [System Matrix](@ref). The back projection alone does not recover the image: it
 # blurs it. Filtered back projection (FBP) filters the projection of every view (its data) with the
-# ramp filter first, and the back projection of the filtered data recovers the image. This page shows why with the simplest image,
-# a single point, in 2D with parallel beams, and then what changes for fan and cone beams, where the
-# method is called FDK ([Reconstruct with FDK](@ref)).
+# ramp filter first, and the back projection of the filtered data recovers the image. This page
+# shows why with the simplest image, a single point, in 2D with parallel beams, and then what
+# changes for fan and cone beams, where the method is called FDK ([Reconstruct with FDK](@ref)).
 
 using CTOperators, CairoMakie, LinearAlgebra
 
@@ -20,7 +20,7 @@ using CTOperators, CairoMakie, LinearAlgebra
 image = ImageGeom(; dims=(129, 129), deltas=(1.0, 1.0))
 x_point = zeros(Float32, 129, 129)
 x_point[65, 65] = 1
-scan(n) = parallel_beam(; angles=range(0, pi, n + 1)[1:n], nu=183, nv=1, du=1.0)
+scan(n) = parallel_beam(; angles=range(0, pi, n + 1)[1:n], nu=183, nv=1, du=1.0);
 
 # Back projection `op' * y` and filtered back projection with [`FDK`](@ref) (for parallel beams it
 # is FBP; `window=:ramp`: the plain ramp filter, no window):
@@ -34,7 +34,8 @@ views = (2, 8, 32, 180)
 results = Dict(n => reconstructions(n) for n in views);
 
 # The figure shows both for 2, 8, 32 and 180 views, each divided by its value at the point, with a
-# narrow gray scale (values above 0.1 are white) to show what lies around the point:
+# narrow gray scale (values above 0.1 are white, below -0.1 black) to show what lies around the
+# point:
 
 fig = Figure(size=(820, 440)) #hide
 for (j, n) in enumerate(views) #hide
@@ -78,16 +79,17 @@ nothing #hide
 # ![Profile through the point and the back projection times the distance](fbp_blur.png)
 
 # Every point of an image is blurred the same way, so the back projection of the data of an image is
-# the image convolved with ``1/r``. In 2D the Fourier transform of ``1/r`` is ``1/|k|`` up to a
-# constant factor (``k`` the spatial frequency): the back projection damps high frequencies, and dividing by ``1/|k|``, that is,
-# multiplying by ``|k|``, undoes it. By the Fourier slice theorem this multiplication can be done on
-# each projection, along the detector, before the back projection: the ramp filter ``|k|``.
+# the image convolved with ``1/r`` . In 2D the Fourier transform of ``1/r`` is ``1/|k|`` up to a
+# constant factor (``k`` the spatial frequency): the back projection damps high frequencies, and
+# dividing by ``1/|k|`` , that is, multiplying by ``|k|`` , undoes it. By the Fourier slice theorem
+# this multiplication can be done on each projection, along the detector, before the back
+# projection: the ramp filter ``|k|`` .
 #
 # ## The ramp filter
 #
 # The ramp filter is applied as a convolution along each detector row. Its kernel is positive at the
-# center and negative on both sides (see [Reconstruct with FDK](@ref) for the windows that lower it at
-# high frequencies). Filtered, the projection of the point gets negative side lobes (one view):
+# center and negative on both sides (see [Reconstruct with FDK](@ref) for the windows that lower it
+# at high frequencies). Filtered, the projection of the point gets negative side lobes (one view):
 
 plan = FDK(image, scan(180); window=:ramp) #hide
 y = VoxelDrivenProjector(image, scan(180)) * x_point #hide
@@ -111,7 +113,7 @@ nothing #hide
 # ## Fan and cone beams
 #
 # For a fan beam the rays of a view are not parallel, and FBP needs weights in addition to the ramp
-# filter (Feldkamp et al. 1984, Section 2, derive them for a flat detector):
+# filter (Feldkamp et al. 1984, Section 2, derive the first two for a flat detector):
 #
 # - every data element is weighted by the cosine of the angle between its ray and the central ray of
 #   the view, before the filter;
@@ -120,7 +122,7 @@ nothing #hide
 #   pixel (for a flat detector both along the central ray; for a detector on an arc [`FDK`](@ref)
 #   takes both within the plane of the orbit);
 # - lines that the scan measures more than once are weighted so that each line counts once (the
-#   redundancy weighting, [`AbstractRedundancy`](@ref)).
+#   redundancy weighting, [`AbstractRedundancy`](@ref); for short scans Parker 1982).
 #
 # Feldkamp, Davis & Kress (1984) carry this over to a circular cone beam: each detector row is
 # filtered as a fan, and the cosine weight includes the angle of the row. This is FDK. In the plane
@@ -129,12 +131,14 @@ nothing #hide
 # knows its magnification there. [`FDK`](@ref) implements all of them, for parallel beams with the
 # cosine weight and the magnification equal to 1; [Reconstruct with FDK](@ref) shows how to use it.
 #
-# References:
+# ## References
 #
-# - L. A. Feldkamp, L. C. Davis, J. W. Kress, "Practical cone-beam algorithm", J. Opt. Soc. Am. A
-#   1(6), 612–619, 1984.
+# - L. A. Feldkamp, L. C. Davis, J. W. Kress, "Practical cone-beam algorithm", Journal of the
+#   Optical Society of America A 1(6), 612–619, 1984.
+# - D. L. Parker, "Optimal short scan convolution reconstruction for fanbeam CT", Medical Physics
+#   9(2), 254–257, 1982.
 #
-# See also:
+# ## See also
 #
 # - A. C. Kak, M. Slaney, "Principles of Computerized Tomographic Imaging", IEEE Press, 1988,
 #   chapter 3.

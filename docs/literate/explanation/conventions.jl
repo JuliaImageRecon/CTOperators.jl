@@ -9,6 +9,7 @@
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "convention_figures.jl")) #hide
+nothing #hide
 
 # ## World coordinates
 #
@@ -64,7 +65,7 @@ nothing #hide
 #
 # Detector offsets `offset_u`, `offset_v` are given in cells. As the offsets of ImageGeoms, they are
 # subtracted: the cell positions along `u` are `((0:nu-1) .- (nu - 1)/2 .- offset_u) .* du`, so a
-# positive `offset_u` moves the detector by `offset_u` cells towards `−u`.
+# positive `offset_u` moves the detector by `offset_u` cells toward `−u`.
 #
 # ## Parallel beam
 #

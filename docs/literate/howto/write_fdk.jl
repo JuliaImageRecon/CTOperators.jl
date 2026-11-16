@@ -10,8 +10,8 @@ using CTOperators, ImagePhantoms, Sinograms, CairoMakie, LinearAlgebra, Random
 using ImageGeoms: axis
 using ImagePhantoms: ellipsoid_parameters
 
-# The phantom and the scan of [Reconstruct with FDK](@ref): the 3D Shepp-Logan phantom in 64 × 64 × 48
-# voxels of 1 mm, 180 views over one turn with a flat detector.
+# The phantom and the scan of [Reconstruct with FDK](@ref): the 3D Shepp-Logan phantom in 64 × 64 ×
+# 48 voxels of 1 mm, 180 views over one turn with a flat detector.
 
 image = ImageGeom(; dims=(64, 64, 48), deltas=(1.0, 1.0, 1.0))
 x_true = Float32.(phantom(axis(image, 1), axis(image, 2), axis(image, 3),
@@ -56,9 +56,12 @@ save("write_fdk_windows.png", fig) #hide
 nothing #hide
 # ![Windows and a profile through the edge of the skull](write_fdk_windows.png)
 
-# The profile shows the left edge of the skull. The relative errors of the volume:
+# Left, the windows over the frequency; right, a profile through the left edge of the skull. All
+# three smooth the thin skull to a similar peak; `1 - f`, which keeps more of the highest
+# frequencies, leaves small ripples beside it. The relative errors of the volume:
 
-[(window=name, error=relative_error(x)) for (name, x) in (("Hann", x_hann), ("Gaussian, width 0.5", x_gauss), ("1 - f", x_linear))]
+[(window=name, error=relative_error(x))
+ for (name, x) in (("Hann", x_hann), ("Gaussian, width 0.5", x_gauss), ("1 - f", x_linear))]
 
 # ## Weights computed elsewhere
 #
@@ -66,7 +69,8 @@ nothing #hide
 # with dimensions of length 1 for "the same for all", and one per view. Sinograms.jl computes Parker
 # weights for its short scans with `parker_weight`, of size `(ns, 1, na)`: one per detector column
 # and view, the same for all rows. Each view is weighted with its angle step. The geometry of
-# Sinograms.jl converts with [`projection_geometry`](@ref):
+# Sinograms.jl converts with [`projection_geometry`](@ref). Its `na` counts the views of a full turn;
+# the short scan keeps those within half a turn plus the fan angle:
 
 rg = CtFanFlat(:short; ns=112, nt=64, ds=2.0, dt=2.0, na=180, dsd=400.0, dod=200.0)
 sinograms_scan = projection_geometry(rg)
@@ -89,10 +93,10 @@ x_sinograms = CTOperators.fdk(image, sinograms_scan, y_sinograms; redundancy)
 # `Adapt.adapt_structure` method, and it moves to the device with `adapt(storage, weight)`.
 #
 # The example is the weighting of Wesarg et al. (2002, Eq. 12–17) for short scans, with a parameter
-# `q`; `q = 1` gives Parker's weights. From the [`CircularScan`](@ref CTOperators.CircularScan), the kernel
-# object takes for every view the angle `beta` from the first view and two directions in the plane
-# of the orbit: the central ray and the direction across it (towards larger angles). The fan angle
-# of a cell follows from its ray, [`cell_ray`](@ref CTOperators.cell_ray).
+# `q`; `q = 1` gives Parker's weights. From the [`CircularScan`](@ref CTOperators.CircularScan), the
+# kernel object takes for every view the angle `beta` from the first view and two directions in the
+# plane of the orbit: the central ray and the direction across it (toward larger angles). The fan
+# angle of a cell follows from its ray, [`cell_ray`](@ref CTOperators.cell_ray).
 
 using Adapt
 using CTOperators: AbstractRedundancy, CircularScan, redundancy_weights, redundancy_weight, cell_ray
@@ -110,10 +114,10 @@ struct WesargWeight{V,M}
 end
 Adapt.@adapt_structure WesargWeight
 
-# Wesarg's S-shaped step (Eq. 13), from 0 at -1/2 to 1 at 1/2
+## Wesarg's S-shaped step (Eq. 13), from 0 at -1/2 to 1 at 1/2
 step_s(t) = t <= -0.5f0 ? 0.0f0 : t >= 0.5f0 ? 1.0f0 : (1 + sinpi(t)) / 2
 
-# the ramp in the region measured first (Eq. 16), B = 2 (delta - gamma) its height in beta
+## the ramp in the region measured first (Eq. 16), B = 2 (delta - gamma) its height in beta
 function wesarg_rho(beta, gamma, w)
   height = 2 * (w.delta - gamma)
   height <= 0 && return 1.0f0     # the outermost cell at the last view: weight 0 there
@@ -121,8 +125,8 @@ function wesarg_rho(beta, gamma, w)
   (step_s(beta / width - 0.5f0) + step_s((beta - height) / width + 0.5f0)) / 2
 end
 
-# the weight of every measurement (Eq. 12): the ramp, 1 where a line is measured once, and the
-# complement of the ramp of the other measurement
+## the weight of every measurement (Eq. 12): the ramp, 1 where a line is measured once, and the
+## complement of the ramp of the other measurement
 function wesarg_omega(beta, gamma, w)
   beta < 2 * (w.delta - gamma) && return wesarg_rho(beta, gamma, w)
   beta < Float32(pi) - 2 * gamma && return 1.0f0
@@ -149,9 +153,8 @@ function CTOperators.redundancy_weights(r::WesargWeights, scan::CircularScan, ge
 end;
 
 # The arrays of the kernel object are on the host here; FDK moves them to its device with
-# `adapt(storage, weight)`. With `q = 1`, the reconstruction and that with
-# [`ParkerWeights`](@ref) agree to the rounding of `Float32`. The scan covers half a turn plus the fan angle
-# of the outermost cell centers (111 mm from the center of the detector, 400 mm from the source):
+# `adapt(storage, weight)`. With `q = 1`, the reconstruction and that with [`ParkerWeights`](@ref)
+# agree to the rounding of `Float32`. The scan is the short scan of [Reconstruct with FDK](@ref):
 
 fan = atan(111 / 400)
 short = circular_cone_beam(; angles=range(0, pi + 2fan, 121), dso=200, dsd=400, nu=112, nv=64, du=2.0)
@@ -160,21 +163,19 @@ x_parker = CTOperators.fdk(image, short, y_short; redundancy=ParkerWeights())
 x_q1 = CTOperators.fdk(image, short, y_short; redundancy=WesargWeights(1.0))
 norm(x_q1 - x_parker) / norm(x_parker)
 
-# The weights of the middle detector row for Parker's weights and Wesarg's with `q = 0.1`:
+# Wesarg's weights with `q = 0.1` for the middle detector row, to compare with Parker's in
+# [Reconstruct with FDK](@ref): they are 0.5 over most of the region measured twice, with short
+# transitions at its ends.
 
-function weight_image(r) #hide
-  w, _ = redundancy_weights(r, CTOperators.circular_scan(short), short) #hide
-  [redundancy_weight(w, short, iu, 32, k) for iu in 1:112, k in 1:121] #hide
-end #hide
-fig = Figure(size=(800, 280)) #hide
-for (i, (name, r)) in enumerate((("Parker", ParkerWeights()), ("Wesarg, q = 0.1", WesargWeights(0.1)))) #hide
-  local ax = Axis(fig[1, i]; xlabel="view", ylabel=i == 1 ? "cell (u)" : "", title=name) #hide
-  global hm = heatmap!(ax, 1:121, 1:112, permutedims(weight_image(r)); colormap=:grays, colorrange=(0, 1)) #hide
-end #hide
-Colorbar(fig[1, 3], hm; label="weight") #hide
+w_wesarg, _ = redundancy_weights(WesargWeights(0.1), CTOperators.circular_scan(short), short) #hide
+weights = [redundancy_weight(w_wesarg, short, iu, 32, k) for iu in 1:112, k in 1:121] #hide
+fig = Figure(size=(800, 300)) #hide
+ax = Axis(fig[1, 1]; xlabel="view", ylabel="cell (u)") #hide
+hm = heatmap!(ax, 1:121, 1:112, permutedims(weights); colormap=:grays, colorrange=(0, 1)) #hide
+Colorbar(fig[1, 2], hm; label="weight") #hide
 save("write_fdk_wesarg.png", fig) #hide
 nothing #hide
-# ![Parker's and Wesarg's weights of the middle detector row](write_fdk_wesarg.png)
+# ![Wesarg's weights of the middle detector row](write_fdk_wesarg.png)
 
 # Wesarg et al. compare the two weightings on noisy data. Here, with noise added to the data (normal,
 # standard deviation 1 % of the largest line integral): `noise` is the difference of each
@@ -189,6 +190,7 @@ function compare(name, r)
 end
 [compare("Parker", ParkerWeights()), compare("Wesarg, q = 0.1", WesargWeights(0.1))]
 
-# References:
+# ## References
 #
-# - S. Wesarg, M. Ebert, T. Bortfeld, "Parker weights revisited", Med. Phys. 29(3), 372–378, 2002.
+# - S. Wesarg, M. Ebert, T. Bortfeld, "Parker weights revisited", Medical Physics 29(3), 372–378,
+#   2002.

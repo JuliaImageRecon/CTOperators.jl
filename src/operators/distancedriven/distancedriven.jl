@@ -12,7 +12,7 @@ projection is the exact adjoint. See [Distance-Driven Method](@ref) and [System 
 
 Works with detector geometries ([`AbstractDetectorGeometry`](@ref): [`ConeBeam`](@ref),
 [`ArcConeBeam`](@ref), [`ParallelBeam`](@ref)), not with ray lists, which have no detector cells,
-nor with a [`MultiRay`](@ref): the footprint already covers the whole cell. For a 2D image the
+nor with detector sampling ([`sampled`](@ref)): the footprint already covers the whole cell. For a 2D image the
 footprint extends only within the image plane.
 
 Keywords:
@@ -43,11 +43,11 @@ y = op * x                 # forward projection, size (256, 128, 360)
 z = adjoint(op) * y        # back projection
 ```
 
-References:
-* B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Phys.
-  Med. Biol. 49(11), 2463–2475, 2004.
+# References
+* B. De Man, S. Basu, "Distance-driven projection and backprojection in three dimensions", Physics
+  in Medicine and Biology 49(11), 2463–2475, 2004.
 * R. Liu, L. Fu, B. De Man, H. Yu, "GPU-based branchless distance-driven projection and
-  backprojection", IEEE Trans. Comput. Imaging 3(4), 617–632, 2017.
+  backprojection", IEEE Transactions on Computational Imaging 3(4), 617–632, 2017.
 """
 struct DistanceDrivenProjector{T,G<:AbstractDetectorGeometry{T},B<:KA.Backend,I<:ImageGeom,L<:Union{Nothing,LaunchConfig},M<:ProjectorMasks,V<:VoxelGrid{T}} <: AbstractProjector{T,G}
   image::I
@@ -63,9 +63,8 @@ function DistanceDrivenProjector(image::ImageGeom, geometry::AbstractDetectorGeo
   distance_driven_projector(image, device_geometry(geometry, T, storage), launch, raymask)
 end
 
-DistanceDrivenProjector(image::ImageGeom, geometry::MultiRay; kwargs...) =
-  throw(ArgumentError("DistanceDrivenProjector integrates over the whole detector cell; it takes the " *
-                      "geometry of the MultiRay, not the MultiRay"))
+DistanceDrivenProjector(image::ImageGeom, geometry::CellSampled; kwargs...) =
+  throw(ArgumentError("DistanceDrivenProjector integrates over the whole detector cell; it takes no detector sampling"))
 
 DistanceDrivenProjector(image::ImageGeom, geometry::AbstractProjectionGeometry; kwargs...) =
   throw(ArgumentError("DistanceDrivenProjector needs detector cells: a ConeBeam, ArcConeBeam or ParallelBeam, " *

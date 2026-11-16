@@ -147,7 +147,7 @@ The projector of the views `views` of `op` (detector geometries, also with sever
 a vector or range of view indices), for ordered-subset methods. It shares the image geometry and options with `op`, and the
 views of its ray mask.
 """
-function subset(op::AbstractProjector{T,<:Union{AbstractDetectorGeometry,MultiRay}}, views) where {T}
+function subset(op::AbstractProjector{T,<:Union{AbstractDetectorGeometry,CellSampled}}, views) where {T}
   g = subset(geometry(op), views)
   rays = ray_mask(op)
   isnothing(rays) ? similar_projector(op, g) : similar_projector(op, g; raymask=Array(rays)[:, :, views])
@@ -176,9 +176,11 @@ include("distancedriven/distancedriven.jl")
 # (KA.GPU is no help: since KernelAbstractions 0.10 it is the same as KA.Backend, the CPU included)
 const RayDrivenProjector = Union{SiddonProjector,JosephProjector,DistanceDrivenProjector}
 launch_layout(::RayDrivenProjector, geometry, backend) =
-  backend isa KA.CPU || !(geometry isa Union{AbstractDetectorGeometry,MultiRay}) ? () : (8, 8)
+  backend isa KA.CPU || !(geometry isa Union{AbstractDetectorGeometry,CellSampled}) ? () : (8, 8)
 launch_workgroupsize(::RayDrivenProjector, layout) = nothing
 launch_workgroupsize(::RayDrivenProjector, layout::NTuple{2,Int}) = prod(layout)
 
 include("voxeldriven/voxeldriven.jl")
+include("sampled.jl")
+include("intensity.jl")
 include("normal.jl")

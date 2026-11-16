@@ -9,7 +9,8 @@
 #
 # This page describes what the rows, columns and entries of this matrix are, what all projectors
 # have in common, and the two choices in which they differ. The pages on the methods describe how
-# each of them computes the entries.
+# each of them computes the entries; [Write a Projector](@ref) shows how to implement a projector of
+# your own.
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "system_matrix_figures.jl")) #hide
@@ -60,7 +61,7 @@ bonito_page("system_matrix") #hide
 # |:-------|:------------|:---------------|
 # | [Siddon's Method](@ref) | constant within each voxel | the line integral along one ray, through the center of the cell |
 # | [Joseph's Method](@ref) | interpolated linearly between the voxel centers, within each layer (below) | the line integral along one ray, through the center of the cell |
-# | [Several Rays per Cell](@ref) | that of the method used | the mean of the line integrals along several rays of the cell |
+# | [Sampling the Beam](@ref) | that of the method used | the mean of the line integrals along several rays of the cell (or from several points of the focal spot) |
 # | [Distance-Driven Method](@ref) | constant within each voxel, on the center plane of each layer | the mean over the area the cell sees, per layer |
 # | [Voxel-Driven Method](@ref) | a point mass at the center of each voxel | the mean of the line integrals over the cell, each point mass spread over the 2 × 2 nearest cells by bilinear interpolation |
 #

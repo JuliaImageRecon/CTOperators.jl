@@ -8,13 +8,15 @@
 using CTOperators, CairoMakie
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "scan_steps.jl")) #hide
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
+nothing #hide
 
 # ## One ray
 #
 # An X-ray source sends a ray through the object to a detector cell. The cell measures how much the
 # ray was attenuated; after taking the logarithm, this is the line integral of the attenuation
 # coefficient along the ray: the sum of the image values along the ray, weighted by the length of
-# the ray in each voxel. Computing these line integrals for all rays is the forward projection.
+# the ray in each voxel ([From Intensities to Line Integrals](@ref)). Computing these line integrals
+# for all rays is the forward projection.
 
 fig = step_ray_figure() #hide
 save("steps_ray.png", fig) #hide
@@ -99,3 +101,7 @@ nothing #hide
 # the parameters exactly, including curved detectors (`detector=:arc`) and detector offsets
 # (`offset_u`, `offset_v`), and [Set Up a Geometry](@ref) shows parallel-beam scans, arbitrary
 # trajectories and ray lists.
+#
+# The source is a point on this page. A real source has a size, the focal spot, which blurs the
+# projections by an amount that depends on the magnification: [Sampling the Beam](@ref) shows it, and
+# [Model the Focal Spot](@ref) how to include it.

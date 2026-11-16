@@ -15,14 +15,16 @@ function variation(img, r)
   100 * sqrt(sum((inside .- m) .^ 2) / length(inside)) / m
 end
 
-# `models` holds (name, projector, geometry -> geometry) tuples, `ratios` the cell sizes in pixels.
+# `models` holds (name, projector, points) tuples, with the points of the detector sampling or `nothing`
+# for one ray per cell; `ratios` the cell sizes in pixels.
 # One panel per model and ratio; `panel!(ax, op, du)` draws it.
 function comparison_grid(panel!, models, ratios, n, angles, window; size=(250 * length(ratios) + 140, 250 * length(models)))
   fig = Figure(; size)
   Colorbar(fig[1:length(models), length(ratios)+1]; colormap=:RdBu, limits=window, label="coverage")
-  for (i, (name, P, wrap)) in enumerate(models), (j, du) in enumerate(ratios)
+  for (i, (name, P, points)) in enumerate(models), (j, du) in enumerate(ratios)
     ax = Axis(fig[i, j]; title=i == 1 ? "cells of $du pixels" : "", ylabel=j == 1 ? name : "")
-    op = P(comparison_image(n), wrap(comparison_scan(n, du, angles)); eltype=Float64)
+    op = P(comparison_image(n), comparison_scan(n, du, angles); eltype=Float64)
+    op = isnothing(points) ? op : sampled(op; detector=DetectorSampling(points))
     panel!(ax, op, du)
   end
   fig

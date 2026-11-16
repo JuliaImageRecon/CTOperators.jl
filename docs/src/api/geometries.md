@@ -20,15 +20,26 @@ Pages = ["geometry/raylist.jl", "geometry/conebeam.jl", "geometry/arcconebeam.jl
 Private = false
 ```
 
-## Several rays per cell
+## Point and weighting strategies
 
-A detector geometry wrapped with a point strategy (where in each cell the rays end) and a
-weighting strategy, together with the functions that custom strategies implement (see
+Point strategies (where the rays of a sample end in a detector cell or start in a focal spot) and
+weighting strategies, together with the functions that custom strategies implement (see
 [Write a Sampling Strategy](@ref)).
 
 ```@autodocs
 Modules = [CTOperators]
-Pages = ["geometry/multiray.jl"]
+Pages = ["geometry/cellsampled.jl"]
+Private = false
+```
+
+## Sampling of the beam
+
+The samples of a focal spot and of the detector cells, for [`sampled`](@ref) and
+[`stacked`](@ref), and the geometry of a sample.
+
+```@autodocs
+Modules = [CTOperators]
+Pages = ["geometry/sampling.jl", "geometry/shifted.jl"]
 Private = false
 ```
 

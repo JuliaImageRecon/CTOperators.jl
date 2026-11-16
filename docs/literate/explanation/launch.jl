@@ -14,6 +14,7 @@
 
 using CTOperators
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "launch_figures.jl")) #hide
+nothing #hide
 
 # ## Ray order
 #
@@ -72,12 +73,13 @@ nothing #hide
 # ```
 #
 # The `layout` says how the work is laid out over the threads; for the ray-driven projectors it is
-# the tile, `(tu, tv)` cells, and `layout=()` is data order. A field left at `nothing` is derived: the
-# layout is the device's default, and the workgroup size is one tile per workgroup (`tu * tv`
+# the tile, `(tu, tv)` cells, and `layout=()` is data order. A field left at `nothing` is derived:
+# the layout is the device's default, and the workgroup size is one tile per workgroup (`tu * tv`
 # threads, 128 in the example) if the device allows workgroups that large; otherwise, and in data
 # order, it is the size KernelAbstractions.jl chooses. A workgroup size that is given is used as it
 # is: with a smaller one several workgroups share a tile, and one larger than the device or the
-# kernel allows gives an `ArgumentError` when the projector runs.
+# kernel allows gives an error when the projector runs (from KernelAbstractions.jl or the GPU
+# package).
 #
 # The best settings depend on the device and the problem. To find them, time a few combinations on a
 # problem of the size you need (`image`, `geometry` and an image `x` on the device as in
@@ -124,5 +126,5 @@ nothing #hide
 # A layout of another length gives an `ArgumentError`, as does a run for a ray-driven projector:
 #
 # ```julia
-# JosephProjector(image, geometry; launch)    # ArgumentError: Joseph's method takes () or (tu, tv)
+# JosephProjector(image, geometry; launch)    # ArgumentError: the layout must be () or (tu, tv)
 # ```

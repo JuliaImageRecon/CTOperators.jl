@@ -7,6 +7,7 @@
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
 using ImageGeoms: axis
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
+nothing #hide
 
 # The slice: the Shepp-Logan phantom on 128 × 128 pixels of 1 mm.
 
@@ -53,7 +54,8 @@ nothing #hide
 #
 # The sinogram of the full scan. In a full turn every line through the slice is measured twice, once
 # from each side: the ray at fan angle `γ` in the view at angle `β` and the ray at fan angle `−γ` in
-# the view at angle `β + π + 2γ`.
+# the view at angle `β + π + 2γ`. The second half of the sinogram therefore repeats the first,
+# mirrored in `u` and shifted in angle.
 
 op_full = JosephProjector(image, full)
 y_full = op_full * x_true
@@ -67,7 +69,8 @@ nothing #hide
 # A line through the slice is measured when the source passes one of the two points where the line
 # crosses the source circle. In parallel beam half a turn sees every line; in a fan beam the rays of
 # one view spread over the fan angle, and only half a turn plus the fan angle sees every line at
-# least once. Reconstructions of the three scans with 30 CGNR iterations:
+# least once. Reconstructions of the three scans with 30 CGNR iterations, with their relative errors
+# `‖x − x_true‖ / ‖x_true‖`; the gray scale runs from 0 to 0.4, so the skull, at 1, is saturated:
 
 function reconstruct(geometry)
   op = JosephProjector(image, geometry)
@@ -87,11 +90,9 @@ nothing #hide
 # ![Reconstructions of the three scans](fan_reconstructions.png)
 
 # The short scan measured every line, some twice; its error is 0.022, against 0.013 for the full
-# scan. Half a turn misses lines near the edges of the fan: its error is 0.139, and the reconstruction
-# shows streaks and wrong values on the side that was seen least.
+# scan. Half a turn misses lines near the edges of the fan: its error is 0.139, and the
+# reconstruction shows streaks and wrong values on the side that was seen least.
 #
-# Filtered back projection (FBP, available in
-# [Sinograms.jl](https://github.com/JuliaImageRecon/Sinograms.jl); this package provides the
-# projectors for iterative methods) must weight the doubly measured lines of a short scan by hand
-# (Parker weights). An iterative method gets this right by itself, since it only asks for an image
-# that matches all measured line integrals.
+# Filtered back projection must weight the doubly measured lines of a short scan, with
+# [`ParkerWeights`](@ref) (see [Reconstruct with FDK](@ref)). An iterative method gets this right by
+# itself, since it only asks for an image that matches all measured line integrals.

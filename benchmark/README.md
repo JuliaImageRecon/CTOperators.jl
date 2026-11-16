@@ -162,7 +162,7 @@ the rays masked at random.
 | box 64³ | 20 % masked | 2.2 / 5.5 ms | 2.9 / 15.0 ms |
 
 Rays are clipped to the bounding box of the image mask: a small region of interest makes the
-projections 30 to 40× faster; the circle fills its box and gains nothing.
+projections 30 to 43× faster; the circle fills its box and gains nothing.
 Masked rays are not traced: the back projection gets faster by about the masked fraction.
 
 
@@ -170,15 +170,16 @@ Masked rays are not traced: the back projection gets faster by about the masked 
 
 AMD Radeon RX 7900 XT, Float32, 128³ volume, 128² detector, 180 views (circular cone beam),
 minimum of 5 runs, 2026-11-03, branch `nh/multiray` (the GPU was also the desktop GPU in use:
-approximate).
+approximate). Measured with the geometry wrapper `MultiRay` of that time; the same kernels sample
+the cells with `sampled(op; detector=DetectorSampling(points; weights))`.
 
 | geometry | Siddon forward / back | Joseph forward / back |
 |---|---|---|
 | plain | 6.0 / 13.7 ms | 6.8 / 31.0 ms |
-| `MultiRay`, `RegularPoints(1)` | 5.8 / 13.5 ms | 6.8 / 31.0 ms |
-| `MultiRay`, `RegularPoints(2)` | 24.7 / 53.3 ms | 29.9 / 123.7 ms |
-| `MultiRay`, `JitteredPoints(2)` | 25.8 / 54.9 ms | 30.2 / 125.4 ms |
-| `MultiRay`, `JitteredPoints(2)`, `GaussianWeights(0.4)` | 24.1 / 54.9 ms | 29.8 / 125.7 ms |
+| `RegularPoints(1)` | 5.8 / 13.5 ms | 6.8 / 31.0 ms |
+| `RegularPoints(2)` | 24.7 / 53.3 ms | 29.9 / 123.7 ms |
+| `JitteredPoints(2)` | 25.8 / 54.9 ms | 30.2 / 125.4 ms |
+| `JitteredPoints(2)`, `GaussianWeights(0.4)` | 24.1 / 54.9 ms | 29.8 / 125.7 ms |
 
 One ray per cell costs the same as the plain geometry; 4 rays per cell take about 4 times as long.
 Random positions (a hash per ray) and Gaussian weights are not measurable.

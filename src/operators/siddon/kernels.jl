@@ -33,7 +33,7 @@ end
   end
 end
 
-# The rays of data element i of the geometry through the grid (one, or the subrays of a MultiRay);
+# The rays of data element i of the geometry through the grid (one, or the subrays of a CellSampled geometry);
 # returns the accumulated value of the action.
 @inline siddon_ray(action, grid, geometry, i) = trace_element(siddon_segment, action, grid, geometry, i)
 

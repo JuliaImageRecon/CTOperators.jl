@@ -51,8 +51,9 @@
 #
 # `mul!(y, op, x)` and `mul!(z, adjoint(op), y)` reuse preallocated arrays. Iterative solvers work
 # unchanged when their data lives on the device; the solvers of RegularizedLeastSquares.jl allocate
-# their work arrays like the measured data. The normal operator of LinearOperatorCollection.jl
-# allocates its buffer on the projector's device (see [Getting Started](@ref)):
+# their work arrays like the measured data. The normal operator `normalOperator(op)` of
+# LinearOperatorCollection.jl runs on the projector's device; for Siddon, Joseph and distance-driven
+# it needs no buffer for the projection data (see [Normal Operator](@ref)):
 #
 # ```julia
 # using RegularizedLeastSquares, LinearOperatorCollection
@@ -77,19 +78,9 @@
 # precision gives reference results. The element type of a projector is that of its ray geometry and
 # of its arithmetic.
 #
-# Images and data can be stored in a lower precision, such as `Float16`, which halves their memory.
-# The projector converts the values when it reads them and sums in its own element type:
-#
-# ```julia
-# x16 = CuArray{Float16}(x)    # an image stored in Float16
-# y = op * x16                 # Float32 data
-# y16 = similar(y, Float16)
-# mul!(y16, op, x16)           # Float16 data: every value rounded once
-# x = adjoint(op) * y16        # back projection of Float16 data into a Float32 image
-# ```
-#
-# The image of a back projection collects many contributions per voxel; keep it in `Float32`.
-# [Choose the Precision](@ref) shows the other combinations, `BFloat16`, and what each costs.
+# Images and data can also be stored in a lower precision, such as `Float16` or `BFloat16`, which
+# halves their memory; the projector converts the values when it reads them and sums in its own
+# element type. [Choose the Precision](@ref) shows the combinations and what each costs.
 #
 # ## Performance notes
 #
@@ -106,4 +97,4 @@
 # - The projector holds no workspace: its memory is the geometry (a few numbers per view for
 #   detector geometries, two points per ray for ray lists) and the masks.
 # - Creating a projector is cheap; for ordered subsets, create the projectors of all subsets once
-#   (see [Ordered Subsets and Normalization](@ref)).
+#   (see [Use Ordered Subsets and Normalizations](@ref)).

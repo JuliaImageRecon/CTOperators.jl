@@ -21,8 +21,8 @@
       checkbounds(Bool, counts, a, b, k) && (counts[a, b, k] += 1)
     end
   end
-  # distance driven integrates over the cell itself, voxel driven projects voxels: no MultiRay
-  multi = MultiRay(g, JitteredPoints(2; seed=1))
+  # distance driven integrates over the cell itself, voxel driven projects voxels: no detector sampling
+  multi = CTOperators.CellSampled(g, JitteredPoints(2; seed=1))
   cases = ((SiddonProjector, g), (SiddonProjector, multi), (JosephProjector, g), (JosephProjector, multi),
            (DistanceDrivenProjector, g), (VoxelDrivenProjector, g))
   for S in (Float16, BFloat16), (P, geometry) in cases, arrayType in arrayTypes

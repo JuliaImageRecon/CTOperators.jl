@@ -160,10 +160,12 @@ that are not smooth at the first and the last view (an object that reaches out o
 the reconstruction shows streaks; a slightly longer scan avoids the jump of the weights at the edges
 of the fan (Wesarg et al. 2002).
 
-References:
-* D. L. Parker, "Optimal short scan convolution reconstruction for fanbeam CT", Med. Phys. 9(2),
-  254–257, 1982 (Eq. 12; the denominator of its third case must read `δ + α`, as Eq. 9 requires).
-* S. Wesarg, M. Ebert, T. Bortfeld, "Parker weights revisited", Med. Phys. 29(3), 372–378, 2002.
+# References
+* D. L. Parker, "Optimal short scan convolution reconstruction for fanbeam CT", Medical Physics
+  9(2), 254–257, 1982 (Eq. 12; the denominator of its third case must read `δ + α`, as Eq. 9
+  requires).
+* S. Wesarg, M. Ebert, T. Bortfeld, "Parker weights revisited", Medical Physics 29(3), 372–378,
+  2002.
 """
 struct ParkerWeights <: AbstractRedundancy end
 

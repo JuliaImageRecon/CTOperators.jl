@@ -1,6 +1,6 @@
 # # Sparse Views and Limited Angles
 #
-# Fewer views mean less dose and faster scans, and some scanners cannot turn all the way round. This
+# Fewer views mean less dose and faster scans, and some scanners cannot turn all the way around. This
 # tutorial takes views away from a 2D parallel-beam scan like the one of [Parallel Beam in 2D](@ref)
 # (with a finer detector) in two ways, few views over the full half turn and many views over a
 # limited arc, and shows what a regularized reconstruction recovers on this example: much in the
@@ -9,6 +9,7 @@
 using CTOperators, ImagePhantoms, RegularizedLeastSquares, LinearOperatorCollection, CairoMakie
 using ImageGeoms: axis
 include(joinpath(pkgdir(CTOperators), "docs", "utils", "tutorial_figures.jl")) #hide
+nothing #hide
 
 # The Shepp-Logan phantom on 128 × 128 pixels of 1 mm:
 
@@ -39,7 +40,8 @@ nothing #hide
 
 # ## Least squares
 #
-# CGNR, 30 iterations, for each scan:
+# CGNR, 30 iterations, for each scan. The titles give the relative error `‖x − x_true‖ / ‖x_true‖`;
+# the gray scale runs from 0 to 0.4, so the skull, at 1, is saturated:
 
 function least_squares(geometry)
   op = JosephProjector(image, geometry)
@@ -88,9 +90,9 @@ nothing #hide
 # ![Least squares and TV](sparse_tv.png)
 
 # With 20 views TV removes most of the streaks and comes close to the phantom, though small details
-# are blurred: the data and the prior together nearly determine it. Over the limited angle TV
-# sharpens the measured edges but cannot restore those the scan never saw. On this example TV lowers
-# the error from 0.40 to 0.055 for 20 views and from 0.40 to 0.33 for the limited arc.
+# are blurred. Over the limited angle TV sharpens the measured edges but cannot restore those the
+# scan never saw. On this example TV lowers the error from 0.40 to 0.055 for 20 views and from 0.40
+# to 0.33 for the limited arc.
 #
-# The phantom is piecewise constant; this result does not carry over to images with texture. The
-# weight `λ` trades noise and streaks against loss of detail.
+# The phantom is piecewise constant, the case TV is made for; images with texture are not tested
+# here. The weight `λ` trades noise and streaks against loss of detail.
