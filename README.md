@@ -1,4 +1,6 @@
-# CTOperators.jl
+<p align="center">
+  <img src="docs/src/assets/ctoperators-logo.svg" alt="CTOperators.jl" width="480">
+</p>
 
 This package provides forward and back projectors for X-ray computed tomography that run
 multi-threaded on the CPU and on GPUs (CUDA, AMD, Apple) from the same code base; each back

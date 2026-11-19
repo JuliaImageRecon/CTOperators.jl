@@ -5,3 +5,4 @@
 /benchmark/out/
 /benchmark/envs/*/Manifest*.toml
 /benchmark/envs/*/.CondaPkg/
+/logo/Manifest*.toml
