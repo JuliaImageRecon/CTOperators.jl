@@ -1,4 +1,6 @@
-# CTOperators.jl
+```@raw html
+<p style="text-align: center"><img src="assets/ctoperators-logo.svg" alt="CTOperators.jl" width="480"></p>
+```
 
 *Forward and back projectors for X-ray CT on CPUs and GPUs.*
 
@@ -95,4 +97,12 @@ y = op * rand(Float32, 128, 128, 128)        # projections, size (256, 128, 360)
 ```julia
 using Pkg
 Pkg.add("CTOperators")
+```
+
+```@raw html
+<p style="text-align: center; margin-top: 3em">
+  <img src="assets/ctoperators-rotation.svg" alt="The CTOperators.jl logo, turning" width="200"><br>
+  <small><em>The stems of the logo are line integrals through a small phantom, computed with a
+  SiddonProjector.</em></small>
+</p>
 ```
